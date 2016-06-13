@@ -1,7 +1,7 @@
 ---
 layout: default
 ---
-
+<!--
 <div class="home">
 
   <h1 class="page-heading">Posts</h1>
@@ -21,3 +21,163 @@ layout: default
   <p class="rss-subscribe">subscribe <a href="{{ "/feed.xml" | prepend: site.baseurl }}">via RSS</a></p>
 
 </div>
+-->
+<!DOCTYPE html>
+<html>
+	<head>
+		<LINK type="image/png" href="flobgrp.png" rel="icon"></LINK>
+		<title>flobit.com</title>
+		<style>
+A{
+    color:#ffff00;
+}
+BUTTON{
+    border-radius:20px;
+    border-color:#F00;
+    background-color:#080;
+    color:#FFF;
+    font-family:'Ameringo BT';
+}
+INPUT{
+    width:25em;
+    border-radius:15px;
+    border-color:#008;
+    border-width:5px;
+    font-family:'Courier';
+}
+		</style>
+	</head>
+	<body style="background-color: #9999ff">
+		<button id="X">flobit</button>
+		<div style="DISPLAY: none" id=flobbed class=infoBlock>it is now flobbed</div>
+		<P align="center">
+			<B>
+				<INPUT TYPE="text" id="searching"></INPUT>
+			</B>
+			<BUTTON id="search">flob this</BUTTON>
+		</P>
+		<P>
+			<div id=searched class=infoBlock></div>
+		</P>
+		<P id=resultList>
+		</P>
+		<P id="passwordThing"></P>
+		<P id="time"></P>
+		<canvas id="clock" width=400 height=400></canvas>
+		<P NAME="Grimbsby Flob Time">GFT (Grimsby Flob Time)</P>
+		<SCRIPT type="text/javascript">
+var hrefs=[
+"charTester.html",
+"dino.html",
+"doNotClick.html",
+"footy.html",
+""
+];
+var names=[
+"Unicode Character Reference",
+"Dinosaur Strategy Game",
+"Preferably, Ignore This Link.",
+"2Difa",
+""
+];
+var keywords=[
+[/ unicode /i, / char/i, / UTF-/, / tool/i],
+[/ dino/i, / prehistor/i, / ancient /i,/ old /i,/ fossil/i],
+[/ flop /i,/ ? /, / blob /i, / plop /i],
+[/ foot/i,/ game/i, / sport/i ],
+[]
+];
+X.onclick=function(){
+	flobbed.style="DISPLAY: all"; 
+};
+searching.onkeyup=function(event) {
+	if(event.keyCode === 13){
+		search.onclick();
+	}
+};
+search.onclick=function(){
+	resultList.textContent='';
+	var results=[];
+	var results_hrefs=[];
+	var links=[];
+	var Ps=[];
+	searched.style="DISPLAY: all";
+	for(var i = 0; i < keywords.length; i++){
+		for(var j = 0; j < keywords[i].length;j++){
+			var word = keywords[i][j];
+			var queiry = searching.value;
+			if( word.test(' '+queiry+' ') ){
+				results.push(names[i]);
+				results_hrefs.push(hrefs[i]);
+                if(i<keywords.length-1){i++;}
+			}
+		};
+	};
+	for(var k = 0;k < results.length;k++){
+		links.push(document.createElement("a"));
+		links[k].href = results_hrefs[k];
+		links[k].textContent = results[k];
+		Ps.push(document.createElement("p"));
+		resultList.appendChild(Ps[k]);
+		resultList.appendChild(links[k]);
+	};
+	searched.textContent = results.length + " Result(s) found for " + searching.value +".";
+};
+var clock=document.getElementById('clock');
+function clockDisp(seconds, minutes, hours) {
+	seconds=(seconds*Math.PI)/90;
+	minutes=(minutes*Math.PI)/90;
+	hours=(hours*Math.PI)/90;
+	var clock=document.getElementById('clock');
+	clock.width=clock.width;
+	var pen=clock.getContext('2d');
+    pen.beginPath();
+    pen.arc(200,200,200,0,Math.PI*2,false);
+        pen.fillStyle='#880';
+	pen.fill();
+	pen.beginPath();
+	pen.moveTo(0,200);
+	Math.sq=function(x) { return(x*x); };
+	pen.stroke();
+	pen.lineWidth=4;
+	pen.beginPath();
+	pen.moveTo(200,200);
+	pen.lineTo(200+( 150 * Math.sin(seconds*3)), 200-( 150 * Math.cos(seconds*3) ));
+	pen.strokeStyle = '#ff0000';
+	pen.stroke();
+	pen.beginPath();
+	pen.moveTo(200,200);
+	pen.lineTo(200+( 100 * Math.sin(minutes*3)), 200-( 100 * Math.cos(minutes*3) ));
+	pen.strokeStyle = '#00ff00';
+	pen.stroke();
+	pen.beginPath();
+	pen.moveTo(200,200);
+	pen.lineTo(200+( 50 * Math.sin(hours*15) ), 200-( 50 * Math.cos(hours*15) ));
+	pen.strokeStyle = '#0000ff';
+	pen.stroke();
+	var r=160;
+	for(var a = 0.2; a <= 12; a += 0.2){
+		if( (Math.round(a*10) / 10) % 1 == 0){
+			pen.fillStyle='#ffff00';
+			pen.fillText(Math.round(a),200+(r*Math.sin((a*30*Math.PI)/180)),200-(r*Math.cos((a*30*Math.PI)/180)));
+		}else{
+			pen.fillStyle='#00ffff';
+			pen.fillRect(195+(r*Math.sin((a*30*Math.PI)/180)),195-(r*Math.cos((a*30*Math.PI)/180)),10,10);
+		}
+	}
+};
+function time() {
+	var time=new Date();
+	clockDisp(time.getUTCSeconds(),time.getUTCMinutes()+(time.getUTCSeconds()/60),time.getUTCHours()+(time.getUTCMinutes()/60)+(time.getUTCHours()/3600));
+	setTimeout("time()",1000);
+};
+time();
+
+		</SCRIPT>
+		<HR>
+		<P>
+			&copy; flobgroup.corp
+		</P>
+		<EMBED src="tune.mp3" width="1" height="1" id="sound"></EMBED>
+	</body>
+</html>
