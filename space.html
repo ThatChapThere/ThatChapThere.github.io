@@ -1,0 +1,89 @@
+﻿<HTML><HEAD><LINK type="image/png" href="space.png" rel="icon"></LINK>
+<title>planets</title>
+</HEAD><BODY bgColor="#333" style="color:#fff">
+<canvas id="space" width=700 height=700></canvas>
+<BUTTON id="new">Make a new body</BUTTON>
+<SCRIPT>
+function getNumber(string){
+    var input=NaN;
+    while(isNaN(input) || !input) {
+        input=prompt(string+' (must be a number)');
+    }
+    return(eval(input));
+};
+function sq(num) {
+  return(num*num);
+};
+space.width=space.width;
+space.height=space.height;
+var pen=space.getContext('2d');
+function Body(x, y, xv, yv, mass, w, color) {
+  this.x = x;
+  this.y = y;
+  this.mass = mass;
+  this.xv = xv;
+  this.yv = yv;
+  this.w = w;
+  this.color=color;
+};
+var G = 0.0005;
+var bodies = [
+  new Body(350, 350, 0, 0, 330000, 70, '#ffff00'),//the sun
+  new Body(350,292,132.5,0,0.06,4,'#664'),//mercury
+  new Body(350,242,130,0,0.82,12,'#8e6644'),//venus
+  new Body(350,200,135,0,1,13,'#0000ff'),//earth
+  new Body(350,122,132.5,0,0.11,7,'#ff0000'),//mars
+  new Body(350, 200.3, 135, 0, 0.01, 3, '#888'),//the moon
+  new Body(350,122.006,132.5,0,0.00000002,2,'#888'),//phobos
+  new Body(350,121.98,132.5,0.000000003,1,'#888'),//deimos
+];
+function ___disp___() {
+  pen.fillStyle='#000';
+  pen.fillRect(0,0,700,700);
+  for(var i = 0; i < bodies.length; i++){
+    bodies[i].x += bodies[i].xv/100;
+    bodies[i].y += bodies[i].yv/100;
+    pen.fillStyle = bodies[i].color;
+    pen.beginPath();
+    pen.arc(bodies[i].x, bodies[i].y, bodies[i].w/2, 0,Math.PI*2,false);
+    pen.fill();
+    for(var j = 0; j < bodies.length; j++){
+      if(i !== j){
+        var M = bodies[j].mass;//my equation: mass = mass.
+        var r = Math.sqrt(sq(bodies[i].x - bodies[j].x) + sq(bodies[i].y - bodies[j].y));//pythagorus, Hypotenuse = square root [x^2 + y^2]
+        var A = -G * (M / (r * r));//Isaac Newton. F= -G times: (M1 M2) over r squared, modified into aceleration.
+        bodies[i].xv += A * (bodies[i].x - bodies[j].x)
+        bodies[i].yv += A * (bodies[i].y - bodies[j].y)//A = delta d
+      }
+    }
+  }
+  setTimeout('___disp___()',10);
+};
+document.getElementById('new').onclick = function() {
+  var ax=getNumber('x Position?');
+  var ay=getNumber('y Position?');
+  var amass=getNumber('Mass?');
+  var aw=getNumber('Size ?');
+  var axv=getNumber('X velocity');
+  var ayv=getNumber('Y velocity');
+  var color='#';
+  if( confirm('use red?') ){
+    color += 'ff';
+  }else{
+    color += '00';
+  }
+  if( confirm('use green?') ){
+    color += 'ff';
+  }else{
+    color += '00';
+  }
+  if( confirm('use blue?') ){
+    color += 'ff';
+  }else{
+    color += '00';
+  }
+  bodies.push(new Body(ax,ay,axv,ayv,amass,aw,color));
+};
+___disp___();
+</SCRIPT><HR><P>&copy <A href="flobit.html" style="color:#888">flob</A>group.corp</P>
+</BODY></HTML>

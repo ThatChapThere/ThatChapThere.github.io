@@ -1,0 +1,189 @@
+﻿<!DOCTYPE html>
+<HTML>
+  <HEAD>
+    <LINK type="image/png" href="lifeimg.png" rel="icon"></LINK>
+    <TITLE>
+      Game of life.org
+    </TITLE>
+    <STYLE>
+BODY{
+  color:#0F0;
+  background-color:#00F;
+}
+A{
+  color:#ff0;
+}
+    </STYLE>
+  </HEAD>
+  <BODY>
+    <CANVAS id="canvas" width=1000 height=1000></CANVAS>
+    <BR>
+    <H1>
+      The game of life
+    </H1>
+    <BUTTON id="pause">||</BUTTON>
+    <BUTTON id="play"> &gt </BUTTON>
+    <P>
+      The game of life was invented by John Conway in the 1970's and is governed by a few simple rules. Pause to edit the grid by clicking the squares, and play to see how the inputted configuration ends up.
+    </P>
+    <HR>
+    <P>this version was made by: &copy<A href="flobit.html">flob</A>group.corp</P>
+    <P id='counter'></P>
+    <SCRIPT>
+var totalCount = -1;
+var sinceClick = -1;
+var canv=document.getElementById('canvas');
+var ctx=canv.getContext('2d');
+ctx.fillStyle='#fff';
+ctx.fillRect(0,0,500,500);
+ctx.fillStyle='#000';
+ctx.lineWidth=1;
+var running=false;
+ctx.strokeStyle='#000';
+var matrix=[];/*=[
+  [false,true ,false,false,false,false,false,false,false,false],
+  [false,false,true ,false,false,false,false,false,false,false],
+  [true ,true ,true ,false,false,false,false,false,false,false],
+  [false,false,false,false,false,false,false,false,false,false],
+  [false,false,false,false,false,false,false,false,false,false],
+  [false,false,false,false,false,false,false,false,false,false],
+  [false,false,false,false,false,false,false,false,false,false],
+  [false,false,false,false,false,false,false,false,false,false],
+  [false,false,false,false,false,false,false,false,false,false],
+  [false,false,false,false,false,false,false,false,false,false],
+];*/
+for(var i = 0; i < 100; i++){
+  matrix[i]=[];
+  for(var j = 0; j < 100; j++){
+    matrix[i][j]=false;
+  }
+}
+canv.onmouseup=function(event) {
+  if(!running){
+    matrix[Math.floor(event.clientX/10)-1][Math.floor((event.clientY+scrollY)/10)-1]= !matrix[Math.floor(event.clientX/10)-1][Math.floor((event.clientY+scrollY)/10)-1];
+    ctx.fillStyle='#888';
+    ctx.fillRect(0,0,1000,1000);
+    ctx.fillStyle='#f00';
+    ctx.lineWidth=1;
+    ctx.strokeStyle='#0f0';
+    for(var k = 0; k < 100; k++){
+      for(var l = 0; l < 100; l++){
+        if(matrix[k][l]){
+          ctx.fillRect(k*10,l*10,10,10);
+        }else{
+          ctx.strokeRect(k*10,l*10,10,10);
+        }
+      }
+    }
+  }else{
+    alert('Pause First!');
+  }
+};
+pause.onclick=function() {
+  running=false;
+  ctx.fillStyle='#888';
+  ctx.fillRect(0,0,1000,1000);
+  ctx.fillStyle='#f00';
+  ctx.lineWidth=1;
+  ctx.strokeStyle='#0f0';
+    for(var k = 0; k < 100; k++){
+      for(var l = 0; l < 100; l++){
+        if(matrix[k][l]){
+          ctx.fillRect(k*10,l*10,10,10);
+        }else{
+          ctx.strokeRect(k*10,l*10,10,10);
+        }
+      }
+    }
+  sinceClick=0;
+};
+onkeyup=function(event) {
+	if(event.keyCode==32){
+		running = !running;
+		if(!running){
+			ctx.fillStyle='#888';
+			ctx.fillRect(0,0,1000,1000);
+			ctx.fillStyle='#f00';
+			ctx.lineWidth=1;
+			ctx.strokeStyle='#0f0';
+			for(var k = 0; k < 100; k++){
+				for(var l = 0; l < 100; l++){
+					if(matrix[k][l]){
+						ctx.fillRect(k*10,l*10,10,10);
+					}else{
+						ctx.strokeRect(k*10,l*10,10,10);
+					}
+				}
+			}
+			sinceClick=0;
+		}
+	}
+};
+play.onclick=function() {
+  running=true;
+};
+play.innerHTML='\u25BA';
+var numNext;
+var newMatrix=[];
+for(var l = 0; l < 100; l++){
+  newMatrix.push([]);
+}
+
+function GO() {
+  //var newMatrix=[[],[],[],[],[],[],[],[],[],[]];
+  var newMatrix=[];
+  for(var l = 0; l < 100; l++){
+    newMatrix.push([]);
+  }
+  ctx.fillStyle='#fff';
+  ctx.fillRect(0,0,1000,1000);
+  ctx.fillStyle='#008';
+  ctx.lineWidth=2;
+  ctx.strokeStyle='#000';
+  for(var i = 0; i < 100; i++){
+    for(var j = 0; j < 100; j++){
+      numNext = 0;
+      if(matrix[i-1]){
+        if(matrix[i-1][j-1]){numNext++;}
+        if(matrix[i-1][j]){numNext++;}
+        if(matrix[i-1][j+1]){numNext++;}
+      }
+      if(matrix[i+1]){
+        if(matrix[i+1][j-1]){numNext++;}
+        if(matrix[i+1][j]){numNext++;}
+        if(matrix[i+1][j+1]){numNext++;}
+      }
+      if(matrix[i][j-1]){
+        numNext++;
+      }
+      if(matrix[i][j+1]){
+        numNext++;
+      }
+      if(matrix[i][j]){
+        newMatrix[i][j]=true;
+        ctx.fillRect(i*10,j*10,10,10);
+        if(numNext !== 2 && numNext !== 3){
+          newMatrix[i][j]=false;
+        }
+      }else if(numNext === 3){
+        newMatrix[i][j]=true;
+        ctx.strokeRect(i*10,j*10,10,10);
+      }else{
+        ctx.strokeRect(i*10,j*10,10,10);
+        newMatrix[i][j]=false;
+      }
+      /*ctx.fillStyle='#880';
+      ctx.fillText(numNext,i*50+25,j*50+25);
+      ctx.fillStyle='#000';*/
+    }
+  }
+  matrix=newMatrix;
+  totalCount++;
+  sinceClick++;
+  counter.textContent='Number of generations since pause: '+sinceClick+' , number of generations since page loaded: '+totalCount+' .';
+}
+GO();
+setInterval("if(running){ GO(); }",150);
+    </SCRIPT>
+  </BODY>
+</HTML>

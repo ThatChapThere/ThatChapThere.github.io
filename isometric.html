@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<HTML>
+	<HEAD>
+		<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+		<LINK rel="icon" type="image/png" href="file.png"></LINK>
+		<STYLE type="text/css">
+BODY{
+	color:#000000;
+	background-color:#FFFFFF;
+}
+		</STYLE>
+		<TITLE>
+			www.com
+		</TITLE>
+	</HEAD>
+	<BODY>
+		<CANVAS width=1188 height=840 id="isom"></CANVAS>
+		<SCRIPT type="text/javascript" language="javascript">
+const Z = Math.sqrt(3)*10;
+var array1 = [];
+for(var i = 0; i < 100; i ++){
+	if(i % 2 == 0){
+			array1.push(false);
+	}else{
+			array1.push(true);
+	}
+}
+var array2 = [];
+for(var i = 0; i < 100; i ++){
+	if(i % 2 == 0){
+		array2.push(true);
+	}else{
+		array2.push(false);
+	}
+}
+var final_array = [];
+for(var i = 0; i < 200; i ++){
+	if(i % 2 == 0){
+		final_array.push(array1);
+	}else{
+		final_array.push(array2);
+	}
+}
+var cnv = document.getElementById('isom');
+var ctx = cnv.getContext('2d');
+ctx.fillStyle = '#000';
+for(var i = 0; i < 200; i++){
+	for(var j = 0; j < 100; j++){
+		ctx.beginPath();
+		if(final_array[i][j]){
+			ctx.arc(i * 10, j * Z, 2, Math.PI * 2, false);
+		}
+		ctx.fill();
+	}
+}
+		</SCRIPT>
+	</BODY>
+</HTML> 
