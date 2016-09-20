@@ -1,11 +1,12 @@
 BUTTON{
     background-color:#990000;
-    color:#77ffff
+    color:#77ffff;
 }
 body{
-    background-color:#00ff00;
-    color:#ff00ff
+    background-color:#000000;
+    color:#FFF;
+    font-family:"courier";
 }
 H1{
-    color:#ff0000
+    color:#008800;
 }
