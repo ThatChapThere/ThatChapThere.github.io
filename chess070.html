@@ -115,7 +115,7 @@ meter{
 				</TR>
 			</TBODY>
 		</TABLE>
-		<DIV class='canvasBox'>
+		<DIV class='canvasBox'><!-- Open Here -->
 		<TABLE>
 			<TR>
 				<TD>
@@ -995,7 +995,7 @@ function squareControl(x,y) {//gets how much control a player has over a square
 }
 
 function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
-	var doText=!CPU
+	var doText=!CPU;
 	if(x1 == x2 && y1 == y2){
 		return(false);
 	}//if the same square
@@ -1065,11 +1065,12 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 			}
 			inBetweenSquares=[];
 			var inBetweenChecks=[];//for control of in between squares
-			if(dx > 1){
-				for(var x=x1-1;    x>1;    x--){//queenside
+			if(dx > 1){//queenside
+				for(var x=x1-1;    x>1;    x--){
 					inBetweenSquares.push(position[y1][x]);
 					inBetweenChecks.push(squareControl(x,y1)[turn == 'W' ? 'B' : 'W' ]);
 				}
+				inBetweenSquares.push(position[y1][1]);//fixes bug for castling over queen knight, without preventing castling while g1 or g8 square attacked.
 			}
 			if(dx < -1){//kingside
 				for(var x=x1+1;    x<7;    x++){
@@ -1667,6 +1668,18 @@ function resetPositionFromSearch(){
 	}
 }
 
+function sortEvaluationsArray(colour) {//each move is only as good as your opponent's best reply
+	if(colour=='W'){
+		for(var i=0;i<evaluationsArray.length;i++){
+			evaluationsArray[i]=evaluationsArray[i][ getExtremeItem( evaluationsArray[i], false ) ];
+		}
+	}else{
+		for(var i=0;i<evaluationsArray.length;i++){
+			evaluationsArray[i]=evaluationsArray[i][ getExtremeItem( evaluationsArray[i], true ) ];
+		}
+	}
+}
+
 function endSearch(){
 	evaluationsArray=[];
 	movesArray=[];
@@ -1677,19 +1690,21 @@ function endSearch(){
 	currentSearchingDepth=1;
 	readyToMove=false;
 	prog.value=500;
+	drawBoard();
+	promotion='empty';
 }
 
 function mainLoop() {
-	if(turn == "W" && wlevel.value > 0){
-		if(startingSearch){
-			protected_position = new Position(position);
-			movesArray=getCPUmoves('W');
-			prog.value=50;
-			if(movesArray.length==0){
+	if(turn == "W" && wlevel.value > 0){//if on non human white level
+		if(startingSearch){//initial block
+			protected_position = new Position(position);//protect the actual board position
+			movesArray=getCPUmoves('W');//get the available moves
+			prog.value=50;//after this has done, show on the progress bar
+			if(movesArray.length==0){//if no available moves
 				var KingPos=getKingPos('W');
 				var KingX=KingPos.x;
 				var KingY=KingPos.y;
-				if(squareControl(KingX,KingY).B){
+				if(squareControl(KingX,KingY).B){//if in check
 					alert('White is checkmated.');
 					move_board.innerHTML+='<TR>'+'<TD>'+'# 0-1'+'</TD>'+'</TR>';
 				}else{
@@ -1701,20 +1716,20 @@ function mainLoop() {
 				drawBoard();
 				return(0);
 			}
-			if(wlevel.value==1){
+			if(wlevel.value==1){//level one (random)
 				executeFinalMoveW( movesArray[Math.floor(Math.random()*movesArray.length)] );//random move
 				endSearch();
 				drawBoard();
 				return(1);
 			}
-			if(wlevel.value==2){
+			if(wlevel.value==2){//first possible move
 				executeFinalMoveW(movesArray[0]);
 				endSearch();
 				drawBoard();
 				return(2);
 			}
-			if(wlevel.value==3){
-				executeFinalMoveW(movesArray[0]);
+			if(wlevel.value==3){//last possible move
+				executeFinalMoveW(movesArray[movesArray.length-1]);
 				endSearch();
 				drawBoard();
 				return(3);
@@ -1724,43 +1739,87 @@ function mainLoop() {
 		}
 		
 		if(isSearching){
-			if(wlevel.value==4){
-				executeFinalMoveW( movesArray[  getExtremeItem( evaluationsArray, true )  ] );//get the best move
+			if(wlevel.value==4){//level 4 (depth one)
+				executeFinalMoveW( movesArray[  getExtremeItem( evaluationsArray, true )  ] );//get the best move and add to the protected position
 				endSearch();
-				drawBoard();
-				return(3);
+				//drawBoard();
+				return(4);
 			}
 			switch(currentSearchingDepth){
 				case 2://second depth
-					currentSearchingIndex++;//move to the next move
 					if(currentSearchingIndex < movesArray.length){//if still in the available moves
 						resetPositionFromSearch();
-						executeMove(movesArray[currentSearchingIndex]);
-						evaluationsArray[currentSearchingIndex]=EvalPos();
-						if(wlevel.value==4 || true){
-							prog.value= 50 + ((450/movesArray.length)*currentSearchingIndex);
+						//console.log( positionsArray[currentSearchingIndex] );
+						position = ( new Position( positionsArray[currentSearchingIndex] ).p );
+						//drawBoard();
+						turn='B';
+						movesArray[currentSearchingIndex]=getCPUmoves('B');//get all of the opponent's possible moves
+						turn='W';
+						if(wlevel.value==5){
+							prog.value= 50 + ((200/movesArray.length)*currentSearchingIndex);
 						}
-					}else{
+						//drawBoard();
+						currentSearchingIndex++;
+					}else{//when all level two moves are searched
 						resetPositionFromSearch();
-						isSearching=true;
-						currentSearchingDepth++;
-						currentSearchingIndex=0;
+						isSearching=false;//get back to evaluation
+						currentSearchingIndex=[0,0];//now two indices
 					}
+					break;
+				case 3://even level 5 stops here
+					sortEvaluationsArray('W');
+					movesArray=getCPUmoves('W');
+					executeFinalMoveW( movesArray[ getExtremeItem( evaluationsArray, true )  ] );//get the best move and add to the protected position
+					endSearch();
+					drawBoard();
+					return(5);
 					break;
 			}
 		}else{//evaluating
 			switch(currentSearchingDepth){
 				case 1://first depth
-					currentSearchingIndex++;//move to the next move
 					if(currentSearchingIndex < movesArray.length){//if still in the available moves
-						resetPositionFromSearch();
-						executeMove(movesArray[currentSearchingIndex]);
-						evaluationsArray[currentSearchingIndex]=EvalPos();
-						positionsArray[currentSearchingIndex];
+						resetPositionFromSearch();//go back to actual position
+						executeMove(movesArray[currentSearchingIndex]);//try
+						evaluationsArray[currentSearchingIndex]=EvalPos();//and then evaluate move
+						//drawBoard();
+						positionsArray[currentSearchingIndex]=(new Position(position).p);//add the position to the positions array
+						//console.log(new Position(position).p);
+						if(wlevel.value==4){
+							prog.value= 50 + ((450/movesArray.length)*currentSearchingIndex);
+						}
+						currentSearchingIndex++;//move to the next move
+					}else{//when evaluation has finsished
+						resetPositionFromSearch();//go back to actual position
+						isSearching=true;//go back to searching loop to terminate search or continue to next ply
+						currentSearchingDepth++;//add to depth
+						currentSearchingIndex=0;//start from first possible move
+					}
+					break;
+				case 2://second depth
+					if(currentSearchingIndex[0] < movesArray.length){//if still in the current own move
+						if(currentSearchingIndex[1] < movesArray[ currentSearchingIndex[0] ].length){//if still in current opponent's move
+							resetPositionFromSearch();//go back to actual position
+							position = ( new Position( positionsArray[ currentSearchingIndex[0] ] ).p );
+							executeMove(movesArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ] );//try
+							evaluationsArray[ currentSearchingIndex[0] ]=[];
+							evaluationsArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ]=EvalPos();//and then evaluate move
+							//positionsArray[ currentSearchingIndex[0] ]=[];
+							//positionsArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ]=(new Position(position).p);//add the position to the positions array
+							//drawBoard();
+							if(wlevel.value==5){
+								prog.value = 250 + ((250/movesArray.length)*currentSearchingIndex[0]);
+							}
+							currentSearchingIndex[1]++;//move to the next opponent's move in the current own move.
+						}else{
+							currentSearchingIndex[0]++;//move to next possible own move
+							currentSearchingIndex[1]=0;//move to first opponent's move
+						}
 					}else{
-						resetPositionFromSearch();
-						isSearching=true;
-						currentSearchingDepth++;
+						resetPositionFromSearch();//go back to actual position
+						isSearching=true;//go back to searching loop to terminate search or continue to next ply
+						currentSearchingDepth++;//add to depth
+						currentSearchingIndex=0;//start from first possible move
 					}
 					break;
 			}
@@ -1768,7 +1827,134 @@ function mainLoop() {
 	}
 	
 	if(turn == "B" && blevel.value > 0){
-		console.log('Black to move');
+		if(startingSearch){//initial block
+			protected_position = new Position(position);//protect the actual board position
+			movesArray=getCPUmoves('B');//get the available moves
+			prog.value=50;//after this has done, show on the progress bar
+			if(movesArray.length==0){//if no available moves
+				var KingPos=getKingPos('B');
+				var KingX=KingPos.x;
+				var KingY=KingPos.y;
+				if(squareControl(KingX,KingY).W){//if in check
+					alert('Black is checkmated.');
+					move_board.innerHTML+='<TR>'+'<TD>'+'# 0-1'+'</TD>'+'</TR>';
+				}else{
+					alert('Draw by stalemate.');
+					move_board.innerHTML+='<TR>'+'<TD>'+'1/2-1/2'+'</TD>'+'</TR>';
+				}
+				turn=null;
+				endSearch();
+				drawBoard();
+				return(0);
+			}
+			if(blevel.value==1){//level one (random)
+				executeFinalMoveB( movesArray[Math.floor(Math.random()*movesArray.length)] );//random move
+				endSearch();
+				drawBoard();
+				return(1);
+			}
+			if(blevel.value==2){//first possible move
+				executeFinalMoveB(movesArray[movesArray.length-1]);
+				endSearch();
+				drawBoard();
+				return(2);
+			}
+			if(blevel.value==3){//last possible move
+				executeFinalMoveB(movesArray[0]);
+				endSearch();
+				drawBoard();
+				return(3);
+			}
+			isSearching=false;
+			startingSearch=false;
+		}
+		
+		if(isSearching){
+			if(blevel.value==4){//level 4 (depth one)
+				executeFinalMoveB( movesArray[  getExtremeItem( evaluationsArray, false )  ] );//get the best move and add to the protected position
+				endSearch();
+				//drawBoard();
+				return(4);
+			}
+			switch(currentSearchingDepth){
+				case 2://second depth
+					if(currentSearchingIndex < movesArray.length){//if still in the available moves
+						resetPositionFromSearch();
+						//console.log( positionsArray[currentSearchingIndex] );
+						position = ( new Position( positionsArray[currentSearchingIndex] ).p );
+						//drawBoard();
+						turn='W';
+						movesArray[currentSearchingIndex]=getCPUmoves('W');//get all of the opponent's possible moves
+						turn='B';
+						if(blevel.value==5){
+							prog.value= 50 + ((200/movesArray.length)*currentSearchingIndex);
+						}
+						//drawBoard();
+						currentSearchingIndex++;
+					}else{//when all level two moves are searched
+						resetPositionFromSearch();
+						isSearching=false;//get back to evaluation
+						currentSearchingIndex=[0,0];//now two indices
+					}
+					break;
+				case 3://even level 5 stops here
+					sortEvaluationsArray('B');
+					movesArray=getCPUmoves('B');
+					executeFinalMoveB( movesArray[ getExtremeItem( evaluationsArray, false )  ] );//get the best move and add to the protected position
+					endSearch();
+					drawBoard();
+					return(5);
+					break;
+			}
+		}else{//evaluating
+			switch(currentSearchingDepth){
+				case 1://first depth
+					if(currentSearchingIndex < movesArray.length){//if still in the available moves
+						resetPositionFromSearch();//go back to actual position
+						executeMove(movesArray[currentSearchingIndex]);//try
+						evaluationsArray[currentSearchingIndex]=EvalPos();//and then evaluate move
+						//drawBoard();
+						positionsArray[currentSearchingIndex]=(new Position(position).p);//add the position to the positions array
+						//console.log(new Position(position).p);
+						if(blevel.value==4){
+							prog.value= 50 + ((450/movesArray.length)*currentSearchingIndex);
+						}
+						currentSearchingIndex++;//move to the next move
+					}else{//when evaluation has finsished
+						resetPositionFromSearch();//go back to actual position
+						isSearching=true;//go back to searching loop to terminate search or continue to next ply
+						currentSearchingDepth++;//add to depth
+						currentSearchingIndex=0;//start from first possible move
+					}
+					break;
+				case 2://second depth
+					if(currentSearchingIndex[0] < movesArray.length){//if still in the current own move
+						if(currentSearchingIndex[1] < movesArray[ currentSearchingIndex[0] ].length){//if still in current opponent's move
+							resetPositionFromSearch();//go back to actual position
+							position = ( new Position( positionsArray[ currentSearchingIndex[0] ] ).p );
+							executeMove(movesArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ] );//try
+							evaluationsArray[ currentSearchingIndex[0] ]=[];
+							evaluationsArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ]=EvalPos();//and then evaluate move
+							//positionsArray[ currentSearchingIndex[0] ]=[];
+							//positionsArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ]=(new Position(position).p);//add the position to the positions array
+							//drawBoard();
+							if(blevel.value==5){
+								prog.value = 250 + ((250/movesArray.length)*currentSearchingIndex[0]);
+							}
+							currentSearchingIndex[1]++;//move to the next opponent's move in the current own move.
+						}else{
+							currentSearchingIndex[0]++;//move to next possible own move
+							currentSearchingIndex[1]=0;//move to first opponent's move
+						}
+					}else{
+						resetPositionFromSearch();//go back to actual position
+						isSearching=true;//go back to searching loop to terminate search or continue to next ply
+						currentSearchingDepth++;//add to depth
+						currentSearchingIndex=0;//start from first possible move
+					}
+					break;
+			}
+		}
 	}
 }
 
@@ -1782,7 +1968,7 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 		if(level==0){
 			pieceInMove=position[startY][startX];//get the pieces involved
 			pieceAtEnd=position[Y][X];//**********************************
-			if(pieceInMove !== 'empty' && isMoveLegal(startX,startY,X,Y)){
+			if(pieceInMove !== 'empty' && isMoveLegal(startX,startY,X,Y,false)){
 				stan1=standardNotation(startX,startY,X,Y);
 				position[startY][startX]="empty";
 				position[Y][X]=pieceInMove;
@@ -1859,11 +2045,23 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 					if(X==7 && Y==0){
 						rooksUnmoved[1]=false;
 					}//if one of your opponent's rooks is taken, it can no loger be used to castle (DUH!)
+					if(Y==0 && pieceInMove=='WP'){//if promotion
+						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+							var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
+						}
+						if(promotion=='K'){
+							promotion='N';
+						}
+						pieceInMove='W'+promotion;
+						position[Y][X]=pieceInMove;
+						drawBoard();
+					}
 					//console.log(rooksUnmoved);
 					plyCount++;
 					testThree();
 				}
 			}
+		}
 			{//useless
 				/*pen.fillStyle = '#640';
 				pen.fillRect(0,0,800,800);
@@ -1882,9 +2080,10 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 						//pen.fillText(squareControl(j,i).W,(j*100)+10,(i*100)+10);
 						//alert(squareControl(j,i));
 					}
-				}*/
+				}
 			}
 		}
+	*/}
 	}
 	
 	{//useless
@@ -1917,7 +2116,7 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 		if(level==0){
 			pieceInMove=position[startY][startX];//get the pieces involved
 			pieceAtEnd=position[Y][X];//**********************************
-			if(pieceInMove !== 'empty' && isMoveLegal(startX,startY,X,Y)){
+			if(pieceInMove !== 'empty' && isMoveLegal(startX,startY,X,Y,false)){
 				var stan2=standardNotation(startX,startY,X,Y);
 				position[startY][startX]="empty";
 				position[Y][X]=pieceInMove;
@@ -1998,7 +2197,18 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 						this.onmouseup();
 					}
 					//if one of your opponent's rooks is taken, it can no longer be used to castle (DUH!)
-					//console.log(rooksUnmoved);
+					//console.log(rooksUnmoved);if(Y==0 && pieceInMove=='WP'){//if promotion
+					if(Y==0 && pieceInMove=='WP'){//if promotion
+						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+							var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
+						}
+						if(promotion=='K'){
+							promotion='N';
+						}
+						pieceInMove='B'+promotion;
+						position[Y][X]=pieceInMove;
+						drawBoard();
+					}
 					move_board.innerHTML+='<TR>'+'<TD>'+moveCount+'. </TD>'+'<TD>'+stan1+'</TD>'+'<TD>'+stan2+'</TD>'+'</TR>';
 					moveCount++;
 					plyCount++;
