@@ -1620,7 +1620,7 @@ function getExtremeItem(array, isHighest){//or false = lowest
 		for(var i=0;i <array.length;i++){
 			if(array[i] > maxItem){
 				maxItem=array[i];
-				maxIndex=i
+				maxIndex=i;
 			}
 		}
 		return(maxIndex);
@@ -1672,10 +1672,12 @@ function sortEvaluationsArray(colour) {//each move is only as good as your oppon
 	if(colour=='W'){
 		for(var i=0;i<evaluationsArray.length;i++){
 			evaluationsArray[i]=evaluationsArray[i][ getExtremeItem( evaluationsArray[i], false ) ];
+			//console.log(evaluationsArray[i]);
 		}
 	}else{
 		for(var i=0;i<evaluationsArray.length;i++){
 			evaluationsArray[i]=evaluationsArray[i][ getExtremeItem( evaluationsArray[i], true ) ];
+			//console.log(evaluationsArray[i]);
 		}
 	}
 }
@@ -1797,12 +1799,12 @@ function mainLoop() {
 					}
 					break;
 				case 2://second depth
+					//evaluationsArray[ currentSearchingIndex[0] ]=[];
 					if(currentSearchingIndex[0] < movesArray.length){//if still in the current own move
 						if(currentSearchingIndex[1] < movesArray[ currentSearchingIndex[0] ].length){//if still in current opponent's move
 							resetPositionFromSearch();//go back to actual position
 							position = ( new Position( positionsArray[ currentSearchingIndex[0] ] ).p );
 							executeMove(movesArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ] );//try
-							evaluationsArray[ currentSearchingIndex[0] ]=[];
 							evaluationsArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ]=EvalPos();//and then evaluate move
 							//positionsArray[ currentSearchingIndex[0] ]=[];
 							//positionsArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ]=(new Position(position).p);//add the position to the positions array
@@ -1814,6 +1816,7 @@ function mainLoop() {
 						}else{
 							currentSearchingIndex[0]++;//move to next possible own move
 							currentSearchingIndex[1]=0;//move to first opponent's move
+							evaluationsArray[ currentSearchingIndex[0] ]=[];//to prevent undefined item error.
 						}
 					}else{
 						resetPositionFromSearch();//go back to actual position
@@ -1928,13 +1931,15 @@ function mainLoop() {
 					}
 					break;
 				case 2://second depth
+					//evaluationsArray[ currentSearchingIndex[0] ]=[];
 					if(currentSearchingIndex[0] < movesArray.length){//if still in the current own move
 						if(currentSearchingIndex[1] < movesArray[ currentSearchingIndex[0] ].length){//if still in current opponent's move
 							resetPositionFromSearch();//go back to actual position
 							position = ( new Position( positionsArray[ currentSearchingIndex[0] ] ).p );
 							executeMove(movesArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ] );//try
-							evaluationsArray[ currentSearchingIndex[0] ]=[];
 							evaluationsArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ]=EvalPos();//and then evaluate move
+							//console.log(EvalPos());
+							//console.log(evaluationsArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ]);
 							//positionsArray[ currentSearchingIndex[0] ]=[];
 							//positionsArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ]=(new Position(position).p);//add the position to the positions array
 							//drawBoard();
@@ -1945,6 +1950,7 @@ function mainLoop() {
 						}else{
 							currentSearchingIndex[0]++;//move to next possible own move
 							currentSearchingIndex[1]=0;//move to first opponent's move
+							evaluationsArray[ currentSearchingIndex[0] ]=[];
 						}
 					}else{
 						resetPositionFromSearch();//go back to actual position
