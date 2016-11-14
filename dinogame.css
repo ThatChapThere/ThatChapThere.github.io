@@ -1,12 +1,17 @@
 BUTTON{
-    background-color:#990000;
-    color:#77ffff;
+	background-color:#990000;
+	color:#77ffff;
 }
 body{
-    background-color:#000000;
-    color:#FFF;
-    font-family:"courier";
+	background-color:#000000;
+	color:#FFF;
+	font-family:"courier";
 }
 H1{
-    color:#008800;
+	color:#008800;
+	text-align:center;
+}
+H2{
+	color:#FFFF00;
+	text-align:left;
 }
