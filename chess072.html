@@ -55,6 +55,10 @@ div.scrollable{
 	height:795px;
 	overflow: scroll;
 }
+a:visited{
+	color:blue;
+}
+
 		</STYLE>
 	</head>
 	<body style="background-color: #990000; color: #77ffff">
@@ -89,13 +93,13 @@ div.scrollable{
 							Human
 						</OPTION>
 						<OPTION value='1'>
-							Level 1 (1)
+							Level 1 (100)
 						</OPTION>
 						<OPTION value='2'>
-							Level 2 (60)
+							Level 2 (100)
 						</OPTION>
 						<OPTION value='3'>
-							Level 3 (185)
+							Level 3 (100)
 						</OPTION>
 						<OPTION value='4'>
 							Level 4 (267)
@@ -148,6 +152,7 @@ div.scrollable{
 		</TABLE>
 		<SCRIPT src="book.js" ></SCRIPT><!-- The opening book. -->
 		<SCRIPT><!-- Main Script -->
+			
 /*
 Ampere's ideas were very current, wheras Volta's were potentially different;
 Newton was forcefull, but Watt had power;
@@ -163,7 +168,7 @@ and Faraday's capacity induced Henry to charge Coulumb with resisting Ohm for a 
 	var complexGame=["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"];//for undo / redo
 	var center=[[3,4],[4,3],[3,3],[4,4]];// the four central squares
 	var moveCount=1;//the move
-	var plyCount=0;
+	var plyCount=0;//not really sure what this is for
 	var files='abcdefgh';//files for notation
 	var _50moveCounter=0;//counter for 50-move rule
 	var knightMoves=[[1,2],[2,1],[-1,-2],[-2,-1],[-1,2],[-2,1],[1,-2],[2,-1]];//possible knight moves for board control
@@ -230,7 +235,7 @@ function setPosition(pos){
 {//context setup
 	pen.fillStyle = '#640';//
 	pen.fillRect(0,0,800,800);//
-	pen.fillStyle='#da5';//******************************************************************************************
+	pen.fillStyle='#da5';//
 }
 
 {//yet more variables
@@ -239,7 +244,7 @@ function setPosition(pos){
 	var pieceInMove='empty';//the piece to be moved, changed when promoting
 	var rooksUnmoved=[true,true,true,true];//for castling.[BQR,BKR,WQR,WKR]. If the king moves, both rooks are set to false.
 	var canEP=false;//can capture en passant
-	var canEPnext=false;
+	var canEPnext=false;//can capture en passant on the next move
 	var EP=false;//other neccisary variables for en passant
 	var EPrank=0;//for en passant
 	var evaluationsArray=[];//an array that becomes a nested array after depth
@@ -249,12 +254,12 @@ function setPosition(pos){
 	var isSearching=true;//is searching for moves. only applies after depth 2. if false, it is evaluating rather than searching
 	var startingSearch=true;//should the initial block be executed? this happens once per move
 	var currentSearchingDepth=1;//current depth of search
-	var readyToMove=false;//is ready to move (currently the endSearch function is used instead
+	var readyToMove=true;//is ready to move so as not to move while human user is playing an illegal move into check
 }
 
 {//********************************code for the rendering of the pieces*******************************************
 	var pieces={//IMG html elements to paste ont canvas
-		BP:document.createElement("img"),
+		BP:document.createElement("img"), //black pawn e.t.c
 		BR:document.createElement("img"),
 		BN:document.createElement("img"),
 		BB:document.createElement("img"),
@@ -267,10 +272,10 @@ function setPosition(pos){
 		WQ:document.createElement("img"),
 		WK:document.createElement("img"),
 		BOARD:document.createElement("img"),
-		empty:document.createElement("canvas")
+		empty:document.createElement("canvas") //just an empty
 	};
 	
-	pieces.BP.src="chesspieces/BP.png";//the URLS. the "file:" statement appears to be dated and fails on github
+	pieces.BP.src="chesspieces/BP.png"; //the URLS. the "file:" statement is for offline files and fails on github
 	pieces.BR.src="chesspieces/BR.png";
 	pieces.BN.src="chesspieces/BN.png";
 	pieces.BB.src="chesspieces/BB.png";
@@ -561,8 +566,8 @@ function FENtoPos(FEN){//does the opposite of the above function. rnbqkbnr/ppppp
 	drawBoard();
 }
 
-{//***************  sets up the neccisary values for rendering the pieces
-	var arrayOne=[];
+{//***************  sets up the neccissary values for rendering the pieces
+	var arrayOne=[];//first array, to be added to each array item
 	
 	for(var i = 0; i < 8;i++){
 		arrayOne.push(null);
@@ -592,7 +597,7 @@ function FENtoPos(FEN){//does the opposite of the above function. rnbqkbnr/ppppp
 //***********************************************************
 }
 
-{
+{//mouse booleans for the user to move pieces
 	var X=0;//mouse positions as board coordinates for moving pieces
 	var Y=0;
 	var startX=0;
@@ -644,7 +649,7 @@ function newgame() {//reset the position
 	promotion='empty';//variable for pawn promotion
 	turn='W';//who's turn it is
 	notTurn='B';//who's turn it isn't
-	pieceInMove='empty';//the pice being moved
+	pieceInMove='empty';//the piece being moved
 	rooksUnmoved=[true,true,true,true];//for castling.[BQR,BKR,WQR,WKR]. If the king moves, both rooks are set to false.
 	canEP=false;//can capture en passant
 	canEPnext=false;//other en passant for complex handling
@@ -664,13 +669,13 @@ function newgame() {//reset the position
 	document.getElementById('move_board').innerHTML='';//reset
 	drawBoard();
 	endSearch();//if the user presses new game while searching, this stops weird things from happening
-	prog.value=0;
+	prog.value=0;//restart progress METER
 }
 
 function EvalPos() {//for evaluating positions
 	var evaluation=0;//set to even start
 	var pawncount=[0,0,0,0,0,0,0,0];//for testing doubled pawns
-	var pawncountB=[0,0,0,0,0,0,0,0];
+	var pawncountB=[0,0,0,0,0,0,0,0];//same thing for black
 	for(var i = 0; i < 8; i++){
 		for(var j = 0; j < 8; j++){//looping through the board
 			var pieceToMove=position[j][i];//get the piece on a square
@@ -678,7 +683,7 @@ function EvalPos() {//for evaluating positions
 				case 'BP':
 					evaluation--;
 					if(pawncountB[i] > 1){
-						evaluation+=0.9;//***************************************UP TO HERE IN FORMATTING*****************************************************
+						evaluation+=0.9;
 					}//dislikes doubled pawns
 					pawncountB[i]++;
 					break;
@@ -754,7 +759,7 @@ function getKingPos(colour) {//gets the king's position for a specified colour
 }
 
 function squareControl(x,y) {//gets how much control a player has over a square
-	var x2=x;
+	var x2=x;//variables for finding pieces that control the squares
 	var y2=y;
 
 	var control={//object for returning both player's control
@@ -763,189 +768,189 @@ function squareControl(x,y) {//gets how much control a player has over a square
 	}
 
 	{//this bit is for horizontal/vertical moves.
-	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2<7){// loop for increasing x
-		x2++;
-	}
-
-	if(!(x2==x && y2==y)){
-		switch(position[y2][x2]){
-			case 'WR':
-			case 'WQ':
-				control.W++;
-				break;
-			case 'BR':
-			case 'BQ':
-				control.B++;//handle pieces. If a queen or rook, they control the square
+		while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2<7){// loop for increasing x
+			x2++;
 		}
-	}
-
-	var x2=x;
-	var y2=y;
-
-	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2>0){//loop for decreasing x
-		x2--;
-	}
-
-	if(!(x2==x && y2==y)){
-		switch(position[y2][x2]){
-			case 'WR':
-			case 'WQ':
-				control.W++;
-				break;
-			case 'BR':
-			case 'BQ':
-				control.B++;//handle pieces. If a queen or rook, they control the square
+	
+		if(!(x2==x && y2==y)){
+			switch(position[y2][x2]){
+				case 'WR':
+				case 'WQ':
+					control.W++;
+					break;
+				case 'BR':
+				case 'BQ':
+					control.B++;//handle pieces. If a queen or rook, they control the square
+			}
 		}
-	}
-
-	var x2=x;
-	var y2=y;
-
-	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && y2>0){//loop for decreasing y
-		y2--;
-	}
-
-	if(!(x2==x && y2==y)){
-		switch(position[y2][x2]){
-			case 'WR':
-			case 'WQ':
-				control.W++;
-				break;
-			case 'BR':
-			case 'BQ':
-				control.B++;//handle pieces. If a queen or rook, they control the square
+	
+		var x2=x;
+		var y2=y;
+	
+		while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2>0){//loop for decreasing x
+			x2--;
 		}
-	}
-
-	var x2=x;
-	var y2=y;
-
-	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && y2<7){//loop for increasing y
-		y2++;
-	}
-
-	if(!(x2==x && y2==y)){
-		switch(position[y2][x2]){
-			case 'WR':
-			case 'WQ':
-				control.W++;
-				break;
-			case 'BR':
-			case 'BQ':
-				control.B++;//handle pieces. If a queen or rook, they control the square
+	
+		if(!(x2==x && y2==y)){
+			switch(position[y2][x2]){
+				case 'WR':
+				case 'WQ':
+					control.W++;
+					break;
+				case 'BR':
+				case 'BQ':
+					control.B++;//handle pieces. If a queen or rook, they control the square
+			}
 		}
-	}
+	
+		var x2=x;
+		var y2=y;
+	
+		while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && y2>0){//loop for decreasing y
+			y2--;
+		}
+	
+		if(!(x2==x && y2==y)){
+			switch(position[y2][x2]){
+				case 'WR':
+				case 'WQ':
+					control.W++;
+					break;
+				case 'BR':
+				case 'BQ':
+					control.B++;//handle pieces. If a queen or rook, they control the square
+			}
+		}
+	
+		var x2=x;
+		var y2=y;
+	
+		while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && y2<7){//loop for increasing y
+			y2++;
+		}
+	
+		if(!(x2==x && y2==y)){
+			switch(position[y2][x2]){
+				case 'WR':
+				case 'WQ':
+					control.W++;
+					break;
+				case 'BR':
+				case 'BQ':
+					control.B++;//handle pieces. If a queen or rook, they control the square
+			}
+		}
 
 	}
 
 	{//then diagonal.
-	var x2=x;
-	var y2=y;
-	//similar, but with increment for x AND y, and handler for bishop and queen
-	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2<7 && y2<7){
-		y2++;
-		x2++;
-	}
-
-	if(!(x2==x && y2==y)){
-		switch(position[y2][x2]){
-			case 'WB':
-			case 'WQ':
-				control.W++;
-				break;
-			case 'BB':
-			case 'BQ':
-				control.B++;
+		var x2=x;
+		var y2=y;
+		//similar, but with increment for x AND y, and handler for bishop and queen
+		while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2<7 && y2<7){//y+, x+
+			y2++;
+			x2++;
 		}
-	}
-
-	var x2=x;
-	var y2=y;
-
-	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2<7 && y2>0){
-		y2--;
-		x2++;
-	}
-
-	if(!(x2==x && y2==y)){
-		switch(position[y2][x2]){
-			case 'WB':
-			case 'WQ':
-				control.W++;
-				break;
-			case 'BB':
-			case 'BQ':
-				control.B++;
+	
+		if(!(x2==x && y2==y)){
+			switch(position[y2][x2]){
+				case 'WB':
+				case 'WQ':
+					control.W++;
+					break;
+				case 'BB':
+				case 'BQ':
+					control.B++;
+			}
 		}
-	}
-
-	var x2=x;
-	var y2=y;
-
-	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2>0 && y2<7){
-		y2++;
-		x2--;
-	}
-
-	if(!(x2==x && y2==y)){
-		switch(position[y2][x2]){
-			case 'WB':
-			case 'WQ':
-				control.W++;
-				break;
-			case 'BB':
-			case 'BQ':
-				control.B++;
+	
+		var x2=x;
+		var y2=y;
+	
+		while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2<7 && y2>0){//y-, x+
+			y2--;
+			x2++;
 		}
-	}
-
-	var x2=x;
-	var y2=y;
-
-	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2>0 && y2>0){
-		y2--;
-		x2--;
-	}
-
-	if(!(x2==x && y2==y)){
-		switch(position[y2][x2]){
-			case 'WB':
-			case 'WQ':
-				control.W++;
-				break;
-			case 'BB':
-			case 'BQ':
-				control.B++;
+	
+		if(!(x2==x && y2==y)){
+			switch(position[y2][x2]){
+				case 'WB':
+				case 'WQ':
+					control.W++;
+					break;
+				case 'BB':
+				case 'BQ':
+					control.B++;
+			}
 		}
-	}
+	
+		var x2=x;
+		var y2=y;
+	
+		while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2>0 && y2<7){//y+, x-
+			y2++;
+			x2--;
+		}
+	
+		if(!(x2==x && y2==y)){
+			switch(position[y2][x2]){
+				case 'WB':
+				case 'WQ':
+					control.W++;
+					break;
+				case 'BB':
+				case 'BQ':
+					control.B++;
+			}
+		}
+	
+		var x2=x;
+		var y2=y;
+	
+		while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2>0 && y2>0){//y-, x-
+			y2--;
+			x2--;
+		}
+	
+		if(!(x2==x && y2==y)){
+			switch(position[y2][x2]){
+				case 'WB':
+				case 'WQ':
+					control.W++;
+					break;
+				case 'BB':
+				case 'BQ':
+					control.B++;
+			}
+		}
 
 	}
 
 	{//for pawns
 		//all possible pawn controls
 		x2=x-1;
-		y2=y-1;
+		y2=y-1;//black pawn capture
 		if(x2>-1 && y2>-1){
 			if(position[y2][x2]=='BP'){
 				control.B++;
 			}
 		}
 		x2=x+1;
-		y2=y-1;
+		y2=y-1;//black pawn capture
 		if(x2<8 && y2>-1){
 			if(position[y2][x2]=='BP'){
 				control.B++;
 			}
 		}
 		x2=x-1;
-		y2=y+1;
+		y2=y+1;//white pawn capture
 		if(x2>-1 && y2<8){
 			if(position[y2][x2]=='WP'){
 				control.W++;
 			}
 		}
 		x2=x+1;
-		y2=y+1;
+		y2=y+1;//white pawn capture
 		if(x2<8 && y2<8){
 			if(position[y2][x2]=='WP'){
 				control.W++;
@@ -1007,38 +1012,46 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 	var inBetweenSquares=[];
 
 	{//find in between squares
+		
 		if(dx < -1 && dy==0){//straight
 			for(var x=x1+1;x<x2;x++){
 				inBetweenSquares.push(position[y1][x]);
 			}
 		}
+		
 		if(dx > 1 && dy==0){
 			for(var x=x1-1;x>x2;x--){
 				inBetweenSquares.push(position[y1][x]);
 			}
 		}
+		
 		if(dy < -1 && dx==0){
 			for(var y=y1+1;y<y2;y++){
 				inBetweenSquares.push(position[y][x1]);
 			}
 		}
+		
 		if(dy > 1 && dx==0){//*********
 			for(var y=y1-1;y>y2;y--){
 				inBetweenSquares.push(position[y][x1]);
 			}
 		}
+		
 		if(dy == dx){//diagonal
+		
 			if(dy > 1){
 				for(var y=y1-1,x=x1-1;    y>y2;    x--,y--){
 					inBetweenSquares.push(position[y][x]);
 				}
 			}
+		
 			if(dy < -1){
 				for(var y=y1+1,x=x1+1;    y<y2;    x++,y++){
 					inBetweenSquares.push(position[y][x]);
 				}
 			}
 		}
+		
 		if(dy == -dx){//*******
 			if(dy > 1){
 				for(var y=y1-1,x=x1+1;    y>y2;    x++,y--){
@@ -1051,6 +1064,7 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 				}
 			}
 		}
+		
 		if(pieceToMove[1]=='K' && adx==2){//castling
 			var KingX=getKingPos(colour).x;
 			var KingY=getKingPos(colour).y;
@@ -1060,21 +1074,25 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 				}
 				return(false);//can't castle out of check
 			}
+		
 			inBetweenSquares=[];
 			var inBetweenChecks=[];//for control of in between squares
+		
 			if(dx > 1){//queenside
-				for(var x=x1-1;    x>1;    x--){
+				for(var x=x1-1;    x>1;    x--){//from queen to queen bishop (so that if the a or b files are attacked, castling is still possible
 					inBetweenSquares.push(position[y1][x]);
 					inBetweenChecks.push(squareControl(x,y1)[turn == 'W' ? 'B' : 'W' ]);
 				}
 				inBetweenSquares.push(position[y1][1]);//fixes bug for castling over queen knight, without preventing castling while g1 or g8 square attacked.
 			}
+		
 			if(dx < -1){//kingside
-				for(var x=x1+1;    x<7;    x++){
+				for(var x=x1+1;    x<7;    x++){//bishop and knight squares
 					inBetweenSquares.push(position[y1][x]);
 					inBetweenChecks.push(squareControl(x,y1)[turn == 'W' ? 'B' : 'W' ]);
 				}
 			}
+		
 			for(var i in inBetweenChecks){
 				if(inBetweenChecks[i]){
 					if(doText){
@@ -1084,8 +1102,8 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 				}
 			}
 		}
-		//console.log(inBetweenSquares);
-	}//Do not delete this curly bracket.
+		//~ console.log(inBetweenSquares);
+	}
 	
 	for(var i in inBetweenSquares){
 		if(inBetweenSquares[i] !== 'empty'){//has a piece there
@@ -1095,9 +1113,10 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 			return(false);
 		}
 	}
+	
 	if(colour !== turn){
 		if(doText){
-			alert('It\'s not your move.');
+			alert('Those are the wrong pieces, or It\'s not your turn.');
 		}
 		return(false);
 	}
@@ -1108,6 +1127,7 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 		return(false);
 	}
 	switch(pieceToMove){//the monster
+	
 		case 'BP':
 			if((dx == 0) && dy==-1){//same file, 1 rank away
 				if(endColour != 'e'){//square not empty
@@ -1157,6 +1177,7 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 				return(true);//en passant
 			}
 			break;
+	
 		case 'BR':
 			if((dx==0) || (dy==0)){//same file or rank
 				if(x==0 && y==0){
@@ -1309,10 +1330,10 @@ function getCPUmoves(colour){//get all legal CPU moves
 			}else{
 				for(var k=0;k<8;k++){
 					for(var l=0;l<8;l++){
-						if(position[l][k][0]==turn || position[l][k][1]=='K'){
+						if(position[l][k][0]==turn){
 							//break;console.log();//speeds up the search
 						}else{
-							if(isMoveLegal(i,j,k,l,true) && (i!=k || j!=l)){
+							if(isMoveLegal(i,j,k,l,true) && (i!=k || j!=l)){//if the move is legal
 								pieceInMove=position[j][i];
 								pieceAtEnd=position[l][k];
 								//isMoveLegalCPU(i,j,k,l);//in case of pawn promotion, this will make pieceInMove=queen.
@@ -1356,42 +1377,52 @@ function getCPUmoves(colour){//get all legal CPU moves
 function standardNotation(x1,y1,x2,y2){//get a move in notation for
 	var pieceInMove=position[y1][x1];
 	var pieceAtEnd=position[y2][x2];
-	var stan=pieceInMove[1];//first charachter of piece
-	stan+=files[x1] + (8-y1);//rank and file
+	var stan=pieceInMove[1];//first character of piece
+	if(stan=='P'){
+		stan='';
+		if(x1!=x2){
+			stan=files[x1];//letter of file for pawns that are capturing
+		}
+	}
+	
+	//~ stan+=files[x1] + (8-y1);//rank and file
+	
 	if(pieceAtEnd != 'empty'){
 		stan+='x';//it's a capture
 	}
+	
 	stan+=files[x2] + (8-y2);//rank and file
 	return(stan);
 }
 
 function executeMove(move) {//do a specified move(with object{x1,x2,y1,y2} )
 	pieceInMove=position[move.y1][move.x1];
-	pieceAtEnd=position[move.y2][move.x2];
-	if(move.y2==7 && pieceInMove=='BP'){
+	pieceAtEnd=position[move.y2][move.x2];//the pieces involved with the move
+	if(move.y2==7 && pieceInMove=='BP'){//promotion
 		pieceInMove='BQ';
 	}
-	if(move.y2==0 && pieceInMove=='WP'){
+	if(move.y2==0 && pieceInMove=='WP'){//promotion
 		pieceInMove='WQ';
 	}
-	position[move.y1][move.x1]="empty";
+	position[move.y1][move.x1]="empty";//where the piece came from
 	position[move.y2][move.x2]=pieceInMove;
 	if(pieceAtEnd != 'empty' || pieceInMove=='WP' || pieceInMove=='BP'){
 		_50moveCounter=0;
 	}
 }
 
-function executeFinalMoveW(moveToDo) {
+function executeFinalMoveW(moveToDo) {//executes a move so that it actuall gets put onto the board
 	if(moveToDo.y2 == 0 && pieceInMove == 'WP'){
-		pieceInMove='WQ';
+		pieceInMove='WQ';//promottion
 	}
-	stan1=standardNotation(moveToDo.x1,moveToDo.y1,moveToDo.x2,moveToDo.y2);
+	stan1=standardNotation(moveToDo.x1,moveToDo.y1,moveToDo.x2,moveToDo.y2);//for the notation thing
 	startX=moveToDo.x1;
 	startY=moveToDo.y1;
 	X=moveToDo.x2;
 	Y=moveToDo.y2;
 	pieceInMove=position[startY][startX];
 	pieceAtEnd=position[Y][X];
+	
 	if(pieceInMove=='WK' && X-startX == 2){
 		position[7][7]='empty';
 		position[7][5]='WR';
@@ -1400,16 +1431,16 @@ function executeFinalMoveW(moveToDo) {
 		position[7][0]='empty';
 		position[7][3]='WR';
 		stan1='O-O-O';
-	}
+	}//castling
 	if(pieceInMove=='WK'){
-		rooksUnmoved[2]=rooksUnmoved[3]=false;
+		rooksUnmoved[2]=rooksUnmoved[3]=false;//can no longer castle
 	}
 	if(pieceInMove=='WR'){
 		if(startX==0 && startY==7){
-			rooksUnmoved[2]=false;
+			rooksUnmoved[2]=false;//can no longer castle
 		}
 		if(startX==7 && startY==7){
-			rooksUnmoved[3]=false;
+			rooksUnmoved[3]=false;//can no longer castle
 		}
 	}
 	if(pieceInMove=='WP'){
@@ -1519,97 +1550,6 @@ function testThree() {
 	}
 }
 
-function testMove(move,depth) {//how good does a move seem?
-	var ev;
-	var promo=false;
-	pieceInMove=position[move.y1][move.x1];//the pieces involved
-	pieceAtEnd=position[move.y2][move.x2];//********************
-	if(pieceAtEnd[1]=='K'){
-		alert('ERROR!');
-	}
-	if(move.y2==7 && pieceInMove=='BP'){//a promotion
-		pieceInMove='BQ';//promote to queen
-		promo=true;
-	}
-	if(move.y2==0 && pieceInMove=='WP'){//a promotion
-		pieceInMove='WQ';//promote to queen
-		promo=true;
-	}
-	position[move.y1][move.x1]="empty";
-	position[move.y2][move.x2]=pieceInMove;
-	ev=EvalPos();
-	if(currentDepth < depth){
-		if(turn=='W'){
-			turn='B';
-		}else{
-			turn='W';
-		}
-		if(turn=='W'){
-			notTurn='B';
-		}else{
-			notTurn='W';
-		}
-		currentDepth++;
-		var nextMoves=getCPUmoves(turn);
-		if(nextMoves.length==0){
-			ev=-Infinity;//alert();//checkmate. this currently would also include stalemate.
-		}
-		var oldPieceInMove=pieceInMove;
-		var oldPieceAtEnd=pieceAtEnd;
-		if(turn=='W'){
-			//var EV= -Infinity;
-			for(var i in nextMoves){//loop through next possible white moves
-				var evNext=testMove(nextMoves[i],depth);//evaluate this as well
-				if(pieceAtEnd[1]=='K'){
-					alert('ERROR!');
-				}
-				if(evNext > ev){//if the move gives white a better adavantage
-					//EV=
-					ev=evNext;//increase the evaluation
-				}
-			}
-			//ev=EV;
-			if(nextMoves.length==0){
-				ev=-Infinity;//alert();//checkmate. this currently would also include stalemate.
-			}
-		}else{
-			for(var i in nextMoves){//loop through next possible black moves
-				var evNext=testMove(nextMoves[i],depth);//evaluate this as well
-				if(evNext < ev){//if the move gives black a better adavantage
-					ev=evNext;//decrease the evaluation
-				}
-			}
-			if(nextMoves.length==0){
-				ev=Infinity;//checkmate. this currently would also include stalemate.
-			}
-		}
-		var pieceInMove=oldPieceInMove;
-		var pieceAtEnd=oldPieceAtEnd;
-		if(turn=='W'){
-			turn='B';
-		}else{
-			turn='W';
-		}
-		if(turn=='W'){
-			notTurn='B';
-		}else{
-			notTurn='W';
-		}
-		currentDepth--;
-	}
-	if(promo){// if was testing a promotion
-		pieceInMove=turn+'P';
-	}
-	position[move.y1][move.x1]=pieceInMove;
-	position[move.y2][move.x2]=pieceAtEnd;//undo
-	//console.log(ev);
-	return(ev);
-}
-
-function setUpMove(turn,depth){
-	
-}
-
 function getExtremeItem(array, isHighest){//or false = lowest
 	if(isHighest){
 		var maxItem=-Infinity;
@@ -1697,7 +1637,7 @@ function sortEvaluationsArray(colour) {//each move is only as good as your oppon
 	}
 }
 
-function endSearch(){
+function endSearch(){//after moving reset variables for next CPU search
 	evaluationsArray=[];
 	movesArray=[];
 	positionsArray=[];
@@ -1705,14 +1645,14 @@ function endSearch(){
 	isSearching=true;
 	startingSearch=true;
 	currentSearchingDepth=1;
-	readyToMove=false;
+	readyToMove=true;
 	prog.value=500;
 	drawBoard();
 	promotion='empty';
 }
 
 function mainLoop() {
-	if(turn == "W" && wlevel.value > 0){//if on non human white level
+	if(turn == "W" && wlevel.value > 0 && readyToMove){//if on non human white level
 		if(startingSearch){//initial block
 			protected_position = new Position(position);//protect the actual board position
 			movesArray=getCPUmoves('W');//get the available moves
@@ -1851,7 +1791,7 @@ function mainLoop() {
 		}
 	}
 	
-	if(turn == "B" && blevel.value > 0){
+	if(turn == "B" && blevel.value > 0 && readyToMove){
 		if(startingSearch){//initial block
 			protected_position = new Position(position);//protect the actual board position
 			movesArray=getCPUmoves('B');//get the available moves
@@ -2000,10 +1940,13 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 		if(level==0){
 			pieceInMove=position[startY][startX];//get the pieces involved
 			pieceAtEnd=position[Y][X];//**********************************
+			
 			if(pieceInMove !== 'empty' && isMoveLegal(startX,startY,X,Y,false)){
+				readyToMove=false;
 				stan1=standardNotation(startX,startY,X,Y);
 				position[startY][startX]="empty";
 				position[Y][X]=pieceInMove;
+				
 				if(turn=='W'){
 					turn='B';
 				}else{
@@ -2013,16 +1956,19 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 					notTurn='B';
 				}else{
 					notTurn='W';
-				}
+				}//switch turn
+				
 				if(!canEPnext){
 					canEP=false;
 				}else{
 					canEP=true;
 				}
 				canEPnext=false;
+				
 				var KingX=getKingPos(notTurn).x;
 				var KingY=getKingPos(notTurn).y;
-				if(squareControl(KingX,KingY)[turn]){
+				
+				if(squareControl(KingX,KingY)[turn]){//check if in check
 					alert('That move would put your king in check.');
 					position[startY][startX]=pieceInMove;
 					position[Y][X]=pieceAtEnd
@@ -2091,54 +2037,10 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 					//console.log(rooksUnmoved);
 					plyCount++;
 					testThree();
+					readyToMove=true;
 				}
 			}
 		}
-			{//useless
-				/*pen.fillStyle = '#640';
-				pen.fillRect(0,0,800,800);
-				pen.fillStyle='#da5';
-				for(var i = 1; i <= 8; i++){
-					for(var j = 1; j <= 8; j++){
-						if(j % 2 === i % 2){
-							pen.fillRect((i * 100) - 100,(j * 100) - 100,100,100);
-						}
-					}
-				}
-				for(var i=0;i<8;i++){
-					for(var j=0;j<8;j++){
-						pen.fillStyle='#000';
-						pen.drawImage( pieces[ position[i][j] ] ,(j*100)+10,(i*100)+10,80,80);
-						//pen.fillText(squareControl(j,i).W,(j*100)+10,(i*100)+10);
-						//alert(squareControl(j,i));
-					}
-				}
-			}
-		}
-	*/}
-	}
-	
-	{//useless
-		/*pen.fillStyle = '#640';
-		pen.fillRect(0,0,800,800);
-		pen.fillStyle='#da5';
-		
-		for(var i = 1; i <= 8; i++){
-			for(var j = 1; j <= 8; j++){
-				if(j % 2 === i % 2){
-					pen.fillRect((i * 100) - 100,(j * 100) - 100,100,100);
-				}
-			}
-		}
-		
-		for(var i=0;i<8;i++){
-			for(var j=0;j<8;j++){
-				pen.fillStyle='#000';
-				pen.drawImage( pieces[ position[i][j] ] ,(j*100)+10,(i*100)+10,80,80);
-				//pen.fillText(squareControl(j,i).B,(j*100)+10,(i*100)+10);
-				//alert(squareControl(j,i));
-			}
-		}*/
 	}
 	
 	drawBoard();
@@ -2149,6 +2051,7 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 			pieceInMove=position[startY][startX];//get the pieces involved
 			pieceAtEnd=position[Y][X];//**********************************
 			if(pieceInMove !== 'empty' && isMoveLegal(startX,startY,X,Y,false)){
+				readyToMove=false
 				var stan2=standardNotation(startX,startY,X,Y);
 				position[startY][startX]="empty";
 				position[Y][X]=pieceInMove;
@@ -2245,6 +2148,7 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 					moveCount++;
 					plyCount++;
 					testThree();
+					readyToMove=false;
 				}
 			}
 	
@@ -2306,11 +2210,9 @@ document.getElementById('redo').onclick=function(){
 			<HR>
 			<!-- And add a copyright notice. -->
 			<P>
-				&copy;
-				<A href="flobit.html" style="color:#f00">
-					flob
+				<A href="flobit.html" >
+					Flobgroup
 				</A>
-				group.corp
 			</P>
 		</DIV>
 		<canvas width=100 height=100></canvas>
