@@ -58,7 +58,23 @@ div.scrollable{
 a:visited{
 	color:blue;
 }
-
+label{
+	font-size: 23px;
+}
+p{
+	font-size: 25px;
+}
+div#detailsbox{
+	background-color:#000;
+	font-family:"arial";
+	color:#080;
+	height:800px;
+	width:500px;
+}
+button#opendetails{
+	height:800px;
+	width:80px;
+}
 		</STYLE>
 	</head>
 	<body style="background-color: #990000; color: #77ffff">
@@ -148,11 +164,25 @@ a:visited{
 						</TABLE>
 					</DIV>
 				</TD>
+				<TD>
+					<BUTTON id="opendetails"> &gt;&gt; </BUTTON>
+				</TD>
+				<TD>
+					<DIV id="detailsbox" style="display:none;">
+						<INPUT type="checkbox" id="show_calculations"/> <LABEL>Show calculation (slower)</LABEL>
+						<BR/>
+						<INPUT type="checkbox" id="show_details"/> <LABEL>Update details (slower)</LABEL>
+						<BR/>
+						<P>Current calculation depth: <SPAN id="depth"></SPAN></P>
+						<P>Number of nodes found: <SPAN id="nodes"></SPAN></P>
+						<P>Number of nodes evaluated: <SPAN id="evalnodes"></SPAN></P>
+					</DIV>
+				</TD>
 			</TR>
 		</TABLE>
 		<SCRIPT src="book.js" ></SCRIPT><!-- The opening book. -->
 		<SCRIPT><!-- Main Script -->
-			
+
 /*
 Ampere's ideas were very current, wheras Volta's were potentially different;
 Newton was forcefull, but Watt had power;
@@ -173,6 +203,8 @@ and Faraday's capacity induced Henry to charge Coulumb with resisting Ohm for a 
 	var _50moveCounter=0;//counter for 50-move rule
 	var knightMoves=[[1,2],[2,1],[-1,-2],[-2,-1],[-1,2],[-2,1],[1,-2],[2,-1]];//possible knight moves for board control
 	var kingMoves=[[-1,-1],[-1,0],[-1,1],[1,-1],[1,0],[1,1],[0,-1],[0,1]];//possible king moves for board control
+	var hasSelectedSquare=false;//these are for
+	var selectedSquare={x:0,y:0,};//two click moves
 }
 
 function fileToIndex(file){//function to turn a file letter into a number of the position array
@@ -255,7 +287,19 @@ function setPosition(pos){
 	var startingSearch=true;//should the initial block be executed? this happens once per move
 	var currentSearchingDepth=1;//current depth of search
 	var readyToMove=true;//is ready to move so as not to move while human user is playing an illegal move into check
+	var showingCalculations=false;
+	var showingDetails=false;
+	var debugNodes=0;
+	var debugNodesEvaluated=0;
 }
+
+function showDetails(){
+	document.getElementById('nodes').textContent=debugNodes;
+	document.getElementById('depth').textContent=currentSearchingDepth;
+	document.getElementById('evalnodes').textContent=debugNodesEvaluated;
+}
+
+//~ setInterval(showDetails,1);
 
 {//********************************code for the rendering of the pieces*******************************************
 	var pieces={//IMG html elements to paste ont canvas
@@ -318,16 +362,26 @@ function setPosition(pos){
 	];//*******************************************************************
 	/*/
 	var position = [//*********the starting position**************************
-		["BK","empty","empty","empty","empty","empty","empty","empty"],
-		["BP","BP","empty","empty","empty","empty","empty","empty"],
-		["empty","empty","empty","empty","BR","empty","empty","empty"],
 		["empty","empty","empty","empty","empty","empty","empty","empty"],
 		["empty","empty","empty","empty","empty","empty","empty","empty"],
-		["WP","WP","WP","empty","empty","empty","empty","empty"],
-		["WP","WP","WP","empty","empty","empty","empty","empty"],
-		["WK","empty","empty","empty","empty","empty","empty","empty"]
+		["empty","empty","empty","empty","empty","empty","empty","empty"],
+		["empty","empty","empty","WK","empty","empty","empty","empty"],
+		["empty","empty","empty","WR","empty","BP","empty","BK"],
+		["empty","empty","empty","empty","empty","empty","empty","empty"],
+		["empty","empty","empty","empty","empty","empty","WP","empty"],
+		["empty","empty","empty","empty","empty","empty","empty","empty"],
 	];
 	//*/
+	/*		
+		["empty","empty","empty","empty","empty","empty","empty","empty"],
+		["empty","empty","empty","empty","empty","empty","empty","empty"],
+		["empty","empty","empty","empty","empty","empty","empty","empty"],
+		["empty","empty","empty","empty","empty","empty","empty","empty"],
+		["empty","empty","empty","empty","empty","empty","empty","empty"],
+		["empty","empty","empty","empty","empty","empty","empty","empty"],
+		["empty","empty","empty","empty","empty","empty","empty","empty"],
+		["empty","empty","empty","empty","empty","empty","empty","empty"],
+	*/
 	
 	var protected_position=new Position(position);//the position that remains unchanged by searching
 }
@@ -608,6 +662,10 @@ function FENtoPos(FEN){//does the opposite of the above function. rnbqkbnr/ppppp
 function drawBoard() {
 	pen.drawImage(pieces.BOARD,0,0,800,800);
 	if(flipped){
+		if(hasSelectedSquare){
+			pen.fillStyle='#00FF0055';
+			pen.fillRect(100*(7-selectedSquare.x),100*(7-selectedSquare.y),100,100);
+		}
 		for(var i=0;i<8;i++){
 			for(var j=0;j<8;j++){
 				pen.fillStyle='#000';
@@ -617,6 +675,10 @@ function drawBoard() {
 			}
 		}
 	}else{
+		if(hasSelectedSquare){
+			pen.fillStyle='#00FF0055';
+			pen.fillRect(100*(selectedSquare.x),100*(selectedSquare.y),100,100);
+		}
 		for(var i=0;i<8;i++){
 			for(var j=0;j<8;j++){
 				pen.fillStyle='#000';
@@ -1138,7 +1200,7 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 				}
 				if(y2==7){
 					if(doText){
-						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q' && !promotion){
 							var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
 						}
 						if(promotion=='K'){
@@ -1162,7 +1224,7 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 			}else if(adx==1 && dy==-1 && endColour=='W'){//capture
 				if(y2==7){
 					if(doText){
-						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q' && !promotion){
 							var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
 						}
 						if(promotion=='K'){
@@ -1230,7 +1292,7 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 				}
 				if(y2==0){
 					if(doText){
-						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q' && promotion){
 							var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
 						}
 						if(promotion=='K'){
@@ -1255,7 +1317,7 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 			}else if(adx==1 && dy==1 && endColour=='B'){//capture
 				if(y2==7){
 					if(doText){
-						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q' && promotion){
 							var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
 						}
 						if(promotion=='K'){
@@ -1372,6 +1434,18 @@ function getCPUmoves(colour){//get all legal CPU moves
 		}
 	}
 	return(moves);
+}
+
+function findPieces(type){//this is for checking whether or not to add certain coordinates in the noation
+	var places=[];
+	for(var i=0;i<8;i++){	
+		for(var j=0;j<8;j++){
+			if(position[i][j]==type){
+				places.push({x:j,y:i,});
+			}
+		}
+	}
+	return(places);
 }
 
 function standardNotation(x1,y1,x2,y2){//get a move in notation for
@@ -1649,6 +1723,8 @@ function endSearch(){//after moving reset variables for next CPU search
 	prog.value=500;
 	drawBoard();
 	promotion='empty';
+	debugNodes=0;
+	debugNodesEvaluated=0;
 }
 
 function mainLoop() {
@@ -1699,7 +1775,7 @@ function mainLoop() {
 			if(wlevel.value==4){//level 4 (depth one)
 				executeFinalMoveW( movesArray[  getExtremeItem( evaluationsArray, true )  ] );//get the best move and add to the protected position
 				endSearch();
-				//drawBoard();
+				if(showingCalculations){drawBoard();}
 				return(4);
 			}
 			switch(currentSearchingDepth){
@@ -1708,15 +1784,23 @@ function mainLoop() {
 						resetPositionFromSearch();
 						//console.log( positionsArray[currentSearchingIndex] );
 						position = ( new Position( positionsArray[currentSearchingIndex] ).p );
-						//drawBoard();
+						if(showingCalculations){drawBoard();}
 						turn='B';
 						movesArray[currentSearchingIndex]=getCPUmoves('B');//get all of the opponent's possible moves
+						if(showingDetails){
+							debugNodes+=getCPUmoves('B').length;
+							showDetails();
+						}
 						turn='W';
 						if(wlevel.value==5){
 							prog.value= 50 + ((200/movesArray.length)*currentSearchingIndex);
 						}
-						//drawBoard();
+						if(showingCalculations){drawBoard();}
 						currentSearchingIndex++;
+						if(showingDetails){
+							debugNodes++;
+							showDetails();
+						}
 					}else{//when all level two moves are searched
 						resetPositionFromSearch();
 						isSearching=false;//get back to evaluation
@@ -1741,13 +1825,17 @@ function mainLoop() {
 						resetPositionFromSearch();//go back to actual position
 						executeMove(movesArray[currentSearchingIndex]);//try
 						evaluationsArray[currentSearchingIndex]=EvalPos();//and then evaluate move
-						//drawBoard();
+						if(showingCalculations){drawBoard();}
 						positionsArray[currentSearchingIndex]=(new Position(position).p);//add the position to the positions array
 						//console.log(new Position(position).p);
 						if(wlevel.value == 4){
 							prog.value = 50 + ((450/movesArray.length)*currentSearchingIndex);
 						}
 						currentSearchingIndex++;//move to the next move
+						if(showingDetails){
+							debugNodesEvaluated++;
+							showDetails();
+						}
 					}else{//when evaluation has finsished
 						resetPositionFromSearch();//go back to actual position
 						isSearching=true;//go back to searching loop to terminate search or continue to next ply
@@ -1770,11 +1858,15 @@ function mainLoop() {
 							//alert(EvalPos());
 							//positionsArray[ currentSearchingIndex[0] ]=[];
 							//positionsArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ]=(new Position(position).p);//add the position to the positions array
-							//drawBoard();
+							if(showingCalculations){drawBoard();}
 							if(wlevel.value==5){
 								prog.value = 250 + ((250/movesArray.length)*currentSearchingIndex[0]);
 							}
-							currentSearchingIndex[1]++;//move to the next opponent's move in the current own move.
+							currentSearchingIndex[1]++;//move to the next opponent's move in the current own move.	
+							if(showingDetails){
+								debugNodesEvaluated++;
+								showDetails();
+							}
 						}else{
 							currentSearchingIndex[0]++;//move to next possible own move
 							currentSearchingIndex[1]=0;//move to first opponent's move
@@ -1838,7 +1930,7 @@ function mainLoop() {
 			if(blevel.value==4){//level 4 (depth one)
 				executeFinalMoveB( movesArray[  getExtremeItem( evaluationsArray, false )  ] );//get the best move and add to the protected position
 				endSearch();
-				//drawBoard();
+				if(showingCalculations){drawBoard();}
 				return(4);
 			}
 			switch(currentSearchingDepth){
@@ -1847,15 +1939,23 @@ function mainLoop() {
 						resetPositionFromSearch();
 						//console.log( positionsArray[currentSearchingIndex] );
 						position = ( new Position( positionsArray[currentSearchingIndex] ).p );
-						//drawBoard();
+						if(showingCalculations){drawBoard();}
 						turn='W';
 						movesArray[currentSearchingIndex]=getCPUmoves('W');//get all of the opponent's possible moves
+						if(showingDetails){
+							debugNodes+=getCPUmoves('B').length;
+							showDetails();
+						}
 						turn='B';
 						if(blevel.value==5){
 							prog.value= 50 + ((200/movesArray.length)*currentSearchingIndex);
 						}
-						//drawBoard();
+						if(showingCalculations){drawBoard();}
 						currentSearchingIndex++;
+						if(showingDetails){
+							debugNodes++;
+							showDetails();
+						}
 					}else{//when all level two moves are searched
 						resetPositionFromSearch();
 						isSearching=false;//get back to evaluation
@@ -1879,13 +1979,17 @@ function mainLoop() {
 						resetPositionFromSearch();//go back to actual position
 						executeMove(movesArray[currentSearchingIndex]);//try
 						evaluationsArray[currentSearchingIndex]=EvalPos();//and then evaluate move
-						//drawBoard();
+						if(showingCalculations){drawBoard();}
 						positionsArray[currentSearchingIndex]=(new Position(position).p);//add the position to the positions array
 						//console.log(new Position(position).p);
 						if(blevel.value==4){
 							prog.value= 50 + ((450/movesArray.length)*currentSearchingIndex);
 						}
 						currentSearchingIndex++;//move to the next move
+						if(showingDetails){
+							debugNodesEvaluated++;
+							showDetails();
+						}
 					}else{//when evaluation has finsished
 						resetPositionFromSearch();//go back to actual position
 						isSearching=true;//go back to searching loop to terminate search or continue to next ply
@@ -1908,11 +2012,15 @@ function mainLoop() {
 							//console.log(evaluationsArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ]);
 							//positionsArray[ currentSearchingIndex[0] ]=[];
 							//positionsArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ]=(new Position(position).p);//add the position to the positions array
-							//drawBoard();
+							if(showingCalculations){drawBoard();}
 							if(blevel.value==5){
 								prog.value = 250 + ((250/movesArray.length)*currentSearchingIndex[0]);
 							}
 							currentSearchingIndex[1]++;//move to the next opponent's move in the current own move.
+							if(showingDetails){
+								debugNodesEvaluated++;
+								showDetails();
+							}
 						}else{
 							currentSearchingIndex[0]++;//move to next possible own move
 							currentSearchingIndex[1]=0;//move to first opponent's move
@@ -1934,7 +2042,17 @@ setInterval(mainLoop,1);
 
 document.getElementById('board').onmouseup=function(event) {//this also contains the inner workings***********************************************************
 	mouseDown=false;
-	
+	if(startX==X && startY==Y){
+		if(hasSelectedSquare){
+			hasSelectedSquare=false;
+			startX=selectedSquare.x;
+			startY=selectedSquare.y;//this will then continue this function as if the player has dragged a piece
+		}else{
+			hasSelectedSquare=true;
+			selectedSquare.x=X;
+			selectedSquare.y=Y;
+		}
+	}
 	if(turn=='W'){
 		var level=wlevel.value;
 		if(level==0){
@@ -2024,7 +2142,7 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 						rooksUnmoved[1]=false;
 					}//if one of your opponent's rooks is taken, it can no loger be used to castle (DUH!)
 					if(Y==0 && pieceInMove=='WP'){//if promotion
-						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q' && promotion){
 							var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
 						}
 						if(promotion=='K'){
@@ -2117,7 +2235,7 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 							canEP=true;
 							EPrank=X;
 						}
-						if(position[Y][X]=='empty' && X!=startX){//en passant
+						if(pieceAtEnd=='empty' && X!=startX){//en passant
 							position[startY][X]='empty';
 							stan2+='ep';
 						}
@@ -2134,7 +2252,7 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 					//if one of your opponent's rooks is taken, it can no longer be used to castle (DUH!)
 					//console.log(rooksUnmoved);if(Y==0 && pieceInMove=='WP'){//if promotion
 					if(Y==0 && pieceInMove=='WP'){//if promotion
-						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q' && promotion){
 							var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
 						}
 						if(promotion=='K'){
@@ -2148,7 +2266,7 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 					moveCount++;
 					plyCount++;
 					testThree();
-					readyToMove=false;
+					readyToMove=true;
 				}
 			}
 	
@@ -2173,6 +2291,29 @@ onkeydown=function(event) {
 	}
 }	
 
+var show_calc = document.getElementById('show_calculations');
+show_calc.onchange=function() {
+	showingCalculations=show_calc.checked;
+}
+var show_det = document.getElementById('show_details');
+show_det.onchange=function() {
+	showingDetails=show_det.checked;
+}
+
+var open_det = document.getElementById('opendetails');
+var det_box = document.getElementById('detailsbox');
+
+open_det.onclick=function() {
+	if(det_box.style.display == 'none'){
+		open_det.textContent='<<';
+		det_box.style.display='block';
+	}else{
+		open_det.textContent='>>';
+		det_box.style.display='none';
+	}
+}
+			
+setTimeout('drawBoard()',1000);
 			</SCRIPT>
 			<BUTTON onclick="newgame()">
 				New Game
