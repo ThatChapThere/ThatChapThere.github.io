@@ -191,6 +191,7 @@ and Faraday's capacity induced Henry to charge Coulumb with resisting Ohm for a 
 */
 
 {//variables
+	var threefoldRepAlerted=false;
 	var prog=document.getElementById('progress');//the METER html element
 	var flipped=false;//whether the board is flipped so the user can see black's perspective
 	var currentDepth=1;//the current searching depth for searching, replaced by currentSearchingDepth in the 0.7 update
@@ -205,6 +206,7 @@ and Faraday's capacity induced Henry to charge Coulumb with resisting Ohm for a 
 	var kingMoves=[[-1,-1],[-1,0],[-1,1],[1,-1],[1,0],[1,1],[0,-1],[0,1]];//possible king moves for board control
 	var hasSelectedSquare=false;//these are for
 	var selectedSquare={x:0,y:0,};//two click moves
+	var notationArray=[[],[]];//this is two arrays for the white and black moves respectively in standard notation.
 }
 
 function fileToIndex(file){//function to turn a file letter into a number of the position array
@@ -258,6 +260,51 @@ function setPosition(pos){
 		}	
 	}
 }//sets the position to the one specified without referencing the same object
+
+function drawNotation(){
+	for(var i=moveCount-1;i<notationArray[0].length;i++){
+		if(document.getElementById('move'+ (i+1) )){//the tr already exists, i.e. black move or old move before undo.
+			document.getElementById('move'+ (i+1) ).innerHTML='<TR id="move' + (i+1) + '" >'+'<TD>'+ (i+1) +'. </TD>'+'<TD>'+notationArray[0][i]+'</TD>'+'<TD>'+notationArray[1][i]+'</TD>'+'</TR>';
+		}else{
+			move_board.innerHTML+='<TR id="move' + (i+1) + '" >'+'<TD>'+ (i+1) +'. </TD>'+'<TD>'+notationArray[0][i]+'</TD>'+'<TD>'+notationArray[1][i]+'</TD>'+'</TR>';
+		}
+	}
+}
+
+function testForInsuffMaterial() {
+	var squareColours=[];
+	var pieces=[];
+	for(var i=0;i<8;i++){	
+		for(var j=0;j<8;j++){
+			if(position[i][j][1] != 'm' && position[i][j][1] != 'K'){
+			squareColours.push((i+j) % 2 ? 'D' : 'L');//the square colour
+				pieces.push(position[i][j][1]);//the piece on that square
+			}
+		}
+	}
+	if(pieces.length == 0){
+		return(true);
+	}
+	if(pieces.length == 1){
+		switch(pieces[0]){
+			case 'Q':
+			case 'R':
+			default:
+				return(false);
+				break;
+			case 'N':
+			case 'B':
+				return(true);
+		}
+	}
+	for(var i=0;i < pieces.length;i++){
+		if(pieces[i] != 'B' || squareColours[i] != squareColours[0]){//unless there are only bishops on the same colour square
+			//alert(pieces.length);
+			return(false);
+		}
+	}
+	return(true);
+}
 
 {//more variables
 	var promotion='empty';//variable for pawn promotion
@@ -362,13 +409,13 @@ function showDetails(){
 	];//*******************************************************************
 	/*/
 	var position = [//*********the starting position**************************
+		["empty","empty","empty","BK","empty","empty","empty","empty"],
 		["empty","empty","empty","empty","empty","empty","empty","empty"],
-		["empty","empty","empty","empty","empty","empty","empty","empty"],
-		["empty","empty","empty","empty","empty","empty","empty","empty"],
+		["empty","empty","empty","empty","BR","empty","empty","empty"],
 		["empty","empty","empty","WK","empty","empty","empty","empty"],
-		["empty","empty","empty","WR","empty","BP","empty","BK"],
+		["empty","empty","empty","empty","empty","BB","empty","WB"],
 		["empty","empty","empty","empty","empty","empty","empty","empty"],
-		["empty","empty","empty","empty","empty","empty","WP","empty"],
+		["empty","empty","empty","empty","empty","empty","empty","empty"],
 		["empty","empty","empty","empty","empty","empty","empty","empty"],
 	];
 	//*/
@@ -706,6 +753,7 @@ function newgame() {//reset the position
 	game=["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq"];//for threefold rep
 	complexGame=["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"];//for undo / redo
 	moveCount=1;//the move
+	threefoldRepAlerted=false;
 	plyCount=0;//counter of plys
 	_50moveCounter=0;//counter for 50-move rule
 	promotion='empty';//variable for pawn promotion
@@ -717,6 +765,7 @@ function newgame() {//reset the position
 	canEPnext=false;//other en passant for complex handling
 	EP=false;//other nessisary variables for en passant
 	EPrank=0;//for en passant
+	notationArray=[[],[]];
 	//*
 	position = [//*********the starting position**************************
 		["BR","BN","BB","BQ","BK","BB","BN","BR"],
@@ -1132,7 +1181,7 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 			var KingY=getKingPos(colour).y;
 			if(squareControl(KingX,KingY)[turn == 'W' ? 'B' : 'W' ]){//opponent has control
 				if(doText){
-					alert('You can\'t castle out of check.');
+					//alert('You can\'t castle out of check.');
 				}
 				return(false);//can't castle out of check
 			}
@@ -1158,7 +1207,7 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 			for(var i in inBetweenChecks){
 				if(inBetweenChecks[i]){
 					if(doText){
-						alert('That move is blocked by check.');
+						//alert('That move is blocked by check.');
 					}
 					return(false);
 				}
@@ -1170,7 +1219,7 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 	for(var i in inBetweenSquares){
 		if(inBetweenSquares[i] !== 'empty'){//has a piece there
 			if(doText){
-				alert('That move is blocked.');
+				//alert('That move is blocked.');
 			}
 			return(false);
 		}
@@ -1178,13 +1227,13 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 	
 	if(colour !== turn){
 		if(doText){
-			alert('Those are the wrong pieces, or It\'s not your turn.');
+			//alert('Those are the wrong pieces, or It\'s not your turn.');
 		}
 		return(false);
 	}
 	if(colour==endColour){
 		if(doText){
-			alert('You can\'t take your own pieces.');
+			//alert('You can\'t take your own pieces.');
 		}
 		return(false);
 	}
@@ -1214,7 +1263,7 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 			}else if((dx==0) && (y1==1) && (dy==-2)){//initial rank, same file, two squares
 				if(endColour != 'e'){
 					if(doText){
-						alert('Pawns can\'t capture straight ahead.');
+						//alert('Pawns can\'t capture straight ahead.');
 					}
 					return(false);
 				}
@@ -1286,7 +1335,7 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 			if((dx == 0) && dy==1){//same file, 1 rank away
 				if(endColour != 'e'){//square not empty
 					if(doText){
-						alert('Pawns can\'t capture straight ahead.');
+						//alert('Pawns can\'t capture straight ahead.');
 					}
 					return(false);
 				}
@@ -1306,7 +1355,7 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 			}else if((dx==0) && (y1==6) && (dy==2)){//initial rank, same file, two squares
 				if(endColour != 'e'){
 					if(doText){
-						alert('Pawns can\'t capture straight ahead.');
+						//alert('Pawns can\'t capture straight ahead.');
 					}
 					return(false);
 				}
@@ -1379,7 +1428,7 @@ function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
 		return(false);
 	}
 	if(doText){
-		alert('That move is not legal.');
+		//alert('That move is not legal.');
 	}
 };
 
@@ -1541,6 +1590,13 @@ function executeFinalMoveW(moveToDo) {//executes a move so that it actuall gets 
 	turn='B';
 	//move_board.innerHTML+='<TR>'+'<TD>'+moveCount+'. </TD>'+'<TD>'+stan1+'</TD>'+'<TD>'+stan2+'</TD>'+'</TR>';
 	//moveCount++;
+	notationArray[0][moveCount-1]=stan1;
+	notationArray[1][moveCount-1]='';
+	drawNotation();
+	if(testForInsuffMaterial()){
+		turn=null;
+		alert('Draw by insufficient mating material.');
+	}
 	plyCount++;
 	testThree();
 }
@@ -1598,7 +1654,13 @@ function executeFinalMoveB(moveToDo) {
 		_50moveCounter=0;
 	}
 	turn='W';
-	move_board.innerHTML+='<TR>'+'<TD>'+moveCount+'. </TD>'+'<TD>'+stan1+'</TD>'+'<TD>'+stan2+'</TD>'+'</TR>';
+	//move_board.innerHTML+='<TR>'+'<TD>'+moveCount+'. </TD>'+'<TD>'+stan1+'</TD>'+'<TD>'+stan2+'</TD>'+'</TR>';
+	notationArray[1][moveCount-1]=stan2;
+	drawNotation();
+	if(testForInsuffMaterial()){
+		turn=null;
+		alert('Draw by insufficient mating material.');
+	}
 	moveCount++;
 	plyCount++;
 	testThree();
@@ -1615,8 +1677,11 @@ function testThree() {
 				for(var k in game){
 					if(game[j]==game[k] && j!=k && k!= i){
 						turn=null;
-						alert('Draw by threefold repetition.');
-						break;
+						if(!threefoldRepAlerted){
+							alert('Draw by threefold repetition.');
+							threefoldRepAlerted=true;
+						}
+						return(0);
 					}
 				}
 			}
@@ -1660,7 +1725,11 @@ document.getElementById('board').onmousemove=function(event) {//mouse handlers
 		pen.drawImage( pieces[ position[startY][startX] ] ,event.clientX-58+scrollX,event.clientY-270+scrollY,80,80);//draws the piece constantly
 	}
 	//console.log(X+', '+Y);
-	pieceInMove=position[Y][X];
+	try{
+		pieceInMove=position[Y][X];
+	}catch(e) {
+		pieceInMove='empty';
+	}
 };
 
 document.getElementById('board').onmousedown=function(event) {
@@ -2087,7 +2156,7 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 				var KingY=getKingPos(notTurn).y;
 				
 				if(squareControl(KingX,KingY)[turn]){//check if in check
-					alert('That move would put your king in check.');
+					//alert('That move would put your king in check.');
 					position[startY][startX]=pieceInMove;
 					position[Y][X]=pieceAtEnd
 					if(turn=='W'){
@@ -2142,7 +2211,7 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 						rooksUnmoved[1]=false;
 					}//if one of your opponent's rooks is taken, it can no loger be used to castle (DUH!)
 					if(Y==0 && pieceInMove=='WP'){//if promotion
-						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q' && promotion){
+						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
 							var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
 						}
 						if(promotion=='K'){
@@ -2153,6 +2222,13 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 						drawBoard();
 					}
 					//console.log(rooksUnmoved);
+					notationArray[0][moveCount-1]=stan1;
+					notationArray[1][moveCount-1]='';
+					drawNotation();
+					if(testForInsuffMaterial()){
+						turn=null;
+						alert('Draw by insufficient mating material.');
+					}
 					plyCount++;
 					testThree();
 					readyToMove=true;
@@ -2192,7 +2268,7 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 				var KingX=getKingPos(notTurn).x;
 				var KingY=getKingPos(notTurn).y;
 				if(squareControl(KingX,KingY)[turn]){
-					alert('That move would put your king in check.');
+					//alert('That move would put your king in check.');
 					position[startY][startX]=pieceInMove;
 					position[Y][X]=pieceAtEnd;
 					if(turn=='W'){
@@ -2251,8 +2327,8 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 					}
 					//if one of your opponent's rooks is taken, it can no longer be used to castle (DUH!)
 					//console.log(rooksUnmoved);if(Y==0 && pieceInMove=='WP'){//if promotion
-					if(Y==0 && pieceInMove=='WP'){//if promotion
-						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q' && promotion){
+					if(Y==7 && pieceInMove=='BP'){//if promotion
+						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
 							var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
 						}
 						if(promotion=='K'){
@@ -2262,7 +2338,12 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 						position[Y][X]=pieceInMove;
 						drawBoard();
 					}
-					move_board.innerHTML+='<TR>'+'<TD>'+moveCount+'. </TD>'+'<TD>'+stan1+'</TD>'+'<TD>'+stan2+'</TD>'+'</TR>';
+					notationArray[1][moveCount-1]=stan2;
+					drawNotation();
+					if(testForInsuffMaterial()){
+						turn=null;
+						alert('Draw by insufficient mating material.');
+					}
 					moveCount++;
 					plyCount++;
 					testThree();
@@ -2330,9 +2411,13 @@ setTimeout('drawBoard()',1000);
 			<SCRIPT type="text/javascript">
 document.getElementById('undo').onclick=function(){
 	if(plyCount){
+		if(turn=='W'){
+			moveCount--;
+		}
 		FENtoPos(complexGame[plyCount-1]);
 		plyCount-=1;
 		endSearch();
+		threefoldRepAlerted=false;
 	}else{
 		alert('Cannot undo move');
 	}
@@ -2340,6 +2425,9 @@ document.getElementById('undo').onclick=function(){
 
 document.getElementById('redo').onclick=function(){
 	if(game.length > plyCount+1){
+		if(turn=='B'){
+			moveCount++;
+		}
 		FENtoPos(complexGame[plyCount+1]);
 		plyCount+=1;
 		endSearch();
