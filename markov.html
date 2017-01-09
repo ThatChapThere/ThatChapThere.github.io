@@ -1,0 +1,157 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>Markov Chain Generator</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<STYLE type="text/css">
+.cpu{
+	text-align: right;
+    color: red;
+    font-family: "courier new";
+}
+.user{
+	color: blue;
+    font-family: "Times new Roman";
+}
+	
+	</STYLE>
+</head>
+
+<body>
+	<DIV id='log'>
+			<SPAN class="cpu">Hello!</SPAN>
+	</DIV>
+	<INPUT type="text" id="in" />
+	<script type="text/javascript">
+{//variables
+	var wordList=['',null];//starting with beginning and ending, respectively
+	var database=[[0,0],[]];//this has a list of values for each word corresponding to the number of occurences of each word after it
+	var occurences=[0,0];//the number of occurences of each word (to speed up randomization)
+}
+
+{//HTML elements
+	var LOG=document.getElementById('log');
+	var IN=document.getElementById('in');
+}
+
+function textToWordArray(text) {//turns a piece of text into an array of the words it contains
+	var wordsArray=[];//the list of words
+	var currentWord='';//the string of charcters being accumulated until we hit a space
+	for(c in text){
+		if(text[c] == ' '){
+			if(currentWord){//so as not to add empty stings when we have multiple spaces
+				wordsArray.push(currentWord);//add the word to the word list 
+				currentWord='';//and reset
+			}
+		}else{
+			currentWord+=text[c];//add the current charachter to the word
+		}
+	}
+	if(currentWord){//add the final word (unless the final character was a space)
+		wordsArray.push(currentWord);
+	}
+	return(wordsArray);
+}
+
+function wordListContains(word) {//find out if the list already contains a word
+	var answer=false;//it doesn't yet
+	for(var i = 0; i < wordList.length; i++){//loop through all words
+		if(wordList[i]==word){//if the word is found
+			answer=true;//it is already indexed
+		}
+	}
+	return(answer);
+}
+
+function generateNewDatabaseInfo() {
+	var array=[];
+	for(var i = 0; i < database.length; i++){
+		array.push(0);
+	}
+	return(array);
+}
+
+function addNewWordToDatabases(){//whenever a new word is added
+	for(var i=0; i < database.length; i++){
+		database[i].push(0);
+	}
+}
+
+function getIndex(word) {//get the index that a word is at
+	for(var i = 0; i < wordList.length; i++){//loop through words
+		if(wordList[i]==word){//if it matches the search
+			return[i];
+		}
+	}
+	alert('   Error:\nAttempt at finding unindexed word');//this shouldn't be called, but if it is debugging will be easier
+}
+
+function addTextToDatabase(text){// add an array of words to the database
+	//alert('called');
+	occurences[0]++;//essentially this is the number of inputted strings
+	for(var i = 0; i < text.length; i++){//loop through
+		if(wordListContains(text[i]) ){//if it is already in the database
+			//alert('incr');
+			occurences[ getIndex(text[i]) ]++;//find out where it is and increase the occurences
+		}else{database
+			//alert('add');
+			wordList.push(text[i]);//add the word to the words list
+			occurences.push(1);//add the word to the occurences list
+			database.push(generateNewDatabaseInfo());//add a new array to the database which has the same length as the 
+			addNewWordToDatabases();//add a new item to the end of each database array (including the one created)
+		}
+	}
+	
+	database[0][getIndex(text[0])]++;//add to the number of times the first word occurs as a first word
+	
+	for(var i = 0; i < text.length - 1; i++){//loop through
+		database[ getIndex(text[i]) ][ getIndex(text[i+1]) ]++;//add to the number of times that a specific word occurs after another word
+	}
+	
+	database[  getIndex( text[ text.length-1 ] ) ] [1]++;//add to the number of times the last word was the last word	
+}
+
+function generateMarkovChain() {
+	var currentWord=0;//start at the beginning
+	var mainString='';//the outputted markov string
+	var currentCountSize=0;//the accumulative number formed from the database entries
+	var randomWordNumber=0;
+	var randomWordIndex=1;
+	while(currentWord != 1){
+		mainString+=wordList[currentWord];
+		if(currentWord>1){
+			mainString+=' ';
+		}
+		randomWordNumber=occurences[currentWord] * Math.random();//random number ranged by the number of occurences
+		currentCountSize=0;//reset counter
+		for(var i=0; i<database[currentWord].length; i++){//loop through database entry
+			currentCountSize+=database[currentWord][i];//add occurences of words after current one
+			if(currentCountSize > randomWordNumber){
+				randomWordIndex=i;
+				i=Infinity;
+			}
+		}
+		if(wordList[currentWord]  [ wordList[currentWord].length-1 ] == '.'  ||  wordList[currentWord]  [ wordList[currentWord].length-1 ] == '?'  ||  wordList[currentWord]  [ wordList[currentWord].length-1 ] == '!'){
+			currentWord=1;
+		}else{
+			currentWord=randomWordIndex;	
+		}
+	}
+	return(mainString);
+}
+
+IN.onkeyup=function(event){
+	if(event.keyCode==13){// the enter key is pressed
+		LOG.innerHTML+='<BR/>';
+		LOG.innerHTML+='<SPAN class="user">' + IN.value + '</SPAN>';
+		addTextToDatabase(textToWordArray(IN.value));
+		LOG.innerHTML+='<BR/>';
+		LOG.innerHTML+='<SPAN class="cpu">' + generateMarkovChain() + '</SPAN>';
+		IN.value='';
+	}
+}
+	</script>
+</body>
+</html>
