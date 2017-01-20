@@ -7,8 +7,17 @@ body{
 	text-align: center;
 }
 div#wrapper{
+	margin:0 auto;
+	width:85%;
+	height:85%;
+}
+div#header{
 	width:100%;
-	height:100%;
+	height:20%;
+}
+div.canvasBox{
+	width:100%;
+	height:80%;
 }
 img{
 	width:100%;
@@ -22,8 +31,7 @@ h1{
 select{
 	color:#000;
 	background-color: #AAA;
-	border-width:  3px;
-	border-radius: 0px;
+	border-width:  3%;
 	border-color: #080;
 	width:13%;
 	height: 10%;
@@ -45,7 +53,7 @@ h4{
 	margin-bottom:1%;
 }
 meter{
-	width: 75%;
+	width: 400px;
 	height: 100%;
 }
 .canvasBox{
@@ -54,19 +62,19 @@ meter{
 	padding-top: 0px;
 }
 table{
-	font-size: 13px;
+	font-size: 90%;
 	margin: 0 auto;
 }
 canvas#board{
-	width:75%;
-	height:100%;
+	width:400px;
+	height:400px;
 }
 table.notation{
 	color:#FF7800;
 	background-color: #333;
 	font-size:100%;
 	width: 90%;
-	height: 0px;
+	height: 0%;
 }
 button{
 	border-width: 5px;
@@ -113,10 +121,10 @@ td{
 }
 
 td#boardTab{
-  width: 50%;	
+  width: 45%;
 }
 td#notationTab{
-	width: 15%;
+	width: 20%;
 	height: 0px;
 }
 td#buttonTab{

@@ -9,78 +9,82 @@
 		<LINK href="chess.css" rel="stylesheet" ></LINK>
 	</head>
 	<body>
+	
 	<div id="wrapper"><!-- Open Here -->
-		<TABLE>
-			<TR>
-				<TD>
-					<IMG src="chessimg.PNG"/>
-				</TD>
-				<TD>
-					<h1>
-						KnightCobra
-					</h1>
-				</TD>
-			</TR>
-		</TABLE>
-		<TABLE>
-			<TBODY>
-				<TR>
-					<TD>
-						<H2>
-							0.8.0 Beta
-						</H2>
-						<H4>
-							press space to flip board
-						</H4>
-					</TD>
-				</TR>
-				<TR>
-					<SELECT id='wlevel'>
-						<OPTION value='0' class='Human'>
-							Human
-						</OPTION>
-						<OPTION value='1'>
-							Level 1 (100)
-						</OPTION>
-						<OPTION value='2'>
-							Level 2 (100)
-						</OPTION>
-						<OPTION value='3'>
-							Level 3 (100)
-						</OPTION>
-						<OPTION value='4'>
-							Level 4 (267)
-						</OPTION>
-						<OPTION value='5'>
-							Level 5 (568)
-						</OPTION>
-					</SELECT>
-				</TR>
-				-
-				<TR>
-					<SELECT id='blevel'>
-						<OPTION value='0' class='Human'>
-							Human
-						</OPTION>
-						<OPTION value='1'>
-							Level 1 (100)
-						</OPTION>
-						<OPTION value='2'>
-							Level 2 (100)
-						</OPTION>
-						<OPTION value='3'>
-							Level 3 (100)
-						</OPTION>
-						<OPTION value='4'>
-							Level 4 (267)
-						</OPTION>
-						<OPTION value='5'>
-							Level 5 (568)
-						</OPTION>
-					</SELECT>
-				</TR>
-			</TBODY>
-		</TABLE>
+		<div id="header">
+				<TABLE>
+					<TR>
+						<TD>
+							<IMG src="chessimg.PNG"/>
+						</TD>
+						<TD>
+							<h1>
+								KnightCobra
+							</h1>
+						</TD>
+					</TR>
+				</TABLE>
+				<TABLE>
+					
+					<TBODY>
+						<TR>
+							<TD>
+								<H2>
+									0.8.0 Beta
+								</H2>
+								<H4>
+									press space to flip board
+								</H4>
+							</TD>
+						</TR>
+						<TR>
+							<SELECT id='wlevel'>
+								<OPTION value='0' class='Human'>
+									Human
+								</OPTION>
+								<OPTION value='1'>
+									Level 1 (100)
+								</OPTION>
+								<OPTION value='2'>
+									Level 2 (100)
+								</OPTION>
+								<OPTION value='3'>
+									Level 3 (100)
+								</OPTION>
+								<OPTION value='4'>
+									Level 4 (267)
+								</OPTION>
+								<OPTION value='5'>
+									Level 5 (568)
+								</OPTION>
+							</SELECT>
+						</TR>
+						-
+						<TR>
+							<SELECT id='blevel'>
+								<OPTION value='0' class='Human'>
+									Human
+								</OPTION>
+								<OPTION value='1'>
+									Level 1 (100)
+								</OPTION>
+								<OPTION value='2'>
+									Level 2 (100)
+								</OPTION>
+								<OPTION value='3'>
+									Level 3 (100)
+								</OPTION>
+								<OPTION value='4'>
+									Level 4 (267)
+								</OPTION>
+								<OPTION value='5'>
+									Level 5 (568)
+								</OPTION>
+							</SELECT>
+						</TR>
+					</TBODY>
+				</TABLE>
+		</div>
 		<DIV class='canvasBox'><!-- Open Here -->
 		<TABLE id="centerTable">
 			<TR id="meterRow">
@@ -2453,5 +2457,6 @@ document.getElementById('redo').onclick=function(){
 		</DIV>
 		<!--<canvas width=100 height=100></canvas>-->
 	</div>
+	
 	</body>
 </html>
