@@ -31,8 +31,16 @@ h1{
 select{
 	color:#000;
 	background-color: #AAA;
-	border-width:  3%;
-	border-color: #080;
+	border-color: #000;
+	width:13%;
+	height: 10%;
+	font-size: 80%;
+	margin-top: 0;
+}
+select:hover{
+	color:#000;
+	background-color: #AAA;
+	border-color: #0F0;
 	width:13%;
 	height: 10%;
 	font-size: 80%;
@@ -76,15 +84,37 @@ table.notation{
 	width: 90%;
 	height: 0%;
 }
+#result{
+	color:#FF7800;
+	background-color: #333;
+	font-size:100%;
+	width: 90%;
+	margin: 0 auto;
+}
 button{
-	border-width: 5px;
-	border-color: #0000FF;
+	border-width: 0px;
+	border-color: #666;
 	width: 70px;
 	height: 70px;
-	background-color: #0000FF;
+	background-color: #111;
+	color:#fff;
 	font-size: 100%;
 	margin-right: : 50%;
 	margin-left: 6%;
+}
+button:hover{
+	border-width: 0px;
+	border-color: #666;
+	width: 70px;
+	height: 70px;
+	background-color: #11A;
+	color:#000;
+	font-size: 100%;
+	margin-right: : 50%;
+	margin-left: 6%;
+}
+button#flipButton{
+	display:none;
 }
 label{
 	font-size: 100%;
@@ -93,9 +123,10 @@ p{
 	font-size: 100%;
 }
 div#detailsbox{
-	background-color:#000;
-	font-family:"arial";
-	color:#080;
+	background-color:#333;
+	font-family:"courier";
+	font-size: 75%;
+	color:#0f0;
 	height:100%;
 	width:100%;
 	border-radius: 7px;

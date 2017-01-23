@@ -32,7 +32,7 @@
 								<H2>
 									0.8.0 Beta
 								</H2>
-								<H4>
+								<H4 id="flipboard">
 									press space to flip board
 								</H4>
 							</TD>
@@ -57,6 +57,9 @@
 								<OPTION value='5'>
 									Level 5 (568)
 								</OPTION>
+								<OPTION value='6'>
+									Level 6 (569)
+								</OPTION>
 							</SELECT>
 						</TR>
 						-
@@ -80,6 +83,9 @@
 								<OPTION value='5'>
 									Level 5 (568)
 								</OPTION>
+								<OPTION value='6'>
+									Level 6 (569)
+								</OPTION>
 							</SELECT>
 						</TR>
 					</TBODY>
@@ -102,6 +108,7 @@
 							<TBODY id="move_board">
 							</TBODY>
 						</TABLE>
+						<DIV id="result"></DIV>
 					</DIV>
 				</TD>
 				<TD id="buttonTab">
@@ -120,15 +127,11 @@
 				</TD>
 			</TR>
 		</TABLE>
-		<SCRIPT src="book.js" ></SCRIPT><!-- The opening book. -->
 		<SCRIPT><!-- Main Script -->
-
-/*
-Ampere's ideas were very current, wheras Volta's were potentially different;
-Newton was forcefull, but Watt had power;
-Joule was energetic and Kelin got heated, but it was Pascal who was really under pressure;
-and Faraday's capacity induced Henry to charge Coulumb with resisting Ohm for a second time.
-*/
+			
+function asahdgvsahdfbvudshfbviusdhfbviusdhfbv(){//for Geany text folding
+	
+}
 
 {//variables
 	var threefoldRepAlerted=false;
@@ -186,6 +189,47 @@ function Move(x1,y1,x2,y2){
 	this.x2=x2;
 	this.y2=y2;
 }//a move object prototype
+
+{//opening book
+	function Move(x1,y1,x2,y2){
+		this.x1=x1;
+		this.y1=y1;
+		this.x2=x2;
+		this.y2=y2;
+	}
+	
+	var positions=[
+		'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+		'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1',
+		"rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+	];
+	
+	var names=[
+		'starting position',
+		'B00 king\'s pawn opening',
+		'C20 king\'s pawn game',
+	];
+	var openings=[
+		[new Move(4,6,4,4), new Move(3,6,3,4), new Move(2,6,2,4), ],
+		[new Move(4,1,4,3), new Move(3,1,3,3), new Move(2,1,2,3), ],
+		[new Move(6,7,5,5)],
+	];
+	
+	function getOpeningMove(FEN) {
+		var i;
+		var match=false;
+		for(i = 0; i < positions.length  && !match; i++){
+			if(positions[i] == FEN){
+				match=true;
+			}
+		}
+		i--;
+		if(!match){
+			return(false);
+		}
+		return(openings[i][Math.floor(Math.random()*openings[i].length)]);
+	}
+}
 
 function Position(pos){
 	this.p=[];
@@ -715,7 +759,7 @@ function getNoFromTurn() {//so that integers can be used to describe the positio
 function newgame() {//reset the position
 	//flipped=false;//this was actually quite annoying
 	currentDepth=1;//unused, I think
-	game=["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq"];//for threefold rep
+	game=["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -"];//for threefold rep
 	complexGame=["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"];//for undo / redo
 	moveCount=1;//the move
 	threefoldRepAlerted=false;
@@ -746,6 +790,7 @@ function newgame() {//reset the position
 	drawBoard();
 	endSearch();//if the user presses new game while searching, this stops weird things from happening
 	prog.value=0;//restart progress METER
+	document.getElementById('result').textContent='';
 }
 
 function EvalPos() {//for evaluating positions
@@ -1561,13 +1606,13 @@ function executeFinalMoveW(moveToDo) {//executes a move so that it actuall gets 
 	if(testForInsuffMaterial()){
 		turn=null;
 		alert('Draw by insufficient mating material.');
-		notationArray[0][moveCount-1]+='½-½';
+		document.getElementById('result').textContent='½-½';
 	}
 	if(_50moveCounter >= 50){
 		drawBoard();
 		turn=null;
 		alert('Draw by 50-move rule.');
-		notationArray[0][moveCount-1]+='½-½';
+		document.getElementById('result').textContent='½-½';
 	}
 	plyCount++;
 	testThree();
@@ -1632,13 +1677,13 @@ function executeFinalMoveB(moveToDo) {
 	if(testForInsuffMaterial()){
 		turn=null;
 		alert('Draw by insufficient mating material.');
-		notationArray[1][moveCount-1]+='½-½';
+		document.getElementById('result').textContent='½-½';
 	}
 	if(_50moveCounter >= 50){
 		drawBoard();
 		turn=null;
 		alert('Draw by 50-move rule.');
-		notationArray[1][moveCount-1]+='½-½';
+		document.getElementById('result').textContent='½-½';
 	}
 	moveCount++;
 	plyCount++;
@@ -1658,9 +1703,9 @@ function testThree() {
 						if(!threefoldRepAlerted){
 							alert('Draw by threefold repetition.');
 							if(turn == 'W'){
-								notationArray[0][moveCount-1]+='½-½';
+								document.getElementById('result').textContent='½-½';
 							}else{
-								notationArray[1][moveCount-1]+='½-½';
+								document.getElementById('result').textContent='½-½';
 							}
 							turn=null;
 							threefoldRepAlerted=true;
@@ -1718,7 +1763,7 @@ document.getElementById('board').onmousemove=function(event) {//mouse handlers
 			squareSize,squareSize
 		);//draws the piece constantly
 	}
-	//console.log(X+', '+Y);
+	console.log(X+', '+Y);
 	try{
 		pieceInMove=position[Y][X];
 	}catch(e) {
@@ -1805,10 +1850,10 @@ function mainLoop() {
 				var KingY=KingPos.y;
 				if(squareControl(KingX,KingY).B){//if in check
 					alert('White is checkmated.');
-					move_board.innerHTML+='<TR>'+'<TD>'+'# 0-1'+'</TD>'+'</TR>';
+					document.getElementById('result').textContent='# 0-1';
 				}else{
 					alert('Draw by stalemate.');
-					move_board.innerHTML+='<TR>'+'<TD>'+'½-½';
+					document.getElementById('result').textContent='½-½';
 				}
 				turn=null;
 				endSearch();
@@ -1832,6 +1877,16 @@ function mainLoop() {
 				endSearch();
 				drawBoard();
 				return(3);
+			}
+			if(wlevel.value==6){
+				var openingMove=getOpeningMove(getFEN(true));
+				if(openingMove){
+					executeFinalMoveW(openingMove);
+					endSearch();
+					drawBoard();
+					prog.value=500;
+					return(6);
+				}
 			}
 			isSearching=false;
 			startingSearch=false;
@@ -1858,7 +1913,7 @@ function mainLoop() {
 							showDetails();
 						}
 						turn='W';
-						if(wlevel.value==5){
+						if(wlevel.value >= 5){
 							prog.value= 50 + ((200/movesArray.length)*currentSearchingIndex);
 						}
 						if(showingCalculations){drawBoard();}
@@ -1925,7 +1980,7 @@ function mainLoop() {
 							//positionsArray[ currentSearchingIndex[0] ]=[];
 							//positionsArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ]=(new Position(position).p);//add the position to the positions array
 							if(showingCalculations){drawBoard();}
-							if(wlevel.value==5){
+							if(wlevel.value >= 5){
 								prog.value = 250 + ((250/movesArray.length)*currentSearchingIndex[0]);
 							}
 							currentSearchingIndex[1]++;//move to the next opponent's move in the current own move.	
@@ -1960,10 +2015,10 @@ function mainLoop() {
 				var KingY=KingPos.y;
 				if(squareControl(KingX,KingY).W){//if in check
 					alert('Black is checkmated.');
-					move_board.innerHTML+='<TR>'+'<TD>'+'# 0-1'+'</TD>'+'</TR>';
+					document.getElementById('result').textContent='# 0-1';
 				}else{
 					alert('Draw by stalemate.');
-					move_board.innerHTML+='<TR>'+'<TD>'+'1/2-1/2'+'</TD>'+'</TR>';
+					document.getElementById('result').textContent='½-½';
 				}
 				turn=null;
 				endSearch();
@@ -1987,6 +2042,16 @@ function mainLoop() {
 				endSearch();
 				drawBoard();
 				return(3);
+			}
+			if(blevel.value==6){
+				var openingMove=getOpeningMove(getFEN(true));
+				if(openingMove){
+					executeFinalMoveB(openingMove);
+					endSearch();
+					drawBoard();
+					prog.value=500;
+					return(6);
+				}
 			}
 			isSearching=false;
 			startingSearch=false;
@@ -2013,7 +2078,7 @@ function mainLoop() {
 							showDetails();
 						}
 						turn='B';
-						if(blevel.value==5){
+						if(blevel.value>=5){
 							prog.value= 50 + ((200/movesArray.length)*currentSearchingIndex);
 						}
 						if(showingCalculations){drawBoard();}
@@ -2079,7 +2144,7 @@ function mainLoop() {
 							//positionsArray[ currentSearchingIndex[0] ]=[];
 							//positionsArray[ currentSearchingIndex[0] ] [ currentSearchingIndex[1] ]=(new Position(position).p);//add the position to the positions array
 							if(showingCalculations){drawBoard();}
-							if(blevel.value==5){
+							if(blevel.value>=5){
 								prog.value = 250 + ((250/movesArray.length)*currentSearchingIndex[0]);
 							}
 							currentSearchingIndex[1]++;//move to the next opponent's move in the current own move.
@@ -2100,6 +2165,43 @@ function mainLoop() {
 					}
 					break;
 			}
+		}
+	}
+	
+}
+
+function checkForPlayerMate(){
+	if(turn == "W" && wlevel.value == 0){//if a human player
+		movesArray=getCPUmoves('W');//get the available moves
+		if(movesArray.length==0){//if no available moves
+			var KingPos=getKingPos('W');
+			var KingX=KingPos.x;
+			var KingY=KingPos.y;
+			if(squareControl(KingX,KingY).B){//if in check
+				alert('White is checkmated.');
+				document.getElementById('result').textContent='# 0-1';
+			}else{
+				alert('Draw by stalemate.');
+				document.getElementById('result').textContent='½-½';
+			}
+			turn=null;
+		}
+	}
+	
+	if(turn == "B" && blevel.value == 0){//if a human player
+		movesArray=getCPUmoves('B');//get the available moves
+		if(movesArray.length==0){//if no available moves
+			var KingPos=getKingPos('B');
+			var KingX=KingPos.x;
+			var KingY=KingPos.y;
+			if(squareControl(KingX,KingY).W){//if in check
+				alert('Black is checkmated.');
+				document.getElementById('result').textContent='# 0-1';
+			}else{
+				alert('Draw by stalemate.');
+				document.getElementById('result').textContent='½-½';
+			}
+			turn=null;
 		}
 	}
 }
@@ -2225,14 +2327,15 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 					if(testForInsuffMaterial()){
 						turn=null;
 						alert('Draw by insufficient mating material.');
-						notationArray[0][moveCount-1]+='½-½';
+						document.getElementById('result').textContent='½-½';
 					}
 					if(_50moveCounter >= 50){
 						drawBoard();
 						turn=null;
 						alert('Draw by 50-move rule.');
-						notationArray[0][moveCount-1]+='½-½';
+						document.getElementById('result').textContent='½-½';
 					}
+					checkForPlayerMate();
 					plyCount++;
 					testThree();
 					readyToMove=true;
@@ -2347,14 +2450,15 @@ document.getElementById('board').onmouseup=function(event) {//this also contains
 					if(testForInsuffMaterial()){
 						turn=null;
 						alert('Draw by insufficient mating material.');
-						notationArray[1][moveCount-1]+='½-½';
+						document.getElementById('result').textContent='½-½';
 					}
 					if(_50moveCounter >= 50){
 						drawBoard();
 						turn=null;
 						alert('Draw by 50-move rule.');
-						notationArray[1][moveCount-1]+='½-½';
+						document.getElementById('result').textContent='½-½';
 					}
+					checkForPlayerMate();
 					moveCount++;
 					plyCount++;
 					testThree();
@@ -2419,6 +2523,9 @@ setTimeout('drawBoard()',1000);
 			<BUTTON onclick="setDetails()">
 				Enter Details
 			</BUTTON>
+			<BUTTON id="flipButton">
+				Flip Board
+			</BUTTON>
 			<SCRIPT type="text/javascript">
 document.getElementById('undo').onclick=function(){
 	if(plyCount){
@@ -2430,6 +2537,7 @@ document.getElementById('undo').onclick=function(){
 		endSearch();
 		threefoldRepAlerted=false;
 		_50moveCounter--;
+		document.getElementById('result').textContent='';
 	}else{
 		alert('Cannot undo move');
 	}
@@ -2447,6 +2555,38 @@ document.getElementById('redo').onclick=function(){
 		alert('Cannot redo move.');
 	}
 }
+
+document.getElementById('flipButton').onclick=function(){
+	flipped=true;
+	drawBoard();
+	
+}
+
+function detectmob() { 
+	if(
+		navigator.userAgent.match(/Android/i)
+		|| navigator.userAgent.match(/webOS/i)
+		|| navigator.userAgent.match(/iPhone/i)
+		|| navigator.userAgent.match(/iPod/i)
+		|| navigator.userAgent.match(/BlackBerry/i)
+		|| navigator.userAgent.match(/Windows Phone/i)
+		|| ( window.innerWidth <= 800 && window.innerHeight <= 600 )
+	){
+		return(true);
+	}
+	else{
+		return(false);
+	}
+}
+function mobilify(){
+	document.getElementById("buttonTab").style.display='none';
+	document.getElementById("detailsTab").style.display='none';
+	document.getElementById("flipboard").textContent='mobile version';
+	document.getElementById("notationTab").style.display='none';
+	document.getElementById("flipButton").style.display='block';
+}
+if(detectmob()){mobilify();}
+
 			</SCRIPT>
 			<HR>
 			<P>
