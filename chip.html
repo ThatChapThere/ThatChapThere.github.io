@@ -1,0 +1,220 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>Electronic Chip Simulator</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="generator" content="Geany 1.26" />
+</head>
+
+<body>
+	<canvas width="500" height="500" >
+	<script type='text/javascript'>
+var ctx=document.getElementsByTagName('canvas')[0].getContext('2d');
+ctx.fillStyle='#fff';
+ctx.strokeStyle='#000';
+ctx.fillRect(0,0,500,500);
+var regions=[];
+var charges=[];
+var chargeChanges=[];
+var names=['silicon','aluminium','n-biased','p-biased','positive electrode','negative electrode'];
+var colours=['#444','#88A','#004','#400','#f00','#00f'];
+
+for(var i=0;i<20;i++){
+	regions[i]=[];
+	charges[i]=[];
+	chargeChanges[i]=[];
+	for(var j=0;j<20;j++){
+		regions[i][j]=0;
+		charges[i][j]=0;
+		chargeChanges[i][j]=0;
+		//~ console.log(i+', '+j);
+		//~ ctx.strokeRect(i*25,j*25,25,25);
+	}
+}
+
+ctx.canvas.onclick=function(event) {
+	var x=event.clientX-ctx.canvas.offsetLeft-scrollX;
+	var y=event.clientY-ctx.canvas.offsetTop-scrollY;
+	x/=25;
+	y/=25;
+	x=Math.floor(x);
+	y=Math.floor(y);
+	console.log(x+', '+y);
+	regions[x][y]++;
+	charges[x][y]=0;
+	if(regions[x][y] == names.length){
+		regions[x][y]=0;
+	}
+}
+
+function draw() {
+	for(var i=0;i<20;i++){
+		for(var j=0;j<20;j++){
+			ctx.strokeRect(i*25,j*25,25,25);
+			ctx.fillStyle=colours[regions[i][j]];
+			ctx.fillRect(i*25,j*25,25,25);
+			
+			if(charges[i][j]>0){
+				ctx.fillStyle='#00ff00';
+			}else{
+				ctx.fillStyle='#ff00ff';
+			}
+			
+			ctx.arc( (i*25) + 12.5, (j*25) + 12.5, Math.abs(charges[i][j]) * 1.25, 0, Math.PI*2, false);
+			ctx.fill();
+			ctx.beginPath();
+			
+			if(regions[i][j] == 4){
+				charges[i][j]=10;
+			}
+
+			if(regions[i][j] == 5){
+				charges[i][j]=-10;
+			}
+			
+			if(regions[i+1] && charges[i+1][j]){
+				switch(regions[i][j]){
+					case 1://metal
+						if(charges[i+1][j] > charges[i][j]){
+							chargeChanges[i][j]++;
+						}
+						if(charges[i+1][j] < charges[i][j]){
+							chargeChanges[i][j]--;
+						}
+						break;
+					case 2://n-
+						if(charges[i+1][j] > charges[i][j] && charges[i][j] > 0){
+							chargeChanges[i][j]++;
+						}
+						if(charges[i+1][j] < charges[i][j]){
+							chargeChanges[i][j]--;
+						}
+						
+						break;
+					case 3://p-
+						if(charges[i+1][j] > charges[i][j]){
+							chargeChanges[i][j]++;
+						}
+						if(charges[i+1][j] < charges[i][j] && charges[i][j] < 0){
+							chargeChanges[i][j]--;
+						}
+						break;
+					default:
+						break;
+					
+				}
+			}
+			if(regions[i-1] && charges[i-1][j]){
+				switch(regions[i][j]){
+					case 1://metal
+						if(charges[i-1][j] > charges[i][j]){
+							chargeChanges[i][j]++;
+						}
+						if(charges[i-1][j] < charges[i][j]){
+							chargeChanges[i][j]--;
+						}
+						break;
+					case 2://n-
+						if(charges[i-1][j] > charges[i][j] && charges[i][j] < 1){
+							chargeChanges[i][j]++;
+						}
+						if(charges[i-1][j] < charges[i][j]){
+							chargeChanges[i][j]--;
+						}
+						
+						break;
+					case 3://p-
+						if(charges[i-1][j] > charges[i][j]){
+							chargeChanges[i][j]++;
+						}
+						if(charges[i-1][j] < charges[i][j] && charges[i][j] > -1){
+							chargeChanges[i][j]--;
+						}
+						break;
+					default:
+						break;
+					
+				}
+			}
+			if(charges[i][j+1]){
+				switch(regions[i][j]){
+					case 1://metal
+						if(charges[i][j+1] > charges[i][j]){
+							chargeChanges[i][j]++;
+						}
+						if(charges[i][j+1]< charges[i][j]){
+							chargeChanges[i][j]--;
+						}
+						break;
+					case 2://n-
+						if(charges[i][j+1] > charges[i][j] && charges[i][j] > 0){
+							chargeChanges[i][j]++;
+						}
+						if(charges[i][j+1] < charges[i][j]){
+							chargeChanges[i][j]--;
+						}
+						
+						break;
+					case 3://p-
+						if(charges[i][j+1] > charges[i][j]){
+							chargeChanges[i][j]++;
+						}
+						if(charges[i][j+1] < charges[i][j] && charges[i][j] < 0){
+							chargeChanges[i][j]--;
+						}
+						break;
+					default:
+						break;
+					
+				}
+			}
+			if(charges[i][j-1]){
+				switch(regions[i][j]){
+					case 1://metal
+						if(charges[i][j-1] > charges[i][j]){
+							chargeChanges[i][j]++;
+						}
+						if(charges[i][j-1] < charges[i][j]){
+							chargeChanges[i][j]--;
+						}
+						break;
+					case 2://n-
+						if(charges[i][j-1] > charges[i][j] && charges[i][j] < 0){
+							chargeChanges[i][j]++;
+						}
+						if(charges[i][j-1] < charges[i][j]){
+							chargeChanges[i][j]--;
+						}
+						
+						break;
+					case 3://p-
+						if(charges[i][j-1] > charges[i][j]){
+							chargeChanges[i][j]++;
+						}
+						if(charges[i][j-1] < charges[i][j] && charges[i][j] > 0){
+							chargeChanges[i][j]--;
+						}
+						break;
+					default:
+						break;
+					
+				}
+			}
+		}
+	}
+	
+	for(var i=0;i<20;i++){
+		for(var j=0;j<20;j++){
+			charges[i][j]+=chargeChanges[i][j];
+			chargeChanges[i][j]=0;
+		}
+	}
+}
+
+setInterval(draw,20);
+	</script>
+</body>
+
+</html>
