@@ -6,9 +6,115 @@
 	<title>Electronic Chip Simulator</title>
 	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
 	<meta name="generator" content="Geany 1.26" />
+	<style>
+body{
+	background-color:#AAA;
+	color:#222;
+}
+td.button{
+	background-color:#FFF;
+	color:#000;
+}
+td.button:hover{
+	background-color:#888;
+	color:#000;
+}
+td.color{
+	width:30px;
+	height:30px;
+}
+td#siliconCol{
+	background-color:#444;
+}
+td#aluminiumCol{
+	background-color:#88A;
+}
+td#nsemiCol{
+	background-color:#004;
+}
+td#psemiCol{
+	background-color:#400;
+}
+td#pelCol{
+	background-color:#f00;
+}
+td#nelCol{
+	background-color:#00f;
+}
+td#ledCol{
+	background-color:#000;
+}
+	</style>
 </head>
 
 <body>
+	<table>
+		<tr>
+			<td>
+				<canvas width="500" height="500" />
+			</td>
+			<td>
+				<table class="things">
+					<tr id="silicon">
+						<td id="siliconCol" class="color">
+							
+						</td>
+						<td class="button" onclick="currentType=0">
+							Silicon
+						</td>
+					</tr>
+					<tr id="aluminium">
+						<td id="aluminiumCol" class="color">
+							
+						</td>
+						<td class="button" onclick="currentType=1">
+							Aluminium
+						</td>
+					</tr>
+					<tr id="nsemi">
+						<td id="nsemiCol" class="color">
+							
+						</td>
+						<td class="button" onclick="currentType=2">
+							N-biased semiconductor
+						</td>
+					</tr>
+					<tr id="psemi">
+						<td id="psemiCol" class="color">
+							
+						</td>
+						<td class="button" onclick="currentType=3">
+							P-biased semiconductor
+						</td>
+					</tr>
+					<tr id="pel">
+						<td id="pelCol" class="color">
+							
+						</td>
+						<td class="button" onclick="currentType=4">
+							Positive Electrode
+						</td>
+					</tr>
+					<tr id="nel">
+						<td id="nelCol" class="color">
+							
+						</td>
+						<td class="button" onclick="currentType=5">
+							Negative electrode
+						</td>
+					</tr>
+					<tr id="led">
+						<td id="ledCol" class="color">
+							
+						</td>
+						<td class="button" onclick="currentType=6">
+							Light bulb (works based on left and right voltages, not top to bottom)
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
 	<canvas width="500" height="500" >
 	<script type='text/javascript'>
 var ctx=document.getElementsByTagName('canvas')[0].getContext('2d');
@@ -16,35 +122,86 @@ ctx.fillStyle='#fff';
 ctx.strokeStyle='#000';
 ctx.fillRect(0,0,500,500);
 var regions=[];
-var charges=[];
-var chargeChanges=[];
-var names=['silicon','aluminium','n-biased','p-biased','positive electrode','negative electrode'];
-var colours=['#444','#88A','#004','#400','#f00','#00f'];
+var mouseDown=false;var isMouseDown = false;
+document.onmousedown = function() {
+	mouseDown = true;
+};
+document.onmouseup = function() {
+	mouseDown = false
+};
+
+function getOffset(left) {//true=left, false=top
+	var offset=0;
+	if(left){
+		var element=ctx.canvas;
+		while(element != document.body){
+			offset+=element.offsetLeft;
+			element=element.offsetParent;
+		}
+		offset+=element.offsetLeft;
+	}else{
+		var element=ctx.canvas;
+		while(element != document.body){
+			offset+=element.offsetTop;
+			element=element.offsetParent;
+		}
+		offset+=element.offsetTop;
+	}
+	return(offset);
+}
+
+var currentType=0;
+var voltages=[];
+var voltageChanges=[];
+var names=['silicon','aluminium','n-biased','p-biased','positive electrode','negative electrode','led'];
+var colours=['#444','#88A','#004','#400','#f00','#00f','#000'];
+var neighbors=[
+	{x:1,y:0},
+	{x:-1,y:0},
+	{x:0,y:1},
+	{x:0,y:-1}
+];
 
 for(var i=0;i<20;i++){
 	regions[i]=[];
-	charges[i]=[];
-	chargeChanges[i]=[];
+	voltages[i]=[];
+	voltageChanges[i]=[];
 	for(var j=0;j<20;j++){
 		regions[i][j]=0;
-		charges[i][j]=0;
-		chargeChanges[i][j]=0;
+		voltages[i][j]=0;
+		voltageChanges[i][j]=0;
 		//~ console.log(i+', '+j);
 		//~ ctx.strokeRect(i*25,j*25,25,25);
 	}
 }
 
+ctx.canvas.onmousemove=function(event) {
+	if(mouseDown){
+	var x=event.clientX-getOffset(true)-scrollX;
+	var y=event.clientY-getOffset(false)-scrollY;
+		x/=25;
+		y/=25;
+		x=Math.floor(x);
+		y=Math.floor(y);
+		console.log(x+', '+y);
+		regions[x][y]=currentType;
+		voltages[x][y]=0;
+		if(regions[x][y] >= names.length){
+			regions[x][y]=0;
+		}
+	}
+}
 ctx.canvas.onclick=function(event) {
-	var x=event.clientX-ctx.canvas.offsetLeft-scrollX;
-	var y=event.clientY-ctx.canvas.offsetTop-scrollY;
+	var x=event.clientX-getOffset(true)-scrollX;
+	var y=event.clientY-getOffset(false)-scrollY;
 	x/=25;
 	y/=25;
 	x=Math.floor(x);
 	y=Math.floor(y);
 	console.log(x+', '+y);
-	regions[x][y]++;
-	charges[x][y]=0;
-	if(regions[x][y] == names.length){
+	regions[x][y]=currentType;
+	voltages[x][y]=0;
+	if(regions[x][y] >= names.length){
 		regions[x][y]=0;
 	}
 }
@@ -56,159 +213,91 @@ function draw() {
 			ctx.fillStyle=colours[regions[i][j]];
 			ctx.fillRect(i*25,j*25,25,25);
 			
-			if(charges[i][j]>0){
-				ctx.fillStyle='#00ff00';
+			if(voltages[i][j]>0){
+				ctx.fillStyle='#ff0000';
 			}else{
-				ctx.fillStyle='#ff00ff';
+				ctx.fillStyle='#0000ff';
 			}
 			
-			ctx.arc( (i*25) + 12.5, (j*25) + 12.5, Math.abs(charges[i][j]) * 1.25, 0, Math.PI*2, false);
+			ctx.arc( (i*25) + 12.5, (j*25) + 12.5, Math.abs(voltages[i][j]) * 1.25, 0, Math.PI*2, false);
 			ctx.fill();
 			ctx.beginPath();
 			
 			if(regions[i][j] == 4){
-				charges[i][j]=10;
+				voltages[i][j]=10;
 			}
 
 			if(regions[i][j] == 5){
-				charges[i][j]=-10;
+				voltages[i][j]=-10;
 			}
 			
-			if(regions[i+1] && charges[i+1][j]){
-				switch(regions[i][j]){
-					case 1://metal
-						if(charges[i+1][j] > charges[i][j]){
-							chargeChanges[i][j]++;
+			if(regions[i][j] == 0){
+				voltages[i][j]=0;
+			}
+			
+			var numberOfNeighbors=0;
+			var sumOfNeighbors=0;
+			for(var k=0;k<neighbors.length;k++){
+				var x=neighbors[k].x+i;
+				var y=neighbors[k].y+j;
+				try{
+					if(regions[x][y] != 0 && regions[x][y] != 2 && regions[x][y] != 3){//is aluminium
+						switch(regions[i][j]){
+							case 1:
+							case 2:
+							case 3:
+							case 6:
+								numberOfNeighbors++;
+								sumOfNeighbors+=voltages[x][y];
+								break;
+							case 0:
+							case 4:
+							case 5:
+							default:
+								break;
 						}
-						if(charges[i+1][j] < charges[i][j]){
-							chargeChanges[i][j]--;
-						}
-						break;
-					case 2://n-
-						if(charges[i+1][j] > charges[i][j] && charges[i][j] > 0){
-							chargeChanges[i][j]++;
-						}
-						if(charges[i+1][j] < charges[i][j]){
-							chargeChanges[i][j]--;
-						}
-						
-						break;
-					case 3://p-
-						if(charges[i+1][j] > charges[i][j]){
-							chargeChanges[i][j]++;
-						}
-						if(charges[i+1][j] < charges[i][j] && charges[i][j] < 0){
-							chargeChanges[i][j]--;
-						}
-						break;
-					default:
-						break;
-					
+					}
+				}catch(e){
+					//~ console.log(e);
 				}
 			}
-			if(regions[i-1] && charges[i-1][j]){
-				switch(regions[i][j]){
-					case 1://metal
-						if(charges[i-1][j] > charges[i][j]){
-							chargeChanges[i][j]++;
-						}
-						if(charges[i-1][j] < charges[i][j]){
-							chargeChanges[i][j]--;
-						}
-						break;
-					case 2://n-
-						if(charges[i-1][j] > charges[i][j] && charges[i][j] < 1){
-							chargeChanges[i][j]++;
-						}
-						if(charges[i-1][j] < charges[i][j]){
-							chargeChanges[i][j]--;
-						}
-						
-						break;
-					case 3://p-
-						if(charges[i-1][j] > charges[i][j]){
-							chargeChanges[i][j]++;
-						}
-						if(charges[i-1][j] < charges[i][j] && charges[i][j] > -1){
-							chargeChanges[i][j]--;
-						}
-						break;
-					default:
-						break;
-					
-				}
-			}
-			if(charges[i][j+1]){
-				switch(regions[i][j]){
-					case 1://metal
-						if(charges[i][j+1] > charges[i][j]){
-							chargeChanges[i][j]++;
-						}
-						if(charges[i][j+1]< charges[i][j]){
-							chargeChanges[i][j]--;
-						}
-						break;
-					case 2://n-
-						if(charges[i][j+1] > charges[i][j] && charges[i][j] > 0){
-							chargeChanges[i][j]++;
-						}
-						if(charges[i][j+1] < charges[i][j]){
-							chargeChanges[i][j]--;
-						}
-						
-						break;
-					case 3://p-
-						if(charges[i][j+1] > charges[i][j]){
-							chargeChanges[i][j]++;
-						}
-						if(charges[i][j+1] < charges[i][j] && charges[i][j] < 0){
-							chargeChanges[i][j]--;
-						}
-						break;
-					default:
-						break;
-					
-				}
-			}
-			if(charges[i][j-1]){
-				switch(regions[i][j]){
-					case 1://metal
-						if(charges[i][j-1] > charges[i][j]){
-							chargeChanges[i][j]++;
-						}
-						if(charges[i][j-1] < charges[i][j]){
-							chargeChanges[i][j]--;
-						}
-						break;
-					case 2://n-
-						if(charges[i][j-1] > charges[i][j] && charges[i][j] < 0){
-							chargeChanges[i][j]++;
-						}
-						if(charges[i][j-1] < charges[i][j]){
-							chargeChanges[i][j]--;
-						}
-						
-						break;
-					case 3://p-
-						if(charges[i][j-1] > charges[i][j]){
-							chargeChanges[i][j]++;
-						}
-						if(charges[i][j-1] < charges[i][j] && charges[i][j] > 0){
-							chargeChanges[i][j]--;
-						}
-						break;
-					default:
-						break;
-					
-				}
+			if(numberOfNeighbors){
+				var meanSurroundingVoltage=sumOfNeighbors/numberOfNeighbors;
+				voltageChanges[i][j]=meanSurroundingVoltage-voltages[i][j];
 			}
 		}
 	}
 	
 	for(var i=0;i<20;i++){
 		for(var j=0;j<20;j++){
-			charges[i][j]+=chargeChanges[i][j];
-			chargeChanges[i][j]=0;
+			voltages[i][j]+=voltageChanges[i][j];
+			voltageChanges[i][j]=0;
+			if(regions[i][j]==2 && voltages[i][j]>0){
+				voltages[i][j]=0;
+			}
+			if(regions[i][j]==3 && voltages[i][j]<0){
+				voltages[i][j]=0;
+			}
+			if(regions[i][j]==6){
+				try{
+					if( 
+						(
+							Math.abs( voltages[i-1][j] - voltages[i+1][j] ) > 2 )  &&
+							regions[i-1][j] != 0  &&
+							regions[i+1][j] != 0
+						){//if both sides are not silicon and have a sufficient p.d.
+						ctx.fillStyle='#ffff00';
+						ctx.arc( (i*25) + 12.5, (j*25) + 12.5, 12.5, 0, Math.PI*2, false);
+						ctx.fill();
+						ctx.beginPath();
+					}else{
+						ctx.fillStyle='#000000';
+						ctx.fillRect(i*25,j*25,25,25);
+					}
+				}catch(e){
+					//~ console.log(e);
+				}
+			}
 		}
 	}
 }
