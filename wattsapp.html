@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>WattsApp - Communication Powered by Steam</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="generator" content="Geany 1.29" />
+	<style>
+.head{
+	width:100%;
+	height:100px;
+	position:fixed;
+	background-color:#DDDDDDDD;
+	left:0px;
+	top:0px;
+}
+body{
+	background-color:#EEFFEE;
+	background-image:url("wattsback.png");
+}
+img#main{
+	position:fixed;
+	left:20px;
+	top:20px;
+	width:150px;
+	height:150px;
+}
+.info{
+	font-size:20px;
+	padding-top:175px;
+	padding-left:5%;
+	padding-right: 5%;
+	color: #FFDDDD;
+}
+a:link{
+	color:8888FF;
+}
+a:visited{
+	color:#FF00FF;
+}
+a:hover{
+	color:#8888FF;
+}
+a:active{
+	color:#FF8800;
+}
+
+table.menu{
+	position:absolute;
+	bottom:0;
+	left:175px;
+}
+td.menu{
+	font-family:"arial";
+	text-decoration: underline;
+	padding-left: 25px;
+	padding-right: 25px;
+	font-size: 25px;
+	background-color: #AAAAAA88;
+	cursor: pointer;
+}
+td.menu:hover{
+	font-family:"arial";
+	text-decoration: underline;
+	padding-left: 25px;
+	padding-right: 25px;
+	font-size: 25px;
+	background-color: #999999;
+	cursor: pointer;
+}
+#lsd{
+	width:100px;
+	height:50px;
+}
+.icon{
+	width:50px;
+	height:50px;
+}
+#download{
+	font-family: "arial";
+}
+#download td{
+	padding-left: 30px;
+	padding-top: 30px;
+}
+.title{
+	font-family:"arial";
+	font-weight: bold;
+	padding-left: 175px;
+	font-size:40px;
+	color:#43ff00;
+}
+	</style>
+</head>
+
+<body>
+	<div class="head">
+		<span class="title">WattsApp.com</span>
+		<table class="menu"><tr>
+			<td id="homel" class="menu">Home</td>
+			<td id="aboutl" class="menu">About</td>
+			<td id="aboutmel" class="menu">About Me</td>
+			<td id="downloadl" class="menu">Download</td>
+		</tr></table>
+		<img id="main" src="wattsapp.png"/>
+	</div>
+	<div id="home" class="info">
+		This is the WattsApp home page. From hither thee can download the app for various platforms, readeth the app's specifications, or findeth out more about me. 
+	</div>
+	<div id="about" class="info">
+		WattsApp useth the power of <a href="http://store.steampowered.com/">steam</a> to sendeth and receiveth messages with thy friends without using wireless fidelity, mobile data or electricity. 
+		Tis free to download, 
+		but thou has't to payeth to sendeth messages at the rate of 2/- in the fusty <a href="https://en.wikipedia.org/wiki/%C2%A3sd">Lsd system</a> 
+		(not <a href="https://en.wikipedia.org/wiki/Lysergic_acid_diethylamide">Lysergic acid diethylamide <img id="lsd" src="lsd.png"/></a>), 
+		or 10p in <a href="https://en.wikipedia.org/wiki/Decimal_Day">today's wage</a>, per thousand messages. 
+	</div>
+	</div>
+	<div id="aboutme" class="info">
+		Good morrow to you, sir, thou mayest refer to me as James Watt. 
+		I wast born on the 19th of January 1736, making me a sprightly 281. 
+		I wast born in Greenock in Scotland. 
+		I wenteth to the University of Glasgow and then hath moved to England.
+		I invented a few things like the steam engine, and sort of started a bit of a thing hath called the Industrial Revolution. 
+		Thee can readeth more about me on <a href="https://en.wikipedia.org/wiki/James_Watt">Wikipædia</a>, although that sayeth that I hath kicked the bucket, which I forsooth don't recall doing. 
+	</div>
+	</div>
+	<div id="download" class="info">
+		<table>
+			<tr>
+				<td>platform:</td>
+				<td>link:</td>
+			</tr>
+			<tr>
+				<td>Automaton <img class="icon" src="android.png"/></td>
+				<td><a href="Download.html">download automaton app version 1.2.4</a></td>
+			</tr>
+			<tr>
+				<td>Windows <img class="icon" src="windows.png"/></td>
+				<td><a href="Download.html">download windows app version 1.0.3a</a></td>
+			</tr>
+			<tr>
+				<td>Apple <img class="icon" src="apple.png"/></td>
+				<td><a href="Download.html">download automaton app version 1.4.2b</a></td>
+			</tr>
+		</table>
+	</div>
+<script>
+function hideAll() {
+	for(var i=0;i<document.getElementsByClassName('info').length;i++){
+		document.getElementsByClassName('info')[i].style.display='none';
+	}
+}
+hideAll();
+document.getElementById('home').style.display='block';
+document.getElementById('homel').onclick=function() {
+	hideAll();
+	document.getElementById('home').style.display='block';
+};
+document.getElementById('aboutl').onclick=function() {
+	hideAll();
+	document.getElementById('about').style.display='block';
+};
+document.getElementById('aboutmel').onclick=function() {
+	hideAll();
+	document.getElementById('aboutme').style.display='block';
+};
+document.getElementById('downloadl').onclick=function() {
+	hideAll();
+	document.getElementById('download').style.display='block';
+};
+</script>
+</body>
+
+</html>
