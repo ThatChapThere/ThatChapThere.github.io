@@ -59,8 +59,6 @@ function Sort(a) {
 	return(r);
 };
 
-//That monster line above ↑ is to sort arrays
-
 function RGB(R,G,B) {//For easy colour making with other variables
 	R=Math.round(bound(R,255,0));
 	G=Math.round(bound(G,255,0));
@@ -110,6 +108,36 @@ function Point(x,y,z) {
 	};
 };//a basic cartesian object prototype
 
+function Rotation(r,p,y) {
+	this.r=r;
+	this.p=p;
+	this.y=y;
+}
+
+function Body(position, velocity, acceleration) {
+	this.position=position;
+	this.velocity=velocity;
+	this.acceleration=acceleration;
+	this.move=function(){
+		this.velocity.x+=this.acceleration.x;
+		this.velocity.y+=this.acceleration.y;
+		this.velocity.z+=this.acceleration.z;
+		
+		this.position.x+=this.velocity.x;
+		this.position.y+=this.velocity.y;
+		this.position.z+=this.velocity.z;
+	}
+}
+
+function getForceAcceleration(x,y,z,attraction,constant,attractive) {
+	var r=Math.sqrt((x*x) + (y*y) + (z*z));
+	var a= (attractive?-1:1) * constant * (attraction / (r*r));
+	x/=r;
+	y/=r;
+	z/=r;
+	return(new Point(x*a,y*a,z*a));
+}
+
 function _3dTo2d(x,y,z) {//turns a 3d cartesian + rotation into a 2d one, with perspective. 
 	var p = new Point(x,y,z);
 	
@@ -118,9 +146,6 @@ function _3dTo2d(x,y,z) {//turns a 3d cartesian + rotation into a 2d one, with p
 	
 	return(p);
 };
-
-//y = y cos @ + x sin @
-//x = x cos @ - x sin @
 
 function ColourObj(r,g,b){this.r=r;this.g=g;this.b=b};//A colour prototype
 
@@ -192,17 +217,17 @@ function draw3Dtriangle(x1,y1,z1	,x2,y2,z2,	x3,y3,z3,	r,g,b) {//draws a triangle
 	);*/
 };
 
-function _3dTriangleMatrix(triangles, roll, pitch, yaw, translation) {//the 3D world prototype
+function _3dTriangleMatrix(triangles, rotation, spin, translation, speed) {//the 3D world prototype
 	this.triangles=triangles;
-	this.roll=roll;
-	this.pitch=pitch;
-	this.yaw=yaw;
+	this.rotation=rotation;
+	this.spin=spin;
 	this.translation=translation;
+	this.speed=speed;
 	
 	this.draw=function() {//draws the world
-		this.rotate(this.roll,'z');
-		this.rotate(this.pitch,'x');
-		this.rotate(this.yaw,'y');
+		this.rotate(this.rotation.r,'z');
+		this.rotate(this.rotation.p,'x');
+		this.rotate(this.rotation.y,'y');
 		
 		this.translate(this.translation.x, this.translation.y, this.translation.z);
 		
@@ -215,9 +240,9 @@ function _3dTriangleMatrix(triangles, roll, pitch, yaw, translation) {//the 3D w
 		
 		this.translate(0-this.translation.x, 0-this.translation.y, 0-this.translation.z);
 		
-		this.rotate(0-this.yaw,'y');
-		this.rotate(0-this.pitch,'x');
-		this.rotate(0-this.roll,'z');//these need to be in reverse order
+		this.rotate(0-this.rotation.y,'y');
+		this.rotate(0-this.rotation.p,'x');
+		this.rotate(0-this.rotation.r,'z');//these need to be in reverse order
 	}
 	
 	this.getDrawOrder=function() {//gets the oder to draw the triangles in
@@ -248,6 +273,7 @@ function _3dTriangleMatrix(triangles, roll, pitch, yaw, translation) {//the 3D w
 		}
 	}
 };
+
 {/*
 {var car=new _3dTriangleMatrix([//octahedron
 	new Triangle([new Point(0,0,50), new Point(0,50,0), new Point(50,0,0)],new ColourObj(0,0,0)),
@@ -322,9 +348,9 @@ function _3dTriangleMatrix(triangles, roll, pitch, yaw, translation) {//the 3D w
 	new Triangle([new Point(-50,100,50), new Point(-50,50,75), new Point(50,50,75)],new ColourObj(0,0,255)),//windscreen
 	
 ], 
-	0, 
-	0, 
-	0, 
+	new Rotation(0,0,0), 
+	new Rotation(0,0,0), 
+	new Point(0,0,0),
 	new Point(0,0,0)
 );}//*/
 
@@ -371,16 +397,16 @@ car.rotate(Math.PI,'y');
 	new Triangle([new Point(-50,100,50), new Point(-50,50,75), new Point(50,50,75)],new ColourObj(0,0,255)),//windscreen
 	
 ], 
-	0, 
-	0, 
-	0, 
+	new Rotation(0,0,0), 
+	new Rotation(0,0,0), 
+	new Point(0,0,0),
 	new Point(0,0,0)
 );}//*/
 
 car2.rotate(Math.PI,'z');
 car2.rotate(Math.PI,'y');
 car2.translation.x=100;
-car2.pitch=Math.PI/4;
+car2.rotation.p=Math.PI/4;
 //~ car.addPolygon([new Point(-50,50,75), new Point(-50,50,100), new Point(50,50,100), new Point(50,50,75)], new ColourObj(0,0,0));
 
 {/*typebox.value='new _3dTriangleMatrix([//car\
@@ -463,14 +489,16 @@ ctx.canvas.onmousemove=function(e) {
 	if(mousedown){
 		var x=e.clientX-getOffset(true);
 		var y=e.clientY-getOffset(false);
-		car.yaw += (previousMousePosition.x-x) / 200;
-		car.pitch += (y-previousMousePosition.y) / 200;
+		car.rotation.y += (previousMousePosition.x-x) / 200;
+		car.rotation.p += (y-previousMousePosition.y) / 200;
 		previousMousePosition.x=x;
 		previousMousePosition.y=y;
 	}
 }
 
 setInterval(draw,100);
+
+setTimeout("console.log(document.getElementsByTagName('SCRIPT')[0].textContent)",1000);
 		</SCRIPT>
 	</BODY>
 </HTML
