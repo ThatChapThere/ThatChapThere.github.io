@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<HTML>
+	<HEAD>
+		<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+		<LINK rel="icon" type="image/png" href="file.png"></LINK>
+		<STYLE type="text/css">
+BODY{
+	color:#00FF00;
+	background-color:#000000;
+}
+H1{
+	text-align:center;
+}
+TEXTAREA{
+	width:600px;
+	height:600px;
+}
+		</STYLE>
+		<TITLE>
+			3D Editor
+		</TITLE>
+	</HEAD>
+	<BODY>
+		<H1>
+			
+		</H1>
+		<TABLE>
+			<TBODY>
+				<TR>
+					<TD>
+						Result:
+						<CANVAS width=600 height=600 id='cnv'></CANVAS>
+					</TD>
+					<TD>
+						Matrix:
+						<TEXTAREA id="typebox"></TEXTAREA>
+					</TD>
+				</TR>
+				<TR>
+					<TD>
+						Polygon input:
+						<TEXTAREA id="polygonIn"></TEXTAREA>
+					</TD>
+					<TD>
+						polygon output:
+						<TEXTAREA id="polygonOut"></TEXTAREA>
+					</TD>
+				</TR>
+			</TBODY>
+		</TABLE>
+		<SCRIPT type="text/javascript" language="javascript">
+		
+function Sort(a) {
+	var r=[];
+	var u=[];
+	for(var i = 0; i < a.length; i++){
+		u.push(true);//creates a list of booleans for whether or not they have already been listed.
+	}
+	for(var j = 0; j < a.length; j++){
+		var s=Infinity;//largest yet found
+		var ios=0;//index of largest found item
+		for(var i = 0; i < a.length; i++){
+			if(a[i] < s && u[i]){//if the item is unused and is less than the largest found
+				ios=i;//this is the largest yet found
+				s=a[i];//this is the largest yet found
+			}
+		}
+		u[ios]=false;//no longer unlisted.
+		r.push(ios);//add the index of the largest found to the ordereed list.
+	}
+	return(r);
+};
+
+function RGB(R,G,B) {//For easy colour making with other variables
+	R=Math.round(bound(R,255,0));
+	G=Math.round(bound(G,255,0));
+	B=Math.round(bound(B,255,0));
+	return('rgb('+R+','+G+','+B+')');
+};
+
+function bound(n,u,l){//This function keeps an number in a certain range
+	if(n > u){//if too large,
+		return(u);//return max
+	}else if(n < l){//if too small,
+		return(l);//return min
+	}else{//otherwise
+		return(n);//the number is fine
+	}
+};
+
+function Point(x,y,z) {
+	this.x=x;//the coordinates
+	this.y=y;
+	this.z=z;
+	this.rotate=function(angle,axis) {//rotate around a specified axis
+		switch(axis) {
+			case 'y'://************************MATHEMATICAL STUFF**********************************************
+				var X=this.x;
+				this.x = (this.x*Math.cos(angle)) + (this.z*Math.sin(angle));
+				this.z = (this.z*Math.cos(angle)) - (X*Math.sin(angle));
+				break;
+			case 'x':
+				var Y=this.y;
+				this.y = (this.y*Math.cos(angle)) - (this.z*Math.sin(angle));
+				this.z = (this.z*Math.cos(angle)) + (Y*Math.sin(angle));
+				break;
+			case 'z':
+				var X=this.x;
+				this.x = (this.x*Math.cos(angle)) - (this.y*Math.sin(angle));
+				this.y = (this.y*Math.cos(angle)) + (X*Math.sin(angle));
+				break;//***************************************************************************************
+			default:
+				alert('ERROR');//There is a mistake in the code which does not specify an axis
+		}
+	};
+	this.translate=function(x,y,z) {
+		this.x+=x;
+		this.y+=y;
+		this.z+=z;
+	};
+};//a basic modeltesian object prototype
+
+function Rotation(r,p,y) {
+	this.r=r;
+	this.p=p;
+	this.y=y;
+}
+
+function Body(position, velocity, acceleration) {
+	this.position=position;
+	this.velocity=velocity;
+	this.acceleration=acceleration;
+	this.move=function(){
+		this.velocity.x+=this.acceleration.x;
+		this.velocity.y+=this.acceleration.y;
+		this.velocity.z+=this.acceleration.z;
+		
+		this.position.x+=this.velocity.x;
+		this.position.y+=this.velocity.y;
+		this.position.z+=this.velocity.z;
+	}
+}
+
+function getForceAcceleration(x,y,z,attraction,constant,attractive) {
+	var r=Math.sqrt((x*x) + (y*y) + (z*z));
+	var a= (attractive?-1:1) * constant * (attraction / (r*r));
+	x/=r;
+	y/=r;
+	z/=r;
+	return(new Point(x*a,y*a,z*a));
+}
+
+function _3dTo2d(x,y,z) {//turns a 3d modeltesian + rotation into a 2d one, with perspective. 
+	var p = new Point(x,y,z);
+	
+	p.x /= (p.z+1000) / 1000;//perspective
+	p.y /= (p.z+1000) / 1000;//ditto
+	
+	return(p);
+};
+
+function ColourObj(r,g,b){this.r=r;this.g=g;this.b=b};//A colour prototype
+
+var ctx = document.getElementsByTagName('canvas')[0].getContext('2d');//gets the context
+
+function get3Dcolour(r,g,b,angle) {//gets a 3d colour based on the angle from a light source (not currently working)
+	angle *= Math.PI/180;
+	var darkness = 1;//Math.abs(Math.cos(angle));
+	return(RGB(r*darkness,g*darkness,b*darkness));
+};
+
+ctx.fillRect(0,0,600,600);//the background
+
+function Triangle(positions,colour) {//triangle object prototype
+	this.positions=positions;//an array of point objects
+	this.colour=colour;//a colour object
+	this.draw=function(){//to draw the triangle
+		draw3Dtriangle(
+			this.positions[0].x,
+			this.positions[0].y,
+			this.positions[0].z,
+			
+			this.positions[1].x,
+			this.positions[1].y,
+			this.positions[1].z,
+			
+			this.positions[2].x,
+			this.positions[2].y,
+			this.positions[2].z,
+			
+			this.colour.r,
+			this.colour.g,
+			this.colour.b
+		);
+	};
+	this.rotate=function(angle,axis){
+		for(var i in this.positions){
+			this.positions[i].rotate(angle,axis);
+		}
+	};
+	this.translate=function(x,y,z) {
+		for(var i in this.positions){
+			this.positions[i].translate(x,y,z);
+		}
+	}
+	this.getMeanZ = function(){
+		total = this.positions[0].z + this.positions[1].z + this.positions[2].z;
+		return(total / 3);
+	};
+};
+
+function draw3Dtriangle(x1,y1,z1	,x2,y2,z2,	x3,y3,z3,	r,g,b) {//draws a triangle
+	ctx.fillStyle=get3Dcolour(r,g,b,0);
+	ctx.beginPath();
+	ctx.moveTo(_3dTo2d(x1,y1,z1).x+300,_3dTo2d(x1,y1,z1).y+300);//the
+	ctx.lineTo(_3dTo2d(x2,y2,z2).x+300,_3dTo2d(x2,y2,z2).y+300);//three
+	ctx.lineTo(_3dTo2d(x3,y3,z3).x+300,_3dTo2d(x3,y3,z3).y+300);//corners
+	ctx.closePath();
+	ctx.fill();/*console.log(
+		Math.round(_3dTo2d(x1,y1,z1).x)+',  '+
+		Math.round(_3dTo2d(x1,y1,z1).y)+',  '+
+		Math.round(_3dTo2d(x1,y1,z1).z)+',  '+
+		Math.round(_3dTo2d(x2,y2,z2).x)+',  '+
+		Math.round(_3dTo2d(x2,y2,z2).y)+',  '+
+		Math.round(_3dTo2d(x2,y2,z2).z)+',  '+
+		Math.round(_3dTo2d(x3,y3,z3).x)+',  '+
+		Math.round(_3dTo2d(x3,y3,z3).y)+',  '+
+		Math.round(_3dTo2d(x3,y3,z3).z)+',  '
+	);*/
+};
+
+function _3dTriangleMatrix(triangles, rotation, spin, translation, speed) {//the 3D world prototype
+	this.triangles=triangles;
+	this.rotation=rotation;
+	this.spin=spin;
+	this.translation=translation;
+	this.speed=speed;
+	
+	this.draw=function() {//draws the world
+		this.rotate(this.rotation.r,'z');
+		this.rotate(this.rotation.p,'x');
+		this.rotate(this.rotation.y,'y');
+		
+		this.translate(this.translation.x, this.translation.y, this.translation.z);
+		
+		var order=this.getDrawOrder();
+		//console.log(order);
+		for(var i = order.length - 1; i >= 0; i--){//reverse order (highest z positions first)
+			this.triangles[order[i]].draw();
+		}
+		
+		
+		this.translate(0-this.translation.x, 0-this.translation.y, 0-this.translation.z);
+		
+		this.rotate(0-this.rotation.y,'y');
+		this.rotate(0-this.rotation.p,'x');
+		this.rotate(0-this.rotation.r,'z');//these need to be in reverse order
+	}
+	
+	this.getDrawOrder=function() {//gets the oder to draw the triangles in
+		var meanZs=[];
+		for(var i in this.triangles){
+			meanZs.push(this.triangles[i].getMeanZ());
+		}
+		//console.log(meanZs);
+		return(Sort(meanZs));//sorts the triangle out
+	};
+	
+	this.rotate=function(angle,axis){
+		for(var i in this.triangles){
+			this.triangles[i].rotate(angle,axis);
+		}
+	}
+	
+	this.translate=function(x,y,z) {
+		for(var i in this.triangles){
+			this.triangles[i].translate(x,y,z);
+		}
+	}
+	
+	this.addPolygon=function (vertices, colour){
+		for(var i = 1; i < vertices.length-1; i++){
+			this.triangles.push(new Triangle(  [ vertices[0],vertices[i],vertices[i+1] ]  ,colour));
+			alert(''+vertices[0].x+vertices[0].y+vertices[0].z+',    '+vertices[i].x+vertices[i].y+vertices[i].z+',    '+vertices[i+1].x+vertices[i+1].y+vertices[i+1].z);
+		}
+	}
+};
+
+{var model=new _3dTriangleMatrix([//model
+	new Triangle([new Point(-50,0,100), new Point(50,0,100), new Point(50,0,-100)],new ColourObj(0,0,0)),
+	new Triangle([new Point(-50,0,100), new Point(-50,0,-100), new Point(50,0,-100)],new ColourObj(0,0,0)),//base
+	
+	new Triangle([new Point(-50,0,100), new Point(-50,0,-100), new Point(-50,50,-100)],new ColourObj(0,255,0)),
+	new Triangle([new Point(-50,0,100), new Point(-50,50,100), new Point(-50,50,-100)],new ColourObj(0,255,0)),//right side
+	
+	new Triangle([new Point(50,0,100), new Point(50,0,-100), new Point(50,50,-100)],new ColourObj(0,255,0)),
+	new Triangle([new Point(50,0,100), new Point(50,50,100), new Point(50,50,-100)],new ColourObj(0,255,0)),//left side
+	
+	new Triangle([new Point(-50,0,100), new Point(50,0,100), new Point(-50,50,100)],new ColourObj(100,255,0)),
+	new Triangle([new Point(50,50,100), new Point(50,0,100), new Point(-50,50,100)],new ColourObj(100,255,0)),//front
+	
+	new Triangle([new Point(-50,0,-100), new Point(50,0,-100), new Point(-50,50,-100)],new ColourObj(100,255,0)),
+	new Triangle([new Point(50,50,-100), new Point(50,0,-100), new Point(-50,50,-100)],new ColourObj(100,255,0)),//front
+	
+	new Triangle([new Point(50,50,75), new Point(50,50,-65.5), new Point(50,100,-50)],new ColourObj(0,0,255)),
+	new Triangle([new Point(50,50,75), new Point(50,100,50), new Point(50,100,-50)],new ColourObj(0,0,255)),//top left side
+
+	new Triangle([new Point(-50,50,75), new Point(-50,50,-65.5), new Point(-50,100,-50)],new ColourObj(0,0,255)),
+	new Triangle([new Point(-50,50,75), new Point(-50,100,50), new Point(-50,100,-50)],new ColourObj(0,0,255)),//top right side
+	
+	new Triangle([new Point(-50,100,50), new Point(50,100,50), new Point(50,100,-50)],new ColourObj(100,0,100)),
+	new Triangle([new Point(-50,100,50), new Point(-50,100,-50), new Point(50,100,-50)],new ColourObj(100,0,100)),//roof
+
+	new Triangle([new Point(-50,50,100), new Point(50,50,100), new Point(50,50,75)],new ColourObj(100,0,100)),
+	new Triangle([new Point(-50,50,100), new Point(-50,50,75), new Point(50,50,75)],new ColourObj(100,0,100)),//bonnet
+
+	new Triangle([new Point(-50,50,-100), new Point(50,50,-100), new Point(50,50,-65.5)],new ColourObj(100,0,100)),
+	new Triangle([new Point(-50,50,-100), new Point(-50,50,-65.5), new Point(50,50,-65.5)],new ColourObj(100,0,100)),//boot
+
+	new Triangle([new Point(-50,100,-50), new Point(50,100,-50), new Point(50,50,-65.5)],new ColourObj(0,0,255)),
+	new Triangle([new Point(-50,100,-50), new Point(-50,50,-65.5), new Point(50,50,-65.5)],new ColourObj(0,0,255)),//rear window
+
+	new Triangle([new Point(-50,100,50), new Point(50,100,50), new Point(50,50,75)],new ColourObj(0,0,255)),
+	new Triangle([new Point(-50,100,50), new Point(-50,50,75), new Point(50,50,75)],new ColourObj(0,0,255)),//windscreen
+	
+	new Triangle([new Point(-50,100,50), new Point(-50,50,75), new Point(50,50,75)],new ColourObj(0,0,255)),//windscreen
+	
+], 
+	new Rotation(0,0,0), 
+	new Rotation(0,0,0), 
+	new Point(0,0,0),
+	new Point(0,0,0)
+);}//*/
+
+//~ model.rotate(Math.PI*0.9,'x');
+function draw() {//general repeater
+	ctx.fillStyle='#87CEEB';
+	ctx.fillRect(0,0,600,600);//the background
+	//~ model.rotate(Math.PI/30,'x');
+	//~ model.rotate(Math.PI/300,'x');
+	//~ model.rotate(Math.PI/45,'x');
+	model.draw();
+};
+
+function getOffset(left) {//true=left, false=top
+	var offset=0;
+	if(left){
+		var element=ctx.canvas;
+		while(element != document.body){
+			offset+=element.offsetLeft;
+			element=element.offsetParent;
+		}
+		offset+=element.offsetLeft;
+	}else{
+		var element=ctx.canvas;
+		while(element != document.body){
+			offset+=element.offsetTop;
+			element=element.offsetParent;
+		}
+		offset+=element.offsetTop;
+	}
+	return(offset);
+}
+	
+var mousedown=false;
+
+var previousMousePosition={x:0,y:0};
+
+document.body.onmouseup=function() {
+	mousedown=false;
+}
+
+ctx.canvas.onmousedown=function(e) {
+	var x=e.clientX-getOffset(true);
+	var y=e.clientY-getOffset(false);
+	mousedown=true;
+	previousMousePosition.x=x;
+	previousMousePosition.y=y;
+}
+
+ctx.canvas.onmousemove=function(e) {
+	if(mousedown){
+		var x=e.clientX-getOffset(true);
+		var y=e.clientY-getOffset(false);
+		model.rotation.y += (previousMousePosition.x-x) / 200;
+		model.rotation.p += (y-previousMousePosition.y) / 200;
+		previousMousePosition.x=x;
+		previousMousePosition.y=y;
+	}
+}
+
+var polinput = document.getElementById('polygonIn');
+
+polinput.onkeyup=function() {
+	eval("var points = " + polinput.value);
+	alert(points);
+	var out='[';
+	for(var i = 2; i < points.length-1; i++){
+		out += 'new Triangle([new Point(' + points[1][0] + ',' + points[1][1] + ',' + points[1][2] + '), new Point(' + points[i][0] + ',' + points[i][1] + ',' + points[i][2] + '), new Point(' + points[i+1][0] + ',' + points[i+1][1] + ',' + points[i+1][2] + ')],new ColourObj(' + points[0][0] + ',' + points[0][1] + ',' + points[0][2] + ')),';
+	}
+	out+=']';
+	document.getElementById('polygonOut').value=out;
+}
+
+setInterval(draw,100);
+
+setTimeout("console.log(document.getElementsByTagName('SCRIPT')[0].textContent)",1000);
+		</SCRIPT>
+	</BODY>
+</HTML
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>untitled</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="generator" content="Geany 1.26" />
+</head>
+
+<body>
+	
+</body>
+
+</html>
