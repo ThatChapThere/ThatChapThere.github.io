@@ -1,0 +1,188 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>Snooker</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="generator" content="Geany 1.29" />
+</head>
+
+<body>
+	<canvas width="734" height="376" />
+	<script>
+// 356.87 cm x 177.8 cm 8.6 pockets, 5.25 balls
+var width=714;
+var height=356;
+var cushions=10;
+var pockets=17.2;
+var pocketWidth= pockets / Math.sqrt(2);
+
+var ctx=document.getElementsByTagName('canvas')[0].getContext('2d');
+//~ ctx.fillRect(0,0,width,height);
+var r=5.25;
+var p=100;
+var maxSpeed=100;
+var friction=0.99;
+var minSpeed=0.4;
+
+function drawPocket(x,y) {
+	ctx.fillStyle='#000000';
+	ctx.beginPath();
+	ctx.arc(x,y,pockets/2,0,Math.PI*2,true);
+	ctx.fill();
+	ctx.beginPath();
+}
+
+function Ball(x,y,xv,yv,colour) {
+	this.x=x;
+	this.y=y;
+	this.xv=xv;
+	this.yv=yv;
+	this.colour=colour;
+	this.draw=function() {
+		ctx.fillStyle=this.colour;
+		ctx.beginPath();
+		ctx.arc(this.x,this.y,r,0,Math.PI*2,true);
+		ctx.fill();
+		ctx.beginPath();
+	}
+	this.move=function() {
+		if(this.x < r + cushions){
+			this.x=r+cushions;
+			this.xv=Math.abs(this.xv);
+		}
+		if(this.x > width+cushions-r){
+			this.x=width-r+cushions;
+			this.xv=0-Math.abs(this.xv);
+		}
+		if(this.y > height-r+cushions){
+			this.y=height-r+cushions;
+			this.yv=0-Math.abs(this.yv);
+		}
+		if(this.y < r+cushions){
+			this.y=r+cushions;
+			this.yv=Math.abs(this.yv);
+		}
+		if(this.yv > maxSpeed){
+			this.yv=maxSpeed;
+		}
+		if(this.xv > maxSpeed){
+			this.xv=maxSpeed;
+		}
+		if(this.yv < -maxSpeed){
+			this.yv=-maxSpeed;
+		}
+		if(this.xv < -maxSpeed){
+			this.xv=-maxSpeed;
+		}
+		this.x+=this.xv;
+		this.y+=this.yv;
+		this.xv*=friction;
+		this.yv*=friction;
+		var speed=new Vector(this.xv,this.yv);
+		if(speed.getRad() < minSpeed){
+			this.xv=0;
+			this.yv=0;
+		}
+	}
+}
+
+function Vector(x,y) {
+	this.x=x;
+	this.y=y;
+	this.getRad=function() {
+		return(Math.sqrt((x*x) + (y*y)));
+	}
+}
+
+var balls=[];
+
+for(var i=0;i<p;i++){
+	balls.push(new Ball(Math.random()*width,Math.random()*height,Math.random()*0,Math.random()*0, '#0000FF'));
+}
+
+function draw() {
+	ctx.fillStyle='#008800';
+	ctx.fillRect(0,0,width+cushions*2,height+cushions*2);
+	drawPocket(0,0);
+	drawPocket(width/2+cushions,0);
+	drawPocket(width+cushions*2,0);
+	drawPocket(0,height+cushions*2);
+	drawPocket(width/2+cushions,height+cushions*2);
+	drawPocket(width+cushions*2,height+cushions*2);
+	
+	for(var i=0;i<p;i++){
+		balls[i].move();
+		balls[i].draw();
+	}
+	for(var i=0;i<p;i++){
+		for(var j=0;j<p;j++){
+			if(i!=j){
+				var v=new Vector(balls[i].x-balls[j].x, balls[i].y-balls[j].y);
+				var d=v.getRad();
+				if(d<r*2){
+					balls[i].xv+=v.x / d;
+					balls[i].yv+=v.y / d;
+				}
+			}
+		}
+	}
+	
+	ctx.fillStyle='#00FF00';
+	ctx.strokeStyle='#000000';
+	
+	ctx.beginPath();//top left
+	ctx.moveTo(pocketWidth,0);
+	ctx.quadraticCurveTo(pocketWidth+cushions,cushions,pocketWidth+cushions*3,cushions);
+	ctx.lineTo(width/2 + pockets/2 - cushions*2,cushions);
+	ctx.quadraticCurveTo(width/2 - pockets/2 +cushions, cushions, width/2 + cushions - pockets/2,0);
+	ctx.fill();
+	
+	ctx.beginPath();//top right
+	ctx.moveTo(width/2 + pockets/2 + cushions,0);
+	ctx.quadraticCurveTo(width/2 + pockets/2 + cushions,cushions,width/2 + pockets/2 +cushions*2,cushions);
+	ctx.lineTo(width-pocketWidth,cushions);
+	ctx.quadraticCurveTo(width+cushions-pocketWidth,cushions,width+cushions*2-pocketWidth,0);
+	ctx.fill();
+	
+	ctx.beginPath();//bottom left
+	ctx.moveTo(pocketWidth,cushions*2+height);
+	ctx.quadraticCurveTo(pocketWidth+cushions,cushions+height,pocketWidth+cushions*3,cushions+height);
+	ctx.lineTo(width/2 + pockets/2 - cushions*2,cushions+height);
+	ctx.quadraticCurveTo(width/2 - pockets/2 +cushions, cushions+height, width/2 + cushions - pockets/2,cushions*2+height);
+	ctx.fill();
+	
+	ctx.beginPath();//bottom right
+	ctx.moveTo(width/2 + pockets/2 + cushions,cushions*2+height);
+	ctx.quadraticCurveTo(width/2 + pockets/2 + cushions,cushions+height,width/2 + pockets/2 +cushions*2,cushions+height);
+	ctx.lineTo(width-pocketWidth,cushions+height);
+	ctx.quadraticCurveTo(width+cushions-pocketWidth,cushions+height,width+cushions*2-pocketWidth,cushions*2+height);
+	ctx.fill();
+	
+	ctx.beginPath();// left
+	ctx.moveTo(0, pocketWidth);
+	ctx.quadraticCurveTo(cushions,pocketWidth+cushions,cushions,pocketWidth+cushions*3);
+	ctx.lineTo(cushions, height-pocketWidth-cushions);
+	ctx.quadraticCurveTo(cushions,height,0,height+cushions*2-pocketWidth);
+	ctx.fill();
+	
+	ctx.beginPath();// right
+	ctx.moveTo(width+cushions*2, pocketWidth);
+	ctx.quadraticCurveTo(width+cushions,pocketWidth+cushions,width+cushions,pocketWidth+cushions*3);
+	ctx.lineTo(width+cushions, height-pocketWidth-cushions);
+	ctx.quadraticCurveTo(width+cushions,height,width+cushions*2,height+cushions*2-pocketWidth);
+	ctx.fill();
+	
+	
+	//ctx.fillRect(0,0,width+ (cushions*2),cushions);
+	//ctx.fillRect(0,0,cushions,height+ (cushions*2));
+	//ctx.fillRect(width+cushions,0,cushions,height+ (cushions*2));
+	//ctx.fillRect(0,height+cushions,width+ (cushions*2),cushions);
+}
+
+setInterval(draw,50);
+	</script>
+</body>
+
+</html>
