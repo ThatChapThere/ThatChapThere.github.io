@@ -6,6 +6,16 @@
 	<title>Snooker</title>
 	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
 	<meta name="generator" content="Geany 1.29" />
+	<style>
+body{
+  margin: 0px;
+}
+canvas{
+  position: absolute;
+  left:  376px;
+  top: 376px;
+}
+	</style>
 </head>
 
 <body>
@@ -21,10 +31,32 @@ var pocketWidth= pockets / Math.sqrt(2);
 var ctx=document.getElementsByTagName('canvas')[0].getContext('2d');
 //~ ctx.fillRect(0,0,width,height);
 var r=5.25;
-var p=100;
-var maxSpeed=100;
-var friction=0.99;
-var minSpeed=0.4;
+var redsGap=Math.sin(Math.PI*2/3)*r*2;
+var p=22;
+var maxSpeed=4;
+var friction=0.998;
+var minSpeed=0.1;
+
+function getOffset(left) {//true=left, false=top
+	var offset=0;
+	if(left){
+		var element=document.getElementsByTagName('canvas')[0];
+		while(element != document.body){
+			offset+=element.offsetLeft;
+			element=element.offsetParent;
+		}
+		offset+=element.offsetLeft;
+	}else{
+		var element=document.getElementsByTagName('canvas')[0];
+		while(element != document.body){
+			offset+=element.offsetTop;
+			element=element.offsetParent;
+		}
+		offset+=element.offsetTop;
+	}
+	//~ offset+=376;
+	return(offset);
+}
 
 function drawPocket(x,y) {
 	ctx.fillStyle='#000000';
@@ -33,6 +65,10 @@ function drawPocket(x,y) {
 	ctx.fill();
 	ctx.beginPath();
 }
+
+function sq(a) {
+	return(a*a);
+};
 
 function Ball(x,y,xv,yv,colour) {
 	this.x=x;
@@ -48,22 +84,47 @@ function Ball(x,y,xv,yv,colour) {
 		ctx.beginPath();
 	}
 	this.move=function() {
-		if(this.x < r + cushions){
-			this.x=r+cushions;
-			this.xv=Math.abs(this.xv);
+		if( ! (  
+			(this.x < pocketWidth + cushions * 3 -r) ||
+			(this.x > (width/2 + pockets/2 - cushions*2 +r) && this.x < (width/2 + pockets/2 + cushions*2 -r) ) ||
+			(this.x > width-pocketWidth+r)  
+		) ){
+			
+			if(this.y > height-r+cushions){
+				this.y=height-r+cushions;
+				this.yv=0-Math.abs(this.yv);
+			}
+			if(this.y < r+cushions){
+				this.y=r+cushions;
+				this.yv=Math.abs(this.yv);
+			}
 		}
-		if(this.x > width+cushions-r){
-			this.x=width-r+cushions;
-			this.xv=0-Math.abs(this.xv);
+		
+		if( ! (  
+			(this.y < pocketWidth + cushions * 3 -r) ||
+			(this.y > height-pocketWidth+r)  
+		) ){
+			
+			if(this.x < r + cushions){
+				this.x=r+cushions;
+				this.xv=Math.abs(this.xv);
+			}
+			if(this.x > width+cushions-r){
+				this.x=width-r+cushions;
+				this.xv=0-Math.abs(this.xv);
+			}
 		}
-		if(this.y > height-r+cushions){
-			this.y=height-r+cushions;
-			this.yv=0-Math.abs(this.yv);
+		
+		
+		
+		if( Math.sqrt(sq(this.xv) + sq(this.yv)) > maxSpeed){
+			var speed= Math.sqrt(sq(this.xv) + sq(this.yv));
+			this.xv/=speed;
+			this.yv/=speed;
+			this.xv*=maxSpeed;
+			this.yv*=maxSpeed;
 		}
-		if(this.y < r+cushions){
-			this.y=r+cushions;
-			this.yv=Math.abs(this.yv);
-		}
+		/*
 		if(this.yv > maxSpeed){
 			this.yv=maxSpeed;
 		}
@@ -76,6 +137,7 @@ function Ball(x,y,xv,yv,colour) {
 		if(this.xv < -maxSpeed){
 			this.xv=-maxSpeed;
 		}
+		*/
 		this.x+=this.xv;
 		this.y+=this.yv;
 		this.xv*=friction;
@@ -96,11 +158,65 @@ function Vector(x,y) {
 	}
 }
 
-var balls=[];
+var mouse=new Vector(0,0);
+
+onmousemove=function(event) {
+	mouse.x=event.clientX-getOffset(true);
+	mouse.y=event.clientY-getOffset(false);
+}
+
+var notPotted=[];
 
 for(var i=0;i<p;i++){
-	balls.push(new Ball(Math.random()*width,Math.random()*height,Math.random()*0,Math.random()*0, '#0000FF'));
+	notPotted.push(true);
 }
+
+var balls=[
+	new Ball(cushions+150, height/2+cushions+25,0,0, '#FFFFFF'),//cueball
+	new Ball(cushions+157, height/2+cushions,0,0, '#865200'),//brown
+	new Ball(cushions+157, height/2+cushions+58,0,0, '#ECE200'),//yellow
+	new Ball(cushions+157, height/2+cushions-58,0,0, '#25C000'),//green
+	new Ball(width/2+cushions, height/2+cushions,0,0, '#0000FF'),//blue
+	new Ball(width+cushions-183, height/2+cushions,0,0, '#FF59F9'),//pink
+	new Ball(width+cushions-75, height/2+cushions,0,0, '#000000'),//black
+	
+	new Ball(width+cushions-183+r*2+1, height/2+cushions,0,0, '#FF0000'),//red
+	
+	new Ball(width+cushions-183+r*2+1 + redsGap, height/2+cushions -r,0,0, '#FF0000'),//red
+	new Ball(width+cushions-183+r*2+1 + redsGap, height/2+cushions +r,0,0, '#FF0000'),//red
+	
+	new Ball(width+cushions-183+r*2+1 + redsGap*2, height/2+cushions-r*2,0,0, '#FF0000'),//red
+	new Ball(width+cushions-183+r*2+1 + redsGap*2, height/2+cushions,0,0, '#FF0000'),//red
+	new Ball(width+cushions-183+r*2+1 + redsGap*2, height/2+cushions+r*2,0,0, '#FF0000'),//red
+	
+	new Ball(width+cushions-183+r*2+1 + redsGap*3, height/2+cushions+r*3,0,0, '#FF0000'),//red
+	new Ball(width+cushions-183+r*2+1 + redsGap*3, height/2+cushions+r,0,0, '#FF0000'),//red
+	new Ball(width+cushions-183+r*2+1 + redsGap*3, height/2+cushions-r,0,0, '#FF0000'),//red
+	new Ball(width+cushions-183+r*2+1 + redsGap*3, height/2+cushions-r*3,0,0, '#FF0000'),//red
+	
+	new Ball(width+cushions-183+r*2+1 + redsGap*4, height/2+cushions+r*4,0,0, '#FF0000'),//red
+	new Ball(width+cushions-183+r*2+1 + redsGap*4, height/2+cushions+r*2,0,0, '#FF0000'),//red
+	new Ball(width+cushions-183+r*2+1 + redsGap*4, height/2+cushions,0,0, '#FF0000'),//red
+	new Ball(width+cushions-183+r*2+1 + redsGap*4, height/2+cushions-r*2,0,0, '#FF0000'),//red
+	new Ball(width+cushions-183+r*2+1 + redsGap*4, height/2+cushions-r*4,0,0, '#FF0000'),//red
+];
+
+var cushionBumps=[
+	new Vector(pocketWidth+cushions*3,0),
+	new Vector(pocketWidth+cushions*3,cushions*2+height),
+	new Vector(width/2 + pockets/2 - cushions*2,0),
+	new Vector(width/2 + pockets/2 - cushions*2,cushions*2+height),
+	new Vector(width/2 + pockets/2 + cushions*2,0),
+	new Vector(width/2 + pockets/2 + cushions*2,cushions*2+height),
+	new Vector(width-pocketWidth+cushions,0),
+	new Vector(width-pocketWidth+cushions,cushions*2+height),
+	
+	new Vector(0, pocketWidth+cushions*3),
+	new Vector(width+cushions*2, cushions*3+width, pocketWidth+cushions*3),
+	new Vector(0, height-pocketWidth+cushions),
+	new Vector(width+cushions*2, height-pocketWidth+cushions),
+];
+
 
 function draw() {
 	ctx.fillStyle='#008800';
@@ -112,25 +228,94 @@ function draw() {
 	drawPocket(width/2+cushions,height+cushions*2);
 	drawPocket(width+cushions*2,height+cushions*2);
 	
+	//baulk
+	ctx.strokeStyle='#FFFFFF';
+	ctx.lineWidth=1;
+	
+	ctx.beginPath();
+	ctx.moveTo(cushions+157,0);
+	ctx.lineTo(cushions+157,height+cushions*2);
+	ctx.stroke();
+	
+	ctx.beginPath();
+	ctx.arc(cushions+157, height/2+cushions,58,1.5*Math.PI,0.5*Math.PI,true);//D
+	ctx.stroke();
+	
+	ctx.fillStyle='#FFFFFF';//spots
+	ctx.beginPath();
+	ctx.arc(width+cushions-75,height/2+cushions,1,0,Math.PI*2,true);//black
+	ctx.fill();
+	ctx.beginPath();
+	ctx.arc(width/2+cushions,height/2+cushions,1,0,Math.PI*2,true);//blue
+	ctx.fill();
+	ctx.beginPath();
+	ctx.arc(width+cushions-183,height/2+cushions,1,0,Math.PI*2,true);//pink
+	ctx.fill();
+	ctx.beginPath();
+	ctx.arc(cushions+157, height/2+cushions+58,1,0,Math.PI*2,true);//yellow
+	ctx.fill();
+	ctx.beginPath();
+	ctx.arc(cushions+157, height/2+cushions-58,1,0,Math.PI*2,true);//green
+	ctx.fill();
+	ctx.beginPath();
+	ctx.arc(cushions+157, height/2+cushions,1,0,Math.PI*2,true);//brown
+	ctx.fill();
+	ctx.beginPath();
+	
 	for(var i=0;i<p;i++){
-		balls[i].move();
-		balls[i].draw();
+		if(notPotted[i]){
+			balls[i].move();
+			balls[i].draw();
+		}
 	}
 	for(var i=0;i<p;i++){
-		for(var j=0;j<p;j++){
-			if(i!=j){
-				var v=new Vector(balls[i].x-balls[j].x, balls[i].y-balls[j].y);
-				var d=v.getRad();
-				if(d<r*2){
-					balls[i].xv+=v.x / d;
-					balls[i].yv+=v.y / d;
+		if(notPotted[i]){
+			for(var j=0;j<p;j++){
+				if(i<j && notPotted[j]){
+					var iToj=new Vector(balls[i].x-balls[j].x, balls[i].y-balls[j].y);
+					var distance=iToj.getRad();
+					var compression=r*2 - distance;
+					
+					var iVelocity=new Vector(balls[i].xv, balls[i].yv);
+					var iSpeed=iVelocity.getRad();
+					var iKineticEnergy=sq(iSpeed);
+					
+					var jVelocity=new Vector(balls[j].xv, balls[j].yv);
+					var jSpeed=jVelocity.getRad();
+					var jKineticEnergy=sq(jSpeed);
+					
+					var totalSpeed=iSpeed+jSpeed;
+					var totalKineticEnergy=iKineticEnergy+jKineticEnergy;
+					
+					if(distance < r*2){
+						balls[i].xv += (iToj.x / distance)  * compression;
+						balls[i].yv += (iToj.y / distance)  * compression;
+						
+						balls[j].xv -= (iToj.x / distance)  * compression;
+						balls[j].yv -= (iToj.y / distance)  * compression;
+					}
 				}
+			}
+			for(var j=0; j < cushionBumps.length; j++){
+				var iToj=new Vector(balls[i].x-cushionBumps[j].x, balls[i].y-cushionBumps[j].y);
+				var distance=iToj.getRad();
+				var compression=r+cushions - distance;
+				
+				if(distance < r+cushions){
+					balls[i].xv += (iToj.x / distance)  * compression;
+					balls[i].yv += (iToj.y / distance)  * compression;
+				}
+			}
+			if(balls[i].y < cushions || balls[i].y > height + cushions || balls[i].x < cushions || balls[i].x > width + cushions){//potted
+				alert('Potted');
+				notPotted[i]=false;
 			}
 		}
 	}
 	
+	
+	
 	ctx.fillStyle='#00FF00';
-	ctx.strokeStyle='#000000';
 	
 	ctx.beginPath();//top left
 	ctx.moveTo(pocketWidth,0);
@@ -174,6 +359,20 @@ function draw() {
 	ctx.quadraticCurveTo(width+cushions,height,width+cushions*2,height+cushions*2-pocketWidth);
 	ctx.fill();
 	
+	//cue
+	ctx.strokeStyle='#444400';
+	ctx.lineWidth=5;
+	ctx.beginPath();// right
+	var cue=new Vector(mouse.x - balls[0].x, mouse.y - balls[0].y);
+	cue.x/=cue.getRad();
+	cue.y/=cue.getRad();
+	ctx.moveTo(balls[0].x + cue.x * (r+2) , balls[0].y + cue.y * (r+2));
+	ctx.lineTo(balls[0].x + cue.x * (r+300) , balls[0].y + cue.y * (r+300));//cue
+	//~ balls[2].x=mouse.x - cue.x * (r+300);
+	//~ balls[2].y=mouse.y - cue.y * (r+300);
+	if(balls[0].xv == 0 && balls[0].yv==0){
+		ctx.stroke();
+	}
 	
 	//ctx.fillRect(0,0,width+ (cushions*2),cushions);
 	//ctx.fillRect(0,0,cushions,height+ (cushions*2));
@@ -181,7 +380,13 @@ function draw() {
 	//ctx.fillRect(0,height+cushions,width+ (cushions*2),cushions);
 }
 
-setInterval(draw,50);
+setInterval(draw,1);
+
+onmouseup=function(event) {
+	balls[0].xv=(balls[0].x-mouse.x) /100;
+	balls[0].yv=(balls[0].y-mouse.y) /100;
+}
+
 	</script>
 </body>
 
