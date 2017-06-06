@@ -1,0 +1,402 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>Fidget Spinner Simulation</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<style type="text/css">
+button{
+  width:80px;
+  height:80px;
+  font-size: 15px;
+}
+
+button:hover{
+  background-color:#CCCCCC;
+  border:1px;
+}
+canvas{
+  cursor: none;
+}
+
+	</style>
+</head>
+
+<body>
+	<table>
+		<tr>
+			<td>
+				<canvas width="800" height="450"></canvas>
+			</td>
+			<td>
+				<input type="checkbox" id="trail"> Show Trail </input>
+				<br/>
+				<input type="checkbox" id="red marker"> Show Red Moving Marker </input>
+				<br/>
+				<input type="checkbox" id="green marker"> Show Green Moving Marker </input>
+				<br/>
+				<input type="checkbox" id="blue marker"> Show Blue Static Marker </input>
+				<br/>
+				<button id="set blue marker">Set Blue Marker Position</button>
+				<br/>
+				<button id="rotate">Rotate Around Set Axis</button>
+				<br/>
+				<button id="move">Move To Set Axis</button>
+				<br/>
+				<input type="checkbox" id="curve"> Curve The Inside </input>
+				<br/>
+				<input type="checkbox" id="finger"> Show Finger </input>
+				<br/>
+				<input type="checkbox" id="finger pointed"> Make Finger Pointed </input>
+				<br/>
+				Press Space to Show Cross
+			</td>
+		</tr>
+	</table>
+	<script>
+var ctx=document.getElementsByTagName('canvas')[0].getContext('2d');
+
+function getIntermediate(point1, point2, percentage) {//find the middle between two points for 50% and the equivalent for all other percentages
+	var dx=point2.x - point1.x;//the differences in x
+	var dy=point2.y - point1.y;//and y
+	return(new Point(point1.x + (percentage/100) * dx,   point1.y + (percentage/100) * dy ));//move point 1 toward point 2 by a certain percentage
+}
+
+var spinner={//this holds all of the spinner variables
+	bodyPoints:[new Point(100,100), new Point(500,100), new Point(500,140), new Point(100,140) ],//the corners of the spinning part
+	centrePoints:[new Point(250,80), new Point(250,160), new Point(350,160), new Point(350,80) ],//the corners of the part that you hold
+	curvePointsCurved:[new Point(300,100), new Point(300,140)],//the base of the quadratic curve when fully curved (corresponds to a point on the spinning body)
+	curvePointsStraight:[new Point(300,80), new Point(300,160)],//the base of the quadratic curve when completely straight
+	percentageCurved:50,
+	centreOfGravity:new Point(300,120),
+	draw:function() {
+		//begin middle bit *********************************************
+		ctx.fillStyle='#DDDD00';
+		ctx.beginPath();
+		ctx.moveTo(this.centrePoints[0].x, this.centrePoints[0].y);
+		ctx.lineTo(this.centrePoints[1].x, this.centrePoints[1].y);//left
+		ctx.quadraticCurveTo(
+			getIntermediate(this.curvePointsStraight[1], this.curvePointsCurved[1], this.percentageCurved).x,
+			getIntermediate(this.curvePointsStraight[1], this.curvePointsCurved[1], this.percentageCurved).y,
+			this.centrePoints[2].x, this.centrePoints[2].y
+		);//bottom
+		ctx.lineTo(this.centrePoints[3].x, this.centrePoints[3].y);//right
+		ctx.quadraticCurveTo(
+			getIntermediate(this.curvePointsStraight[0], this.curvePointsCurved[0], this.percentageCurved).x,
+			getIntermediate(this.curvePointsStraight[0], this.curvePointsCurved[0], this.percentageCurved).y,
+			this.centrePoints[0].x, this.centrePoints[0].y
+		);//top
+		ctx.fill();
+		//end middle bit ***********************************************
+		
+		//begin body ***************************************************
+		ctx.fillStyle='#ffff00';
+		
+		ctx.beginPath();
+		ctx.moveTo(this.bodyPoints[0].x, this.bodyPoints[0].y);
+		for(var i=1; i < this.bodyPoints.length; i++){
+			ctx.lineTo(this.bodyPoints[i].x, this.bodyPoints[i].y);
+		}
+		ctx.lineTo(this.bodyPoints[0].x, this.bodyPoints[0].y);
+		
+		ctx.fill();
+		ctx.beginPath();
+		//end body *****************************************************
+		
+		
+	},
+	rotate:function(centre, angle) {
+		//basically rotate all of the points
+		for(var i=0; i < this.bodyPoints.length; i++){
+			this.bodyPoints[i].rotate(centre, angle);
+		}
+		
+		for(var i=0; i < this.centrePoints.length; i++){
+			this.centrePoints[i].rotate(centre, angle);
+		}
+		
+		for(var i=0; i < this.curvePointsStraight.length; i++){
+			this.curvePointsStraight[i].rotate(centre, angle);
+		}
+		
+		for(var i=0; i < this.curvePointsCurved.length; i++){
+			this.curvePointsCurved[i].rotate(centre, angle);
+		}
+		
+		this.centreOfGravity.rotate(centre, angle);
+	},
+	move:function(point) {
+		//basically move all of the points
+		for(var i=0; i < this.bodyPoints.length; i++){
+			this.bodyPoints[i].add(point);
+		}
+		
+		for(var i=0; i < this.centrePoints.length; i++){
+			this.centrePoints[i].add(point);
+		}
+		
+		for(var i=0; i < this.curvePointsStraight.length; i++){
+			this.curvePointsStraight[i].add(point);
+		}
+		
+		for(var i=0; i < this.curvePointsCurved.length; i++){
+			this.curvePointsCurved[i].add(point);
+		}
+		
+		this.centreOfGravity.add(point);
+	},
+}
+
+function sq(a) {
+	return(a*a);
+};
+
+var maxCurve=60;//the maximum cuvature of the inside curves
+var rotate=0;//how much is left to rotate by
+var blueMarkerPosition=-1;//where we store the blue horisontal line
+
+function Point(x, y){//the object for positions and vectors
+	this.x=x;
+	this.y=y;
+	this.rotate=function(centre, angle){//rotate by a specific number of radians
+		
+		var dx = this.x - centre.x;
+		var dy = this.y - centre.y;
+		
+		var turnVectorX=Math.cos(angle);
+		var turnVectorY=Math.sin(angle);//this is essentialy a complex number of absolute value 1 so that cross-multiplying simply rotates
+		
+		var newDX = (dx * turnVectorX) - (dy * turnVectorY);
+		var newDY = (dx * turnVectorY) + (turnVectorX * dy);
+		
+		this.x=centre.x + newDX;
+		this.y=centre.y + newDY;
+	}
+	this.getRad=function() {//get the distance from 0, 0
+		return( Math.sqrt( sq(this.x) + sq(this.y) ) );
+	}
+	this.norm=function() {
+		var r=this.getRad();
+		x/=r;
+		y/=r;
+	}
+	this.add=function(point) {
+		this.x+=point.x;
+		this.y+=point.y;
+	}
+};
+
+function Trail() {//the object that stores a trail of points
+	this.points=[];
+	this.draw=function(){
+		ctx.beginPath();
+		ctx.moveTo(this.points[0].x, this.points[0].y);
+		for(var i=1; i < this.points.length; i++){
+			ctx.lineTo(this.points[i].x, this.points[i].y);
+		}
+		ctx.stroke();
+		ctx.beginPath();
+	};
+}
+
+var curving=true;//whether we are animating the addition of curvature
+
+var gravityTrail = new Trail();//the trail of the centre of gravity
+
+var cursor=new Point(-20,-20);//the position of the mouse
+var axis=new Point(-20,-20);//thge centre for rotation / motion
+var cursorSize=10;//the width of the mouse cross
+
+var sliding=false;//whether we are moving the spinner
+var slidingSpeed=new Point(0, 0);//the vector for moving the spinner
+var thingyWidth=0;//the width of the finger/stand
+var showCross=false;//show the big red X
+
+function drawXline(y) {//draw a horisontal line
+	ctx.beginPath();
+	ctx.moveTo(0,y);
+	ctx.lineTo(1000,y);
+	ctx.stroke();
+	ctx.beginPath();
+}
+
+function drawYline(x) {//draw a vertical line
+	ctx.beginPath();
+	ctx.moveTo(x,0);
+	ctx.lineTo(x,1000);
+	ctx.stroke();
+	ctx.beginPath();
+}
+
+function draw() {//the general repeat function
+	ctx.fillStyle='#EEEEEE';
+	ctx.fillRect(0,0,1000,1000);//background
+	
+	if(document.getElementById('curve').checked && spinner.percentageCurved < maxCurve) { //if still curving in and not fully curved
+		spinner.percentageCurved++;	//bend a bit
+	}else if( !document.getElementById('curve').checked && spinner.percentageCurved > 0 ){ //if still straightening and not fully straight
+		spinner.percentageCurved--; //flatten a bit
+	}
+	if(spinner.percentageCurved > 100){//keep within bounds
+		curving=false;
+	}
+	if(spinner.percentageCurved < 0){//keep within bounds
+		curving=true;
+	}
+	
+	spinner.draw();
+	
+	if(rotate > 0){//if still some spinning left to do
+		spinner.rotate(axis, Math.PI/200);//spin
+		
+		rotate--;//less left to do
+	}else if(rotate < 0){//if still some spinning left to do
+		spinner.rotate(axis, 0-Math.PI/200);//spin
+		
+		rotate++;//less left to do
+	}
+	
+	if(sliding){//if moving toward action centre
+		spinner.move(slidingSpeed);//move
+		if(//reached destination
+			Math.abs(axis.x - spinner.centreOfGravity.x) < 1
+			&&
+			Math.abs(axis.y - spinner.centreOfGravity.y) < 1
+		){
+			sliding=false;//stop
+		}
+	}
+	
+	if( 
+		gravityTrail.points.length < 3 //less than 3 points stored
+		||
+		gravityTrail.points[gravityTrail.points.length-1].x != spinner.centreOfGravity.x //x has changed
+		||
+		gravityTrail.points[gravityTrail.points.length-1].y != spinner.centreOfGravity.y //y has changed
+	){
+		gravityTrail.points.push( new Point(spinner.centreOfGravity.x, spinner.centreOfGravity.y) ); //append a new point to the trail
+	}
+	
+	
+	//start draw items if checked **************************************
+	if(document.getElementById('trail').checked){ 
+		ctx.strokeStyle='#000000';
+		gravityTrail.draw();
+	}
+	if(document.getElementById('red marker').checked ){
+		ctx.strokeStyle='#FF0000';
+		drawXline(spinner.centreOfGravity.y);
+	}
+	if(document.getElementById('blue marker').checked ){
+		ctx.strokeStyle='#0000FF';
+		drawXline(blueMarkerPosition);
+	}
+	if(document.getElementById('green marker').checked ){
+		ctx.strokeStyle='#00FF00';
+		drawYline(spinner.centreOfGravity.x);
+	}
+	
+	
+	//end draw items if checked ****************************************
+	
+	if(document.getElementById('finger').checked) {//if checked to draw finger
+		//300,120,160
+		ctx.fillStyle='#F0BA7E';
+		ctx.strokeStyle='#000000';
+		ctx.beginPath();
+		ctx.moveTo(260,460);
+		ctx.lineTo( document.getElementById('finger pointed').checked ? 300 : 260 ,   160);
+		ctx.lineTo( document.getElementById('finger pointed').checked ? 300 : 340 ,   160);
+		ctx.lineTo(340,460);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.beginPath();
+	}
+	
+	ctx.strokeStyle='#000000';
+	ctx.beginPath();
+	ctx.moveTo(cursor.x-cursorSize,cursor.y);
+	ctx.lineTo(cursor.x+cursorSize,cursor.y);
+	ctx.stroke();
+	ctx.beginPath();
+	ctx.moveTo(cursor.x,cursor.y-cursorSize);
+	ctx.lineTo(cursor.x,cursor.y+cursorSize);
+	ctx.stroke();
+	ctx.beginPath();//draw the pointer
+	
+	ctx.strokeStyle='#FFFFFF';//draw the axis point
+	ctx.beginPath();
+	ctx.moveTo(axis.x-cursorSize,axis.y);
+	ctx.lineTo(axis.x+cursorSize,axis.y);
+	ctx.stroke();
+	ctx.beginPath();
+	ctx.moveTo(axis.x,axis.y-cursorSize);
+	ctx.lineTo(axis.x,axis.y+cursorSize);
+	ctx.stroke();
+	ctx.beginPath();
+	
+	if(showCross) {
+		ctx.lineWidth=20;
+		ctx.strokeStyle='#FF0000';
+		ctx.beginPath();
+		ctx.moveTo(0,0);
+		ctx.lineTo(800,450);
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(0,450);
+		ctx.lineTo(800,0);
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.lineWidth=1;
+	}
+}
+
+document.getElementById('set blue marker').onclick=function() {
+	blueMarkerPosition=spinner.centreOfGravity.y;//set to where spinner currently is
+}
+
+document.getElementById('rotate').onclick=function() {
+	rotate=-10;
+}
+
+document.getElementById('move').onclick=function() {
+	sliding=true;
+	slidingSpeed.x=axis.x - spinner.centreOfGravity.x;
+	slidingSpeed.y=axis.y - spinner.centreOfGravity.y;
+	//~ alert(slidingSpeed.x);
+	slidingSpeed.norm();
+	var slowness=10;
+	slidingSpeed.x/=slowness;
+	slidingSpeed.y/=slowness;
+	//~ alert(slidingSpeed.x);
+}
+
+onkeydown=function(event) {
+	if(event.keyCode == 32){//spacebar
+		showCross=true;//show the big X
+	}
+}
+
+onkeyup=function(event) {
+	if(event.keyCode == 32){//spacebar
+		showCross=false//hide the X
+	}
+}
+
+ctx.canvas.onmousemove=function(event){
+	cursor.x=event.clientX;
+	cursor.y=event.clientY;
+}
+
+ctx.canvas.onmouseup=function(event){
+	axis.x=event.clientX;
+	axis.y=event.clientY;
+}
+
+setInterval(draw,50);
+	</script>
+</body>
+
+</html>

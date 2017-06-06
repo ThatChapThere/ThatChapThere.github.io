@@ -15,11 +15,33 @@ canvas{
   left:  376px;
   top: 376px;
 }
+meter{
+  position: absolute;
+  left:  376px;
+  top: 300px;
+  height:30px;
+  width:737px;
+}
+#score{
+  font-family: "arial";
+  position: absolute;
+  font-size: 50px;
+  left:  737px;
+  top: 240px;
+  height:30px;
+  width:737px;
+}
 	</style>
 </head>
 
 <body>
-	<canvas width="734" height="376" />
+	<canvas width="734" height="376" ></canvas>
+	<meter value="200" min="0" max="400" low="100" high="300" id="power"></meter>
+	<div id="score">
+		<span id="player1">0</span>
+		-
+		<span id="player2">0</span>
+	</div>
 	<script>
 // 356.87 cm x 177.8 cm 8.6 pockets, 5.25 balls
 var width=714;
@@ -36,6 +58,29 @@ var p=22;
 var maxSpeed=4;
 var friction=0.998;
 var minSpeed=0.1;
+var cushionBumpDistance = ( pockets + (cushions * 2) ) / Math.sqrt(2);
+var playerOneToMOve=true;
+var breakSize=0;
+var score=[0,0];
+var firstBallHit=0;
+var ballsPotted=[];
+var ballNeeded=7; //7=red 0=any 1-6=yellow-black
+var ballCalled=1;//yellow
+var ballsTouching=[];
+var freeBall=false;
+var shotEnded=true;
+
+function getMaxItem(array){//or false = lowest
+	var maxItem=-Infinity;
+	var maxIndex;
+	for(var i=0;i <array.length;i++){
+		if(array[i] > maxItem){
+			maxItem=array[i];
+			maxIndex=i;
+		}
+	}
+	return( array[maxIndex] );
+}
 
 function getOffset(left) {//true=left, false=top
 	var offset=0;
@@ -70,6 +115,10 @@ function sq(a) {
 	return(a*a);
 };
 
+function getRadius(x, y){
+	return( Math.sqrt( sq(x) + sq(y) ) );
+}
+
 function Ball(x,y,xv,yv,colour) {
 	this.x=x;
 	this.y=y;
@@ -85,9 +134,9 @@ function Ball(x,y,xv,yv,colour) {
 	}
 	this.move=function() {
 		if( ! (  
-			(this.x < pocketWidth + cushions * 3 -r) ||
+			(this.x < cushionBumpDistance -r) ||
 			(this.x > (width/2 + pockets/2 - cushions*2 +r) && this.x < (width/2 + pockets/2 + cushions*2 -r) ) ||
-			(this.x > width-pocketWidth+r)  
+			(this.x > width + cushions*2 - cushionBumpDistance + r)  
 		) ){
 			
 			if(this.y > height-r+cushions){
@@ -101,8 +150,8 @@ function Ball(x,y,xv,yv,colour) {
 		}
 		
 		if( ! (  
-			(this.y < pocketWidth + cushions * 3 -r) ||
-			(this.y > height-pocketWidth+r)  
+			(this.y < cushionBumpDistance -r) ||
+			(this.y > height + cushions*2 - cushionBumpDistance + r)  
 		) ){
 			
 			if(this.x < r + cushions){
@@ -171,7 +220,7 @@ for(var i=0;i<p;i++){
 	notPotted.push(true);
 }
 
-var balls=[
+{var balls=[
 	new Ball(cushions+150, height/2+cushions+25,0,0, '#FFFFFF'),//cueball
 	new Ball(cushions+157, height/2+cushions,0,0, '#865200'),//brown
 	new Ball(cushions+157, height/2+cushions+58,0,0, '#ECE200'),//yellow
@@ -200,23 +249,57 @@ var balls=[
 	new Ball(width+cushions-183+r*2+1 + redsGap*4, height/2+cushions-r*2,0,0, '#FF0000'),//red
 	new Ball(width+cushions-183+r*2+1 + redsGap*4, height/2+cushions-r*4,0,0, '#FF0000'),//red
 ];
+}
+var savedBalls=[];
 
-var cushionBumps=[
-	new Vector(pocketWidth+cushions*3,0),
-	new Vector(pocketWidth+cushions*3,cushions*2+height),
+var savedNotPotted=[];
+
+function saveTable() {
+	for(var i=0; i<p; i++){
+		savedBalls[i]=new Ball(balls[i].x,balls[i].y,0,0,balls[i].colour);
+		savedNotPotted[i]=notPotted[i];
+	}
+}
+
+function endShot() {
+	
+}
+
+function restoreTable() {
+	for(var i=0; i<p; i++){
+		balls[i]=new Ball(savedBalls[i].x,savedBalls[i].y,savedBalls[i].xv,savedBalls[i].yv,savedBalls[i].colour);
+		notPotted[i]=savedNotPotted[i];
+	}
+}
+
+{var cushionBumps=[
+	new Vector(cushionBumpDistance,0),
+	new Vector(cushionBumpDistance,cushions*2+height),
 	new Vector(width/2 + pockets/2 - cushions*2,0),
 	new Vector(width/2 + pockets/2 - cushions*2,cushions*2+height),
 	new Vector(width/2 + pockets/2 + cushions*2,0),
 	new Vector(width/2 + pockets/2 + cushions*2,cushions*2+height),
-	new Vector(width-pocketWidth+cushions,0),
-	new Vector(width-pocketWidth+cushions,cushions*2+height),
+	new Vector(width + cushions*2 - cushionBumpDistance,0),
+	new Vector(width + cushions*2 - cushionBumpDistance,cushions*2+height),
 	
-	new Vector(0, pocketWidth+cushions*3),
-	new Vector(width+cushions*2, cushions*3+width, pocketWidth+cushions*3),
-	new Vector(0, height-pocketWidth+cushions),
-	new Vector(width+cushions*2, height-pocketWidth+cushions),
+	new Vector(0, cushionBumpDistance),
+	new Vector(width+cushions*2, cushions*3+width, cushionBumpDistance),
+	new Vector(0, height + cushions*2 - cushionBumpDistance),
+	new Vector(width+cushions*2, height + cushions*2 - cushionBumpDistance),
 ];
+}
 
+function isStopped() {
+	var allStopped=true;
+	for(var i=0; i<p; i++){
+		if(notPotted[i]){
+			if(Math.abs( balls[i].yv ) < minSpeed && Math.abs( balls[i].xv ) < minSpeed){}else{
+				allStopped=false;
+			}
+		}
+	}
+	return(allStopped);
+}
 
 function draw() {
 	ctx.fillStyle='#008800';
@@ -276,23 +359,21 @@ function draw() {
 					var distance=iToj.getRad();
 					var compression=r*2 - distance;
 					
-					var iVelocity=new Vector(balls[i].xv, balls[i].yv);
-					var iSpeed=iVelocity.getRad();
-					var iKineticEnergy=sq(iSpeed);
-					
-					var jVelocity=new Vector(balls[j].xv, balls[j].yv);
-					var jSpeed=jVelocity.getRad();
-					var jKineticEnergy=sq(jSpeed);
-					
-					var totalSpeed=iSpeed+jSpeed;
-					var totalKineticEnergy=iKineticEnergy+jKineticEnergy;
-					
 					if(distance < r*2){
 						balls[i].xv += (iToj.x / distance)  * compression;
 						balls[i].yv += (iToj.y / distance)  * compression;
 						
 						balls[j].xv -= (iToj.x / distance)  * compression;
 						balls[j].yv -= (iToj.y / distance)  * compression;
+					}
+					if(distance < r*2 - 1){
+						//~ var audio = new Audio('pop.mp3');
+						audio.play();
+					}
+					
+					
+					if(i==0 && firstBallHit==0){//the first ball the cue ball hits
+						firstBallHit=j;
 					}
 				}
 			}
@@ -306,9 +387,16 @@ function draw() {
 					balls[i].yv += (iToj.y / distance)  * compression;
 				}
 			}
-			if(balls[i].y < cushions || balls[i].y > height + cushions || balls[i].x < cushions || balls[i].x > width + cushions){//potted
-				alert('Potted');
-				notPotted[i]=false;
+			if(balls[i].y < 0 || balls[i].y > height + cushions*2 || balls[i].x < 0 || balls[i].x > width + cushions*2){//potted
+				//~ alert('Potted');
+				if(i != 0){
+					notPotted[i]=false;
+				}else{
+					balls[0].x=cushions+150;
+					balls[0].y=height/2+cushions+25;
+					balls[0].xv=0;
+					balls[0].yv=0;
+				}
 			}
 		}
 	}
@@ -368,12 +456,26 @@ function draw() {
 	cue.y/=cue.getRad();
 	ctx.moveTo(balls[0].x + cue.x * (r+2) , balls[0].y + cue.y * (r+2));
 	ctx.lineTo(balls[0].x + cue.x * (r+300) , balls[0].y + cue.y * (r+300));//cue
-	//~ balls[2].x=mouse.x - cue.x * (r+300);
-	//~ balls[2].y=mouse.y - cue.y * (r+300);
-	if(balls[0].xv == 0 && balls[0].yv==0){
+	
+	if(isStopped()){
 		ctx.stroke();
 	}
 	
+	ctx.strokeStyle='#00000055';
+	ctx.lineWidth=r*2;
+	ctx.beginPath();// right
+	ctx.moveTo(balls[0].x - cue.x * (r+2) , balls[0].y - cue.y * (r+2));
+	ctx.lineTo(balls[0].x - cue.x * (r+800) , balls[0].y - cue.y * (r+800));//cue
+	
+	//~ balls[2].x=mouse.x - cue.x * (r+300);
+	//~ balls[2].y=mouse.y - cue.y * (r+300);
+	if(isStopped()){
+		ctx.stroke();
+	}
+	
+	if(isStopped){
+		
+	}
 	//ctx.fillRect(0,0,width+ (cushions*2),cushions);
 	//ctx.fillRect(0,0,cushions,height+ (cushions*2));
 	//ctx.fillRect(width+cushions,0,cushions,height+ (cushions*2));
@@ -383,8 +485,26 @@ function draw() {
 setInterval(draw,1);
 
 onmouseup=function(event) {
-	balls[0].xv=(balls[0].x-mouse.x) /100;
-	balls[0].yv=(balls[0].y-mouse.y) /100;
+	if(isStopped()){
+		var size=getRadius(balls[0].x-mouse.x, balls[0].y-mouse.y);
+		balls[0].xv=(balls[0].x-mouse.x) /100 /size * document.getElementById("power").value;
+		balls[0].yv=(balls[0].y-mouse.y) /100 /size * document.getElementById("power").value;
+		shotEnded=false;
+	}
+}
+
+function scroll(e){
+    var evt=window.event || e;
+    var delta=evt.detail? evt.detail : evt.wheelDelta / 120;
+    document.getElementById("power").value+=delta;
+}
+ 
+var mousewheelevt=(/Firefox/i.test(navigator.userAgent))? "DOMMouseScroll" : "mousewheel";
+ 
+if (document.attachEvent){ //if IE (and Opera depending on user setting)
+    document.attachEvent("on"+mousewheelevt, scroll);
+}else if (document.addEventListener) {//WC3 browsers
+    document.addEventListener(mousewheelevt, scroll, false);
 }
 
 	</script>
