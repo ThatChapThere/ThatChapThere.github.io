@@ -1,0 +1,438 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>Political Party Game</title>
+	<LINK type="image/png" href="Politics.png" rel="icon"></LINK>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+</head>
+
+<body>
+	<canvas width="500" height="500"></canvas>
+	<hr/>
+	<button id="run time">Run Election</button>
+	<hr/>
+	<div id="personal">
+		<h4 id="personal constituency"></h4>
+		<h3>Your Ideology:</h3>
+		Tax: <input type="range" id="personal tax" min="0" max="100"></input><span id="personal tax number">20</span>%
+		<br/>
+		Wages: <input type="range" id="personal wages" min="0" max="100"></input>£<span id="personal wages number">20</span> / hour
+		<br/>
+		Immigration:
+		<select id="personal immigration">
+			<option value="0">
+				Police
+			</option>
+			
+			<option value="1">
+				Allow Freely
+			</option>
+			
+			<option value="-1">
+				Ban Immigration
+			</option>
+		</select>
+		<br/>
+		Party:
+		<select id="parties">
+			
+		</select>
+		<br/>
+		<p id="position"></p>
+		<p id="age"></p>
+	</div>
+	<hr/>
+	<div id="national">
+		<h3>National:</h3>
+		<h5>Policies:</h5>
+		tax: <span id="tax">15</span>%
+		<br/>
+		Wages: £<span id="wage">7.50</span> / hour
+		<br/>
+		Immigration: <span id="immigration">policed</span>
+		<h5>National Budget:</h5>
+		£<span id="budget">1000000000</span>
+		<br/>
+		<p id="power"></p>
+	</div>
+	<hr/>
+	<h3>Seats:</h3>
+	<div id="seats"></div>
+	<hr/>
+	<h3>Manifestos:</h3>
+	<div id="ideas"></div>
+	<script>
+var ctx=document.getElementsByTagName('canvas')[0].getContext('2d');
+
+var size=500;//the size of the country
+var vowels='aeiou';
+var consonants='bcdfghjklmnprstvwxyz';
+var endings=['ton', 'borough', 'by', 'thorpes', 'caster', 'castle','chester','ville','sville','k','stone','ston'];//for random town generating
+
+var budget=1000000000;
+
+var reputation=0;
+
+function getRandom(array) {//returns a random index (not item)
+	return( Math.floor( Math.random() * array.length ) );
+}
+
+function generatePlaceName() {
+	return(
+		consonants[ Math.floor( Math.random() * consonants.length ) ]
+		+
+		vowels[ Math.floor( Math.random() * vowels.length ) ]
+		+
+		consonants[ Math.floor( Math.random() * consonants.length ) ]
+		+
+		vowels[ Math.floor( Math.random() * vowels.length ) ]
+		+
+		endings[ Math.floor( Math.random() * endings.length ) ]
+	);
+}
+
+function Manifesto(tax, immigration, wage) {
+	this.tax=tax;
+	this.immigration=immigration;
+	this.wage=wage;
+}
+
+function Party(name, colour, manifesto) {
+	this.name=name;
+	this.colour=colour;
+	this.manifesto=manifesto;
+	this.trustworthiness=50;
+	this.votes=0;
+}
+
+function getImmigrationString(n) {
+	switch(n){
+		case -1:
+			return('banned');
+			break;
+		case 1:
+			return('freely allowed');
+			break;
+		default:
+			return('carefully policed');
+	}
+}
+
+function getImmigrationBudget(n) {
+	switch(n){
+		case -1:
+			return(1000000);
+			break;
+		case 1:
+			return('100000000');
+			break;
+		default:
+			return('5000000');
+	}
+}
+
+var parties=[
+	new Party('right','#5B7EC9',new Manifesto(20,0,7)),
+	new Party('left','#FF2100',new Manifesto(25,1,10)),
+	new Party('wrong','#FF7F00',new Manifesto(40,0,7)),
+	new Party('green','#09B901',new Manifesto(31,1,6)),
+	new Party('purple','#7A01B9',new Manifesto(31,-1,6)),
+	new Party('silly','#FFF500',new Manifesto(99,1,1)),
+	new Party('sensible','#A58A5D',new Manifesto(31,0,6)),
+];
+
+var personalManifesto=new Manifesto(0,0,0);
+
+var countryLaws=new Manifesto(15,0,7.5);
+
+var isMP=false;
+var isLeader=false;
+var age=25;
+var partyIsInPower=false;
+var currentRun=0;
+
+var termToRun=false;//false=election
+
+var currentPartyInPower=0;
+var currentPartySeats=0;
+
+function getRank() {
+	if(isMP){
+		if(partyIsInPower){
+			if(isLeader){
+				return('Prime Minister');
+			}else{
+				return('cabinet minister');
+			}
+		}else{
+			if(isLeader){
+				return('Leader of the opposition');
+			}else{
+				return('backbencher');
+			}
+		}
+	}else{
+		return('civilllian');
+	}
+}
+
+function runTerm(){
+	age+=5;
+	if(isMP && isLeader){
+		parties[document.getElementById('parties').value].manifesto=personalManifesto;
+	}
+	if(currentPartySeats > 50) {
+		countryLaws=parties[currentPartyInPower].manifesto;
+	}
+	document.getElementById('run time').innerHTML='Run Election';
+	draw();
+	termToRun=false;
+	var oldBudget=budget;
+	budget-=countryLaws.wage*25000000;
+	budget+=countryLaws.tax*25000000;
+	budget-=getImmigrationBudget(countryLaws.immigration);
+	if(budget > oldBudget){
+		parties[currentPartyInPower].trustworthiness++;
+	}else{
+		parties[currentPartyInPower].trustworthiness--;
+	}
+}
+
+function Voter(type){//0=random,1=loyal,2=immigration,3=wage,4=reliability,5=tax
+	this.type=type;
+	this.party=getRandom(parties);
+	this.immigration= Math.floor( ( Math.random() * 3 ) - 1 );
+	this.vote=function() {
+		switch(this.type) {
+			case 0:
+				return(getRandom(parties));
+				break;
+			case 1:
+				return(this.party);
+				break;
+			case 2:
+				for(var i=0;i<parties.length;i++){
+					if(parties[i].manifesto.immigration==this.immigration){
+						return(i);
+					}
+				}
+				return(0);
+				break;
+			case 3:				
+				var p=0;
+				var _max=0;
+				for(var i=0;i<parties.length;i++){
+					if(parties[i].manifesto.wage > _max){
+						p=i;
+						_max=parties[i].manifesto.wage;
+					}
+				}
+				return(p);
+				break;
+			case 4:			
+				var p=0;
+				var _max=0;
+				for(var i=0;i<parties.length;i++){
+					if(parties[i].manifesto.trustworthiness > _max){
+						p=i;
+						_max=parties[i].trustworthiness;
+					}
+				}
+				return(p);
+			
+				break;
+			case 5:		
+				var p=0;
+				var _min=101;
+				for(var i=0;i<parties.length;i++){
+					if(parties[i].manifesto.tax < _min){
+						p=i;
+						_min=parties[i].manifesto.tax;
+					}
+				}
+				return(p);
+				break;
+		}
+	}
+}
+
+function Constituency(x,y,party) {
+	this.name=generatePlaceName();
+	this.x=x;
+	this.y=y;
+	this.party=party;
+	this.voters=[];
+	for(var i=0;i<10;i++){
+		this.voters.push(new Voter(getRandom([1,2,3,4,5,6]) ));
+	}
+	this.draw=function() {
+		ctx.fillStyle=parties[this.party].colour;
+		ctx.fillRect(this.x,this.y,10,10);
+		ctx.fillStyle='#000000';
+		ctx.fillText(this.name,this.x,this.y);
+	}
+	this.elect=function() {
+		var votes=[];
+		for(var i=0;i<parties.length;i++){
+			votes.push(0);
+		}
+		for(var i=0;i<this.voters.length;i++){
+			votes[this.voters[i].vote()]++;
+		}
+		var p=0;
+		var _max=0;
+		for(var i=0;i<votes.length;i++){
+			if(votes[i] >= _max){
+				p=i;
+				_max=votes[i];
+			}
+		}
+		this.party=p;
+	}
+}
+
+var constituencies=[];
+
+for(var i =0;i<100;i++){
+	constituencies.push(new Constituency(Math.random()*(size-10), Math.random()*(size-10),getRandom(parties) ));
+}
+
+for(var i=0;i<parties.length;i++){
+	document.getElementById('parties').innerHTML+='<option value="' + i +'" style="background-color:'+parties[i].colour+'">'+parties[i].name+'</option>';
+}
+
+function draw() {
+	//Grapics***********************************************************
+	ctx.fillStyle='#73ED4D';
+	ctx.fillRect(0,0,1000,1000);
+	for(var i =0;i<100;i++){
+		constituencies[i].draw();
+	}
+	
+	ctx.beginPath();
+	ctx.arc(constituencies[0].x, constituencies[0].y,25,0,2*Math.PI);
+	ctx.stroke();
+	ctx.beginPath();
+	
+	//Player ideologies and details*************************************
+	document.getElementById('personal tax number').textContent= document.getElementById('personal tax').value;
+	document.getElementById('personal wages number').textContent= document.getElementById('personal wages').value;
+	
+	document.getElementById('personal constituency').style.backgroundColor = parties[constituencies[0].party].colour;
+	
+	document.getElementById('position').textContent= 'Position: '+getRank();
+	document.getElementById('age').textContent= 'Age: '+age;
+	
+	personalManifesto = new Manifesto(document.getElementById('personal tax').value, document.getElementById('personal immigration').value, document.getElementById('personal wages').value );
+
+	
+	//party seats*******************************************************
+	document.getElementById('seats').innerHTML='<div style="background-color:#78787878; width:400px; height: 50px"><div style="background-color:#555555; width:204px; height: 400px">required for majority</div></div>';
+	
+	for(var i=0;i<parties.length;i++){
+		parties[i].votes=0;
+		for(var j=0;j<constituencies.length;j++){
+			if(constituencies[j].party==i){
+				parties[i].votes++;
+			}
+		}
+		document.getElementById('seats').innerHTML+='<div style="background-color:#78787878; width:400px; height: 50px"><div style="background-color:'+ parties[i].colour +'; width:'+parties[i].votes*4+'px; height: 50px">the '+parties[i].name+' party</div></div>';
+	}
+	//party ideologies**************************************************
+	document.getElementById('ideas').innerHTML='';
+	for(var i=0;i<parties.length;i++){
+		document.getElementById('ideas').innerHTML+='<p style="background-color:'+parties[i].colour+'">'+parties[i].name+' party: tax = '+parties[i].manifesto.tax+'%; Wages = £'+parties[i].manifesto.wage+' / hour; Immigration will be '+getImmigrationString( parties[i].manifesto.immigration)+'<br/>';
+	}
+	//national statistics
+	document.getElementById('tax').innerHTML=countryLaws.tax;
+	document.getElementById('immigration').innerHTML=getImmigrationString(countryLaws.immigration);
+	document.getElementById('wage').innerHTML=countryLaws.wage;
+	document.getElementById('budget').innerHTML=budget;
+	power.innerHTML='';
+	var p=0;
+	var _max=0;
+	for(var i=0;i<parties.length;i++){
+		if(parties[i].votes >= _max){
+			p=i;
+			_max=parties[i].votes;
+		}
+	}
+	
+	currentPartyInPower=p;
+	currentPartySeats=parties[p].votes;
+	
+	document.getElementById('power').innerHTML ='Government: The '+ parties[p].name + ' party (' +  (parties[p].votes > 50? 'majority':'minority') +')';
+
+	//handle insane policies *******************************************
+	if(countryLaws.tax==100 || countryLaws.wage==0 || budget < 0){
+		alert('Unfortunately you were assasinated.');
+		document.body.innerHTML='';
+	}
+}
+
+document.getElementById('personal tax').onmousemove=function() {
+	draw();
+}
+
+document.getElementById('personal constituency').innerHTML='Your constituency is '+constituencies[0].name+'. '+Math.round(constituencies[0].x)+'miles east and '+Math.round(constituencies[0].y)+' miles south';
+
+document.getElementById('personal wages').onmousemove=function() {
+	draw();
+}
+
+document.getElementById('parties').onchange=function() {
+	currentRun=0;
+	isLeader=false;
+}
+
+for(var i=0;i<constituencies.length;i++){
+	constituencies[i].elect();
+}
+
+draw();
+
+function election() {
+	for(var i=0;i<constituencies.length;i++){
+		constituencies[i].elect();
+	}
+	
+	if(constituencies[0].party==document.getElementById('parties').value){
+		currentRun++;
+		isMP=true;
+		if(currentRun==3){
+			isLeader=true;
+		}
+	}else{
+		currentRun=0;
+		isLeader=false;
+		isMP=false;
+	}
+	
+	draw();
+	
+	if(currentPartyInPower==document.getElementById('parties').value){
+		partyIsInPower=true;
+	}else{
+		partyIsInPower=false;
+		
+	}
+	document.getElementById('run time').innerHTML='Run Term';
+	
+	termToRun=true;
+}
+
+document.getElementById('run time').onclick=function() {
+	if(termToRun){
+		runTerm();
+	}else{
+		election();
+	}
+}
+
+setInterval(draw,100);
+	</script>
+</body>
+
+</html>
