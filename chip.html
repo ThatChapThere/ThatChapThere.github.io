@@ -115,7 +115,7 @@ td#ledCol{
 			</td>
 		</tr>
 	</table>
-	<canvas width="500" height="500" >
+	<canvas width="500" height="500" />
 	<script type='text/javascript'>
 var ctx=document.getElementsByTagName('canvas')[0].getContext('2d');
 ctx.fillStyle='#fff';
@@ -123,9 +123,11 @@ ctx.strokeStyle='#000';
 ctx.fillRect(0,0,500,500);
 var regions=[];
 var mouseDown=false;var isMouseDown = false;
+
 document.onmousedown = function() {
 	mouseDown = true;
 };
+
 document.onmouseup = function() {
 	mouseDown = false
 };
@@ -191,6 +193,7 @@ ctx.canvas.onmousemove=function(event) {
 		}
 	}
 }
+
 ctx.canvas.onclick=function(event) {
 	var x=event.clientX-getOffset(true)-scrollX;
 	var y=event.clientY-getOffset(false)-scrollY;
@@ -231,7 +234,7 @@ function draw() {
 				voltages[i][j]=-10;
 			}
 			
-			if(regions[i][j] == 0){
+			if(regions[i][j] == 0){//silicon
 				voltages[i][j]=0;
 			}
 			
@@ -261,6 +264,7 @@ function draw() {
 					//~ console.log(e);
 				}
 			}
+			
 			if(numberOfNeighbors){
 				var meanSurroundingVoltage=sumOfNeighbors/numberOfNeighbors;
 				voltageChanges[i][j]=meanSurroundingVoltage-voltages[i][j];
