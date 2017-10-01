@@ -1,0 +1,1517 @@
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+		<LINK type="image/png" href="../images/icons/chessimg.png" rel="icon"></LINK>
+		<title>
+			playChess.org
+		</title>
+		<STYLE>
+.canvasBox{
+	position:absolute;
+	left:8px;
+	top:200px;
+}
+table{
+	font-size: 13px;
+}
+body{
+	font-family:'Times new Roman';
+}
+table.notation{
+	position:absolute;
+	top:200;
+	left:1000;
+	color:#000000;
+	font-size:20px;
+}
+		</STYLE>
+	</head>
+	<body style="background-color: #990000; color: #77ffff">
+		<TABLE class='notation'>
+			<TBODY id="move_board">
+			</TBODY>
+		</TABLE>
+		<h1>
+			Chess
+		</h1>
+		<TABLE>
+			<TBODY>
+				<TR>
+					<TD>
+						knightCobra 0.6.2 beta
+					</TD>
+				</TR>
+				<TR>
+					<SELECT id='wlevel'>
+						<OPTION value='0' class='Human'>
+							Human
+						</OPTION>
+						<OPTION value='1'>
+							Level 1 (1)
+						</OPTION>
+						<OPTION value='2'>
+							Level 2 (60)
+						</OPTION>
+						<OPTION value='3'>
+							Level 3 (185)
+						</OPTION>
+						<OPTION value='4'>
+							Level 4 (267)
+						</OPTION>
+						<OPTION value='5'>
+							Level 5 (?)
+						</OPTION>
+					</SELECT>
+				</TR>
+				-
+				<TR>
+					<SELECT id='blevel'>
+						<OPTION value='0' class='Human'>
+							Human
+						</OPTION>
+						<OPTION value='1'>
+							Level 1 (1)
+						</OPTION>
+						<OPTION value='2'>
+							Level 2 (60)
+						</OPTION>
+						<OPTION value='3'>
+							Level 3 (185)
+						</OPTION>
+						<OPTION value='4'>
+							Level 4 (267)
+						</OPTION>
+						<OPTION value='5'>
+							Level 5 (?)
+						</OPTION>
+					</SELECT>
+				</TR>
+			</TBODY>
+		</TABLE>
+		<DIV class='canvasBox'>
+		<canvas id="board" width=800 height=800></canvas>
+		<SCRIPT>
+/*
+Ampere's ideas were very current, wheras Volta's were potentially different;
+Newton was forcefull, but Watt had power;
+Joule was energetic and Kelin got heated, but it was Pascal who was really under pressure;
+and Faraday's capacity induced Henry to charge Coulumb with resisting Ohm for a second time.
+*/
+var currentDepth=1;
+var game=[];//for threefold rep
+var center=[[3,4],[4,3],[3,3],[4,4]];// the four central squares
+var moveCount=1;//the move
+var files='abcdefgh';//files for notation
+var _50moveCounter=0;//counter for 50-move rule
+var knightMoves=[[1,2],[2,1],[-1,-2],[-2,-1],[-1,2],[-2,1],[1,-2],[2,-1]];//possible knight moves for board control
+var kingMoves=[[-1,-1],[-1,0],[-1,1],[1,-1],[1,0],[1,1],[0,-1],[0,1]];//possible king moves for board control
+function opponent(CoL) {
+	CoL=CoL.toUpperCase();
+	if(CoL=='B'){
+		return('W');
+	}if(CoL=='W'){
+		return('B');
+	}
+};//get the other colour
+/*var queenMoves=[];
+var rookMoves=[];
+var bishopMoves=[];
+for(var i =-7; i<8;i++){
+	rookMoves.push([i,0]);
+	rookMoves.push([0,i]);
+	queenMoves.push([i,0]);
+	queenMoves.push([0,i]);
+	bishopMoves.push([i,i]);
+	bishopMoves.push([i,-i]);
+	queenMoves.push([i,i]);
+	queenMoves.push([i,-i]);
+}*/
+//currently redundant code
+var promotion='empty';//variable for pawn promotion
+var pen=document.getElementById('board').getContext('2d');//the rendering object*********************************
+
+pen.fillStyle = '#640';//
+pen.fillRect(0,0,800,800);//
+pen.fillStyle='#da5';//******************************************************************************************
+
+var turn='W';//who's turn it is
+var notTurn='B';
+var pieceInMove='empty';
+
+for(var i = 1; i <= 8; i++){
+	for(var j = 1; j <= 8; j++){
+		if(j % 2 === i % 2){
+			pen.fillRect((i * 100) - 100,(j * 100) - 100,100,100);
+		}
+	}
+
+}//draws the board
+
+var rooksUnmoved=[true,true,true,true];//for castling.[BQR,BKR,WQR,WKR]. If the king moves, both rooks are set to false.
+var canEP=false;//can capture en passant
+var canEPnext=false;
+var EP=false;//other nessisary variables for en passant
+var EPrank=0;//for en passant
+
+{//********************************code for the rendering of the pieces*******************************************
+	var pieces={
+		BP:document.createElement("img"),
+		BR:document.createElement("img"),
+		BN:document.createElement("img"),
+		BB:document.createElement("img"),
+		BQ:document.createElement("img"),
+		BK:document.createElement("img"),
+		WP:document.createElement("img"),
+		WR:document.createElement("img"),
+		WN:document.createElement("img"),
+		WB:document.createElement("img"),
+		WQ:document.createElement("img"),
+		WK:document.createElement("img"),
+		empty:document.createElement("canvas")
+	};
+pieces.BP.src="chesspieces/BP.jpg";
+pieces.BR.src="chesspieces/BR.jpg";
+pieces.BN.src="chesspieces/BN.jpg";
+pieces.BB.src="chesspieces/BB.jpg";
+pieces.BQ.src="chesspieces/BQ.jpg";
+pieces.BK.src="chesspieces/BK.jpg";
+pieces.WP.src="chesspieces/WP.jpg";
+pieces.WR.src="chesspieces/WR.jpg";
+pieces.WN.src="chesspieces/WN.jpg";
+pieces.WB.src="chesspieces/WB.jpg";
+pieces.WQ.src="chesspieces/WQ.jpg";
+pieces.WK.src="chesspieces/WK.jpg";
+}
+
+{//gets the player's details
+	var player=prompt("What is your name?");
+	var playerRating=prompt("What is your chess rating?");
+	for(var i in document.getElementsByClassName('Human')){
+		document.getElementsByClassName('Human')[i].innerHTML=player+' ('+playerRating+')';
+	}
+}
+
+//*
+var position = [//*********the starting position**************************
+	["BR","BN","BB","BQ","BK","BB","BN","BR"],
+	["BP","BP","BP","BP","BP","BP","BP","BP"],
+	["empty","empty","empty","empty","empty","empty","empty","empty"],
+	["empty","empty","empty","empty","empty","empty","empty","empty"],
+	["empty","empty","empty","empty","empty","empty","empty","empty"],
+	["empty","empty","empty","empty","empty","empty","empty","empty"],
+	["WP","WP","WP","WP","WP","WP","WP","WP"],
+	["WR","WN","WB","WQ","WK","WB","WN","WR"]
+];//*******************************************************************
+/*/
+var position = [//*********the starting position**************************
+	["BK","empty","empty","empty","empty","empty","empty","empty"],
+	["empty","empty","empty","empty","empty","empty","empty","empty"],
+	["empty","empty","empty","empty","empty","empty","empty","empty"],
+	["empty","empty","empty","empty","empty","empty","empty","empty"],
+	["empty","empty","empty","empty","empty","empty","empty","empty"],
+	["empty","empty","empty","empty","empty","empty","empty","empty"],
+	["empty","empty","empty","empty","empty","empty","BR","BR"],
+	["WK","empty","empty","empty","empty","empty","empty","empty"]
+];
+//*/
+{//***************sets up the nescisary values for rendering the pieces
+	var arrayOne=[];
+	
+	for(var i = 0; i < 8;i++){
+		arrayOne.push(null);
+	}
+	
+	var arrayTwo=[];
+	
+	for(var i = 0; i < 8;i++){
+		arrayTwo.push(arrayOne);
+	}
+	
+	var positionInHtmlProtcol=arrayTwo;
+	
+	for(var i = 0; i < 8;i++){
+		for(var i = 0; i < 8;i++){
+			positionInHtmlProtcol[i][j] = pieces[ position[i][j] ];
+		}
+}
+
+var currentSquare;
+
+for(var i=0;i<8;i++){//this bit
+	for(var j=0;j<8;j++){
+		pen.drawImage( pieces[ position[i][j] ] ,(j*100)+10,(i*100)+10,80,80);
+	}
+}//draws them
+//***********************************************************
+}
+
+var X=0;//mouse positions as board coordinates for moving pieces
+var Y=0;
+var startX=0;
+var startY=0;//********************************************
+var mouseDown = false;
+
+function EvalPos() {//for evaluating positions
+	var evaluation=0;
+	for(var i = 0; i < 8; i++){
+		for(var j = 0; j < 8; j++){//looping through the board
+			var pieceToMove=position[j][i];//get the piece on a square
+			switch(pieceToMove){//handle possible valuable pieces
+				case 'BP':
+					evaluation--;
+					break;
+				case 'BR':
+					evaluation-=5;
+					break;
+				case 'BN':
+				case 'BB':
+					evaluation-=3;
+					break;
+						case 'BQ':
+					evaluation-=9;
+					break;
+				case 'WP':
+					evaluation++;
+					break;
+				case 'WR':
+					evaluation+=5;
+					break;
+				case 'WN':
+				case 'WB':
+					evaluation+=3;
+					break;
+				case 'WQ':
+					evaluation+=9;
+				break;
+				case 'WK':
+					evaluation+=1000;
+				break;
+				case 'BK':
+					evaluation-=1000;
+					break;
+			}//**************************************************
+		}
+	}
+	for(var i in center){//check central squares
+		var x=center[i][0];
+		var y=center[i][1];
+		var control=squareControl(x,y);//handle cental control
+		evaluation+=control.W*0.2;
+		evaluation-=control.B*0.2;
+		var centerCol=position[y][x][0];//********************
+		if(centerCol == 'B'){//handle cental pieces
+			evaluation-=0.3;
+		}
+		if(centerCol == 'W'){
+			evaluation+=0.3;
+		}//****************************************
+	}
+	return(evaluation);
+}
+
+function getKingPos(colour) {//gets the king's position for a specified colour
+	var king=colour.toUpperCase()+'K';//gets what the king will be called
+	for(var i=0;i<8;i++){
+		for(var j=0;j<8;j++){//loop through the board
+			if(position[i][j]==king){
+				return({x:j,y:i});//return position of found king
+			}
+		}
+	}
+	alert('king not found');
+}
+
+function squareControl(x,y) {//gets how much control a player has over a square
+	var x2=x;
+	var y2=y;
+
+	var control={//object for returning both player's control
+		W:0,
+		B:0
+	}
+
+	{//this bit is for horizontal/vertical moves.
+	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2<7){// loop for increasing x
+		x2++;
+	}
+
+	if(!(x2==x && y2==y)){
+		switch(position[y2][x2]){
+			case 'WR':
+			case 'WQ':
+				control.W++;
+				break;
+			case 'BR':
+			case 'BQ':
+				control.B++;//handle pieces. If a queen or rook, they control the square
+		}
+	}
+
+	var x2=x;
+	var y2=y;
+
+	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2>0){//loop for decreasing x
+		x2--;
+	}
+
+	if(!(x2==x && y2==y)){
+		switch(position[y2][x2]){
+			case 'WR':
+			case 'WQ':
+				control.W++;
+				break;
+			case 'BR':
+			case 'BQ':
+				control.B++;//handle pieces. If a queen or rook, they control the square
+		}
+	}
+
+	var x2=x;
+	var y2=y;
+
+	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && y2>0){//loop for decreasing y
+		y2--;
+	}
+
+	if(!(x2==x && y2==y)){
+		switch(position[y2][x2]){
+			case 'WR':
+			case 'WQ':
+				control.W++;
+				break;
+			case 'BR':
+			case 'BQ':
+				control.B++;//handle pieces. If a queen or rook, they control the square
+		}
+	}
+
+	var x2=x;
+	var y2=y;
+
+	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && y2<7){//loop for increasing y
+		y2++;
+	}
+
+	if(!(x2==x && y2==y)){
+		switch(position[y2][x2]){
+			case 'WR':
+			case 'WQ':
+				control.W++;
+				break;
+			case 'BR':
+			case 'BQ':
+				control.B++;//handle pieces. If a queen or rook, they control the square
+		}
+	}
+
+	}
+
+	{//then diagonal.
+	var x2=x;
+	var y2=y;
+	//similar, but with increment for x AND y, and handler for bishop and queen
+	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2<7 && y2<7){
+		y2++;
+		x2++;
+	}
+
+	if(!(x2==x && y2==y)){
+		switch(position[y2][x2]){
+			case 'WB':
+			case 'WQ':
+				control.W++;
+				break;
+			case 'BB':
+			case 'BQ':
+				control.B++;
+		}
+	}
+
+	var x2=x;
+	var y2=y;
+
+	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2<7 && y2>0){
+		y2--;
+		x2++;
+	}
+
+	if(!(x2==x && y2==y)){
+		switch(position[y2][x2]){
+			case 'WB':
+			case 'WQ':
+				control.W++;
+				break;
+			case 'BB':
+			case 'BQ':
+				control.B++;
+		}
+	}
+
+	var x2=x;
+	var y2=y;
+
+	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2>0 && y2<7){
+		y2++;
+		x2--;
+	}
+
+	if(!(x2==x && y2==y)){
+		switch(position[y2][x2]){
+			case 'WB':
+			case 'WQ':
+				control.W++;
+				break;
+			case 'BB':
+			case 'BQ':
+				control.B++;
+		}
+	}
+
+	var x2=x;
+	var y2=y;
+
+	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2>0 && y2>0){
+		y2--;
+		x2--;
+	}
+
+	if(!(x2==x && y2==y)){
+		switch(position[y2][x2]){
+			case 'WB':
+			case 'WQ':
+				control.W++;
+				break;
+			case 'BB':
+			case 'BQ':
+				control.B++;
+		}
+	}
+
+	}
+
+	{//for pawns
+		//all possible pawn controls
+		x2=x-1;
+		y2=y-1;
+		if(x2>-1 && y2>-1){
+			if(position[y2][x2]=='BP'){
+				control.B++;
+			}
+		}
+		x2=x+1;
+		y2=y-1;
+		if(x2<8 && y2>-1){
+			if(position[y2][x2]=='BP'){
+				control.B++;
+			}
+		}
+		x2=x-1;
+		y2=y+1;
+		if(x2>-1 && y2<8){
+			if(position[y2][x2]=='WP'){
+				control.W++;
+			}
+		}
+		x2=x+1;
+		y2=y+1;
+		if(x2<8 && y2<8){
+			if(position[y2][x2]=='WP'){
+				control.W++;
+			}
+		}
+	}
+
+	{//knight
+		for(var i in knightMoves){//loop through possible knight moves
+			try{//in cas of unefined error, if move leads to off the board
+				var pieceInSquare=position[y+knightMoves[i][0]][x+knightMoves[i][1]];
+			}catch(e){
+				pieceInSquare='empty';
+			}
+
+			if(pieceInSquare=='BN'){//handle both colour knights
+				control.B+=1;
+			}
+
+			if(pieceInSquare=='WN'){//**************************
+				control.W+=1;
+			}
+		}
+	}
+
+	{//king
+		//fundamentally the same as for a knight
+		for(var i in kingMoves){
+			try{
+				var pieceInSquare=position[y+kingMoves[i][0]][x+kingMoves[i][1]];
+			}catch(e){
+				pieceInSquare='empty';
+			}
+			if(pieceInSquare=='BK'){
+				control.B+=0.5;
+			}
+			if(pieceInSquare=='WK'){
+				control.W+=0.5;
+			}
+		}
+	}
+
+	return(control);
+}
+
+function isMoveLegal(x1,y1,x2,y2,CPU) {//is a move legal?
+	var doText=!CPU
+	if(x1 == x2 && y1 == y2){
+		return(false);
+	}//if the same square
+
+	var dx=x1-x2;//change in x or y, absolute or directional
+	var dy=y1-y2;
+	var ady=Math.abs(dy);
+	var adx=Math.abs(dx);//*********************************
+	var pieceToMove=position[y1][x1];//piece to be moved
+	var colour=position[y1][x1][0];//piece to be taken (or blank square)
+	var endColour=position[y2][x2][0];//colour of piece to be taken (or blank square = "e" )
+	var inBetweenSquares=[];
+
+	{//find in between squares
+		if(dx < -1 && dy==0){//straight
+			for(var x=x1+1;x<x2;x++){
+				inBetweenSquares.push(position[y1][x]);
+			}
+		}
+		if(dx > 1 && dy==0){
+			for(var x=x1-1;x>x2;x--){
+				inBetweenSquares.push(position[y1][x]);
+			}
+		}
+		if(dy < -1 && dx==0){
+			for(var y=y1+1;y<y2;y++){
+				inBetweenSquares.push(position[y][x1]);
+			}
+		}
+		if(dy > 1 && dx==0){//*********
+			for(var y=y1-1;y>y2;y--){
+				inBetweenSquares.push(position[y][x1]);
+			}
+		}
+		if(dy == dx){//diagonal
+			if(dy > 1){
+				for(var y=y1-1,x=x1-1;    y>y2;    x--,y--){
+					inBetweenSquares.push(position[y][x]);
+				}
+			}
+			if(dy < -1){
+				for(var y=y1+1,x=x1+1;    y<y2;    x++,y++){
+					inBetweenSquares.push(position[y][x]);
+				}
+			}
+		}
+		if(dy == -dx){//*******
+			if(dy > 1){
+				for(var y=y1-1,x=x1+1;    y>y2;    x++,y--){
+					inBetweenSquares.push(position[y][x]);
+				}
+			}
+			if(dy < -1){
+				for(var y=y1+1,x=x1-1;    y<y2;    x--,y++){
+					inBetweenSquares.push(position[y][x]);
+				}
+			}
+		}
+		if(pieceToMove[1]=='K' && adx==2){//castling
+			var KingX=getKingPos(colour).x;
+			var KingY=getKingPos(colour).y;
+			if(squareControl(KingX,KingY)[colour == 'W' ? 'B' : 'W' ]){//opponent has control
+				if(doText){
+					alert('You can\'t castle out of check.');
+				}
+				return(false);//can't castle out of check
+			}
+			inBetweenSquares=[];
+			var inBetweenChecks=[];//for control of in between squares
+			if(dx > 1){
+				for(var x=x1-1;    x>1;    x--){//queenside
+					inBetweenSquares.push(position[y1][x]);
+					inBetweenChecks.push(squareControl(x,y1).B);
+				}
+			}
+			if(dx < -1){//kingside
+				for(var x=x1+1;    x<7;    x++){
+					inBetweenSquares.push(position[y1][x]);
+					inBetweenChecks.push(squareControl(x,y1).B);
+				}
+			}
+			for(var i in inBetweenChecks){
+				if(inBetweenChecks[i]){
+					if(doText){
+						alert('That move is blocked by check.');
+					}
+					return(false);
+				}
+			}
+		}
+		//console.log(inBetweenSquares);
+	}//Do not delete this curly bracket.
+	
+	for(var i in inBetweenSquares){
+		if(inBetweenSquares[i] !== 'empty'){//has a piece there
+			if(doText){
+				alert('That move is blocked.');
+			}
+			return(false);
+		}
+	}
+	if(colour !== turn){
+		if(doText){
+			alert('It\'s not your move.');
+		}
+		return(false);
+	}
+	if(colour==endColour){
+		if(doText){
+			alert('You can\'t take your own pieces.');
+		}
+		return(false);
+	}
+	switch(pieceToMove){//the monster
+		case 'BP':
+			if((dx == 0) && dy==-1){//same file, 1 rank away
+				if(endColour != 'e'){//square not empty
+					if(doText){
+						//alert('Pawns can\'t capture straight ahead.');
+					}
+					return(false);
+				}
+				if(y2==7){
+					if(doText){
+						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+							var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
+						}
+						if(promotion=='K'){
+							promotion='N';
+						}
+						pieceInMove='B'+promotion;//carefull, this is not from this scope
+					}
+					return(true);
+				}
+				return(true);
+			}else if((dx==0) && (y1==1) && (dy==-2)){//initial rank, same file, two squares
+				if(endColour != 'e'){
+					if(doText){
+						alert('Pawns can\'t capture straight ahead.');
+					}
+					return(false);
+				}
+				//EPrank=x1;
+				//canEPnext=true;//set up en passant
+				return(true);
+			}else if(adx==1 && dy==-1 && endColour=='W'){//capture
+				if(y2==7){
+					if(doText){
+						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+							var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
+						}
+						if(promotion=='K'){
+							promotion='N';
+						}
+						pieceInMove='B'+promotion;
+					}
+				}
+				return(true);
+			}else if(adx==1 && dy==-1 && endColour=='e' && canEP && EPrank==x2 && y2==5){
+				//position[y1][x2]='empty';
+				return(true);//en passant
+			}
+			break;
+		case 'BR':
+			if((dx==0) || (dy==0)){//same file or rank
+				if(x==0 && y==0){
+					//rooksUnmoved[0]=false;
+				}
+				if(x==7 && y==0){
+					//rooksUnmoved[1]=false;
+				}
+				return(true);
+			}
+			break;
+		case 'BN':
+			if((adx==2 && ady==1)  ||  (adx==1 && ady==2)){//knight move
+				return(true);
+			}
+			break;
+		case 'BB':
+			if(adx==ady){
+				return(true);
+			}
+			break;
+		case 'BQ':
+			if(adx==ady){
+				return(true);
+			}else if((dx==0) || (dy==0)){//same file or rank
+				return(true);
+			}
+			break;
+		case 'BK':
+			if((adx==1 || ady==1) && adx+ady <3){
+				//rooksUnmoved[0]=rooksUnmoved[1]=false;
+				return(true);
+			}else if(dx == 2 && rooksUnmoved[0] && dy == 0){//queenside
+				//position[0][0]='empty';
+				//position[0][3]='BR';
+				return(true);
+			}else if(dx == -2 && rooksUnmoved[1] && dy == 0){//kingside
+				//position[0][7]='empty';
+				//position[0][5]='BR';
+				return(true);
+			}
+			break;
+		case 'WP':
+			if((dx == 0) && dy==1){//same file, 1 rank away
+				if(endColour != 'e'){//square not empty
+					if(doText){
+						alert('Pawns can\'t capture straight ahead.');
+					}
+					return(false);
+				}
+				if(y2==0){
+					if(doText){
+						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+							var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
+						}
+						if(promotion=='K'){
+							promotion='N';
+						}
+						pieceInMove='W'+promotion;//carefull, this is not from this scope
+					}
+					return(true);
+				}
+				return(true);
+			}else if((dx==0) && (y1==6) && (dy==2)){//initial rank, same file, two squares
+				if(endColour != 'e'){
+					if(doText){
+						alert('Pawns can\'t capture straight ahead.');
+					}
+					return(false);
+				}
+				//EPrank=x1;
+				//canEPnext=true;//set up en passant
+				return(true);
+
+			}else if(adx==1 && dy==1 && endColour=='B'){//capture
+				if(y2==7){
+					if(doText){
+						while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+							var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
+						}
+						if(promotion=='K'){
+							promotion='N';
+						}
+						pieceInMove='W'+promotion;
+					}
+				}
+				return(true);
+
+			}else if(adx==1 && dy==1 && endColour=='e' && canEP && EPrank==x2 && y2==2){
+				//position[y1][x2]='empty';
+				return(true);//en passant
+			}
+			break;
+		case 'WR':
+			if((dx==0) || (dy==0)){//same file or rank
+				if(x==0 && y==7){
+					//rooksUnmoved[2]=false;
+				}
+				if(x==7 && y==7){
+					//rooksUnmoved[3]=false;
+				}
+				return(true);
+			}
+			break;
+		case 'WN':
+			if((adx==2 && ady==1)  ||  (adx==1 && ady==2)){//knight move
+				return(true);
+			}
+			break;
+		case 'WB':
+			if(adx==ady){
+				return(true);
+			}
+			break;
+		case 'WQ':
+			if(adx==ady){
+				return(true);
+			}else if((dx==0) || (dy==0)){//same file or rank
+				return(true);
+			}
+			break;
+		case 'WK':
+			if((adx==1 || ady==1) && adx+ady <3){
+				//rooksUnmoved[2]=rooksUnmoved[3]=false;
+				return(true);
+			}else if(dx == 2 && rooksUnmoved[2] && dy == 0){//queenside
+				//position[7][0]='empty';
+				//position[7][3]='WR';
+				return(true);
+			}else if(dx == -2 && rooksUnmoved[3] && dy == 0){//kingside
+				//position[7][7]='empty';
+				//position[7][5]='WR';
+				return(true);
+			}
+			break;
+		default:
+		return(false);
+	}
+	if(doText){
+		alert('That move is not legal.');
+	}
+};
+
+function getCPUmoves(colour){//get all legal CPU moves
+	var moves=[];
+	for(var i=0;i<8;i++){
+		for(var j=0;j<8;j++){
+			if(position[j][i][0] != turn){
+				//console.log('wrong piece');//speeds up the search
+			}else{
+				for(var k=0;k<8;k++){
+					for(var l=0;l<8;l++){
+						if(position[l][k][0]==turn || position[l][k][1]=='K'){
+							//break;console.log();//speeds up the search
+						}else{
+							if(isMoveLegal(i,j,k,l,true) && (i!=k || j!=l)){
+								pieceInMove=position[j][i];
+								pieceAtEnd=position[l][k];
+								//isMoveLegalCPU(i,j,k,l);//in case of pawn promotion, this will make pieceInMove=queen.
+								position[j][i]="empty";
+								position[l][k]=pieceInMove;
+								if(!canEPnext){
+									canEP=false;
+								}else{
+									canEP=true;
+								}
+								canEPnext=false;
+								var KingPos=getKingPos(colour);
+								var KingX=KingPos.x;
+								var KingY=KingPos.y;
+								if(squareControl(KingX,KingY)[opponent(colour)]){
+									position[j][i]=pieceInMove;
+									position[l][k]=pieceAtEnd;//undoes the move
+								}else{
+									//alert('done');
+									moves.push({x1:i,y1:j,x2:k,y2:l});
+									position[j][i]=pieceInMove;
+									position[l][k]=pieceAtEnd;//undoes the move
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return(moves);
+}
+
+function standardNotation(x1,y1,x2,y2){//get a move in notation for
+	var pieceInMove=position[y1][x1];
+	var pieceAtEnd=position[y2][x2];
+	var stan=pieceInMove[1];//first charachter of piece
+	stan+=files[x1] + (8-y1);//rank and file
+	if(pieceAtEnd != 'empty'){
+		stan+='x';//it's a capture
+	}
+	stan+=files[x2] + (8-y2);//rank and file
+	return(stan);
+}
+
+function executeMove(move) {//do a specified move(with object{x1,x2,y1,y2} )
+	pieceInMove=position[move.y1][move.x1];
+	pieceAtEnd=position[move.y2][move.x2];
+	if(move.y2==7 && pieceInMove=='BP'){
+		pieceInMove='BQ';
+	}
+	position[move.y1][move.x1]="empty";
+	position[move.y2][move.x2]=pieceInMove;
+	if(pieceAtEnd != 'empty' || pieceInMove=='WP'){
+		_50moveCounter=0;
+	}
+}
+
+function testThree() {
+	var gameString='';
+	for(var i=0;i<8;i++){
+		for(var j=0;j<8;j++){
+			gameString+=position[j][i];
+		}
+	}
+	game.push(gameString);//append the current position
+	for(var i in game){
+		for(var j in game){
+			if(game[i]==game[j] && i!=j){
+				for(var k in game){
+					if(game[j]==game[k] && j!=k){
+						turn=null;
+						alert('Draw by threefold repetition.');
+					}
+				}
+			}
+		}
+	}
+}
+
+function testMove(move,depth) {//how good does a move seem?
+	var ev;
+	var promo=false;
+	pieceInMove=position[move.y1][move.x1];//the pieces involved
+	pieceAtEnd=position[move.y2][move.x2];//********************
+	if(pieceAtEnd[1]=='K'){
+		alert('ERROR!');
+	}
+	if(move.y2==7 && pieceInMove=='BP'){//a promotion
+		pieceInMove='BQ';//promote to queen
+		promo=true;
+	}
+	if(move.y2==0 && pieceInMove=='WP'){//a promotion
+		pieceInMove='WQ';//promote to queen
+		promo=true;
+	}
+	position[move.y1][move.x1]="empty";
+	position[move.y2][move.x2]=pieceInMove;
+	ev=EvalPos();
+	if(currentDepth < depth){
+		if(turn=='W'){
+			turn='B';
+		}else{
+			turn='W';
+		}
+		if(turn=='W'){
+			notTurn='B';
+		}else{
+			notTurn='W';
+		}
+		currentDepth++;
+		var nextMoves=getCPUmoves(turn);
+		if(nextMoves.length==0){
+			ev=-Infinity;//alert();//checkmate. this currently would also include stalemate.
+		}
+		var oldPieceInMove=pieceInMove;
+		var oldPieceAtEnd=pieceAtEnd;
+		if(turn=='W'){
+			//var EV= -Infinity;
+			for(var i in nextMoves){//loop through next possible white moves
+				var evNext=testMove(nextMoves[i],depth);//evaluate this as well
+				if(pieceAtEnd[1]=='K'){
+					alert('ERROR!');
+				}
+				if(evNext > ev){//if the move gives white a better adavantage
+					//EV=
+					ev=evNext;//increase the evaluation
+				}
+			}
+			//ev=EV;
+			if(nextMoves.length==0){
+				ev=-Infinity;//alert();//checkmate. this currently would also include stalemate.
+			}
+		}else{
+			for(var i in nextMoves){//loop through next possible black moves
+				var evNext=testMove(nextMoves[i],depth);//evaluate this as well
+				if(evNext < ev){//if the move gives black a better adavantage
+					ev=evNext;//decrease the evaluation
+				}
+			}
+			if(nextMoves.length==0){
+				ev=Infinity;//checkmate. this currently would also include stalemate.
+			}
+		}
+		var pieceInMove=oldPieceInMove;
+		var pieceAtEnd=oldPieceAtEnd;
+		if(turn=='W'){
+			turn='B';
+		}else{
+			turn='W';
+		}
+		if(turn=='W'){
+			notTurn='B';
+		}else{
+			notTurn='W';
+		}
+		currentDepth--;
+	}
+	if(promo){// if was testing a promotion
+		pieceInMove='BP';
+	}
+	position[move.y1][move.x1]=pieceInMove;
+	position[move.y2][move.x2]=pieceAtEnd;//undo
+	//console.log(ev);
+	return(ev);
+}
+
+document.getElementById('board').onmousemove=function(event) {//mouse handlers
+	X = Math.floor((event.clientX-8+scrollX) / 100);//the x and y board coordinates
+	Y = Math.floor((event.clientY-200+scrollY) / 100);//***************************
+	if(mouseDown){
+		pen.drawImage( pieces[ position[startY][startX] ] ,event.clientX-58+scrollX,event.clientY-250+scrollY,80,80);//draws the piece constantly
+	}
+	//console.log(X+', '+Y);
+	pieceInMove=position[Y][X];
+};
+
+document.getElementById('board').onmousedown=function(event) {
+	mouseDown=true;
+	startX=X;//Math.ceil(event.clientX / 100);
+	startY=Y;//Math.ceil(event.clientY / 100);
+	pieceInMove=position[startY][startX];
+};
+
+document.getElementById('board').onmouseup=function(event) {//this also contains the inner workings***********************************************************
+	mouseDown=false;
+	
+	if(turn=='W'){
+		_50moveCounter++;// for 50-move rule
+		var level=wlevel.value;
+		if(level==0){
+			pieceInMove=position[startY][startX];//get the pieces involved
+			pieceAtEnd=position[Y][X];//**********************************
+			if(pieceInMove !== 'empty' && isMoveLegal(startX,startY,X,Y)){
+				var stan1=standardNotation(startX,startY,X,Y);
+				position[startY][startX]="empty";
+				position[Y][X]=pieceInMove;
+				if(turn=='W'){
+					turn='B';
+				}else{
+					turn='W';
+				}
+				if(turn=='W'){
+					notTurn='B';
+				}else{
+					notTurn='W';
+				}
+				if(!canEPnext){
+					canEP=false;
+				}else{
+					canEP=true;
+				}
+				canEPnext=false;
+				var KingX=getKingPos(notTurn).x;
+				var KingY=getKingPos(notTurn).y;
+				if(squareControl(KingX,KingY)[turn]){
+					alert('That move would put your king in check.');
+					position[startY][startX]=pieceInMove;
+					position[Y][X]=pieceAtEnd;
+					_50moveCounter--;
+					if(turn=='W'){
+						turn='B';
+					}else{
+						turn='W';
+					}
+					if(turn=='W'){
+						notTurn='B';
+					}else{
+						notTurn='W';
+					}
+				}else{
+					if(pieceAtEnd != 'empty' || pieceInMove=='WP'){
+						_50moveCounter=0;
+					}
+					if(pieceInMove=='WK' && X-startX == 2){//kingside
+						position[7][7]='empty';
+						position[7][5]='WR';
+						stan1='O-O';
+					}else if(pieceInMove=='WK' && X-startX == -2){
+						position[7][0]='empty';
+						position[7][3]='WR';
+						stan1='O-O-O';
+					}
+					if(pieceInMove=='WK'){
+						rooksUnmoved[2]=rooksUnmoved[3]=false;
+					}
+					if(pieceInMove=='WR'){
+						if(startX==0 && startY==7){
+							rooksUnmoved[2]=false;
+						}
+						if(startX==7 && startY==7){
+							rooksUnmoved[3]=false;
+						}
+					}
+					if(pieceInMove=='WP'){
+						if(Y-startY == -2){
+							canEP=true;
+							EPrank=X;
+						}
+						if(pieceAtEnd=='empty' && X!=startX){//en passant
+							position[startY][X]='empty';
+							stan1+='ep';
+						}
+					}
+					if(X==0 && Y==0){
+						rooksUnmoved[0]=false;
+					}
+					if(X==7 && Y==0){
+						rooksUnmoved[1]=false;
+					}//if one of your opponent's rooks is taken, it can no loger be used to castle (DUH!)
+					//console.log(rooksUnmoved);
+				}
+			}
+			{//useless
+				/*pen.fillStyle = '#640';
+				pen.fillRect(0,0,800,800);
+				pen.fillStyle='#da5';
+				for(var i = 1; i <= 8; i++){
+					for(var j = 1; j <= 8; j++){
+						if(j % 2 === i % 2){
+							pen.fillRect((i * 100) - 100,(j * 100) - 100,100,100);
+						}
+					}
+				}
+				for(var i=0;i<8;i++){
+					for(var j=0;j<8;j++){
+						pen.fillStyle='#000';
+						pen.drawImage( pieces[ position[i][j] ] ,(j*100)+10,(i*100)+10,80,80);
+						//pen.fillText(squareControl(j,i).W,(j*100)+10,(i*100)+10);
+						//alert(squareControl(j,i));
+					}
+				}*/
+			}
+		}
+		else{
+			var moves=getCPUmoves('W');
+			try{
+				var depth=1;
+				if(level==5){var depth=2;}
+				var bestMove=0;
+				var bestMoveEval=-Infinity;
+				for(var i in moves){
+					var moveEV=testMove(moves[i],depth);
+					if(moveEV > bestMoveEval){
+						bestMove=i;
+						bestMoveEval=moveEV;
+					}
+				}
+				//console.log(moveEV);
+				switch(level){
+					case '4':
+					case '5':
+						var moveToDo=moves[bestMove];
+					break;
+					case '1':
+						var moveToDo=moves[Math.floor(Math.random()*moves.length)];//random move
+					break;
+					case '2':
+						var moveToDo=moves[moves.length-1];
+					case '3':
+						var moveToDo=moves[0];
+					break;
+					default:
+						alert('error');
+				}
+				if(moveToDo.y2 == 0 && pieceInMove == 'WP'){
+					pieceInMove='BQ';
+				}
+				var stan1=standardNotation(moveToDo.x1,moveToDo.y1,moveToDo.x2,moveToDo.y2);
+				startX=moveToDo.x1;
+				startY=moveToDo.y1;
+				X=moveToDo.x2;
+				Y=moveToDo.y2;
+				pieceInMove=position[startY][startX];
+				pieceAtEnd=position[Y][X];
+				if(pieceInMove=='WK' && X-startX == 2){
+					position[7][7]='empty';
+					position[7][5]='WR';
+					stan1='O-O';
+				}else if(pieceInMove=='WK' && X-startX == -2){
+					position[7][0]='empty';
+					position[7][3]='WR';
+					stan1='O-O-O';
+				}
+				if(pieceInMove=='WK'){
+					rooksUnmoved[2]=rooksUnmoved[3]=false;
+				}
+				if(pieceInMove=='WR'){
+					if(startX==0 && startY==7){
+						rooksUnmoved[2]=false;
+					}
+					if(startX==7 && startY==7){
+						rooksUnmoved[3]=false;
+					}
+				}
+				if(pieceInMove=='WP'){
+					if(Y-startY == -2){
+						canEP=true;
+						EPrank=X;
+					}
+				}
+				if(position[Y][X]=='empty' && X!=startX){//en passant
+					position[startY][X]='empty';
+					stan1+='ep';
+				}
+				if(X==0 && Y==0){
+					rooksUnmoved[0]=false;
+				}
+				if(X==7 && Y==0){
+					rooksUnmoved[1]=false;
+				}//if one of your opponent's rooks is taken, it can no longer be used to castle (DUH!)
+				executeMove(moveToDo);
+				turn='B';
+				//move_board.innerHTML+='<TR>'+'<TD>'+moveCount+'. </TD>'+'<TD>'+stan1+'</TD>'+'<TD>'+stan2+'</TD>'+'</TR>';
+				//moveCount++;
+				testThree();
+			}catch(e){
+				alert(e);
+				var KingPos=getKingPos('W');
+				var KingX=KingPos.x;
+				var KingY=KingPos.y;
+				if(squareControl(KingX,KingY).B){
+					alert('White is checkmated.');
+					move_board.innerHTML+='<TR>'+'<TD>'+'# 0-1'+'</TD>'+'</TR>';
+				}else{
+					alert('Draw by stalemate.');
+					move_board.innerHTML+='<TR>'+'<TD>'+'1/2-1/2'+'</TD>'+'</TR>';
+				}
+				turn=null;
+			}
+		}
+	}
+	{//useless
+		/*pen.fillStyle = '#640';
+		pen.fillRect(0,0,800,800);
+		pen.fillStyle='#da5';
+		
+		for(var i = 1; i <= 8; i++){
+			for(var j = 1; j <= 8; j++){
+				if(j % 2 === i % 2){
+					pen.fillRect((i * 100) - 100,(j * 100) - 100,100,100);
+				}
+			}
+		}
+		
+		for(var i=0;i<8;i++){
+			for(var j=0;j<8;j++){
+				pen.fillStyle='#000';
+				pen.drawImage( pieces[ position[i][j] ] ,(j*100)+10,(i*100)+10,80,80);
+				//pen.fillText(squareControl(j,i).B,(j*100)+10,(i*100)+10);
+				//alert(squareControl(j,i));
+			}
+		}*/
+	}
+	
+	if(turn=='B'){
+		var level=blevel.value;
+		if(level==0){
+			pieceInMove=position[startY][startX];//get the pieces involved
+			pieceAtEnd=position[Y][X];//**********************************
+			if(pieceInMove !== 'empty' && isMoveLegal(startX,startY,X,Y)){
+				var stan1=standardNotation(startX,startY,X,Y);
+				position[startY][startX]="empty";
+				position[Y][X]=pieceInMove;
+				if(turn=='W'){
+					turn='B';
+				}else{
+					turn='W';
+				}
+				if(turn=='W'){
+					notTurn='B';
+				}else{
+					notTurn='W';
+				}
+				if(!canEPnext){
+					canEP=false;
+				}else{
+					canEP=true;
+				}
+				canEPnext=false;
+				var KingX=getKingPos(notTurn).x;
+				var KingY=getKingPos(notTurn).y;
+				if(squareControl(KingX,KingY)[turn]){
+					alert('That move would put your king in check.');
+					position[startY][startX]=pieceInMove;
+					position[Y][X]=pieceAtEnd;
+					_50moveCounter--;
+					if(turn=='W'){
+						turn='B';
+					}else{
+						turn='W';
+					}
+					if(turn=='W'){
+						notTurn='B';
+					}else{
+						notTurn='W';
+					}
+				}else{
+					if(pieceInMove=='BK' && X-startX == 2){
+						position[0][7]='empty';
+						position[0][5]='BR';
+						stan2='O-O';
+					}else if(pieceInMove=='BK' && X-startX == -2){
+						position[0][0]='empty';
+						position[0][3]='BR';
+						stan2='O-O-O';
+					}
+					if(pieceInMove=='BK'){
+						rooksUnmoved[0]=rooksUnmoved[1]=false;
+					}
+					if(pieceInMove=='BR'){
+						if(startX==0 && startY==0){
+							rooksUnmoved[0]=false;
+						}
+						if(startX==7 && startY==0){
+							rooksUnmoved[1]=false;
+						}
+					}
+					if(pieceInMove=='BP'){
+						if(Y-startY == 2){
+							canEP=true;
+							EPrank=X;
+						}
+						if(position[Y][X]=='empty' && X!=startX){//en passant
+							position[startY][X]='empty';
+							stan2+='ep';
+						}
+					}
+					if(X==0 && Y==7){
+						rooksUnmoved[2]=false;
+					}
+					if(X==7 && Y==7){
+						rooksUnmoved[3]=false;
+					}
+					if(wlevel.value!=0){//unless white is a human player
+						this.onmouseup();
+					}
+					//if one of your opponent's rooks is taken, it can no longer be used to castle (DUH!)
+					//console.log(rooksUnmoved);
+				}
+			}
+	
+		}else{
+			var moves=getCPUmoves('B');
+			try{
+				var depth=1;
+				if(level==5){var depth=2;}
+				var bestMove=0;
+				var bestMoveEval=Infinity;
+				for(var i in moves){
+					var moveEV=testMove(moves[i],2);
+					if(moveEV < bestMoveEval){
+						bestMove=i;
+						bestMoveEval=moveEV;
+					}
+				}
+				//console.log(moveEV);
+				switch(level){
+						case '4':
+						case '5':
+							var moveToDo=moves[bestMove];
+						break;
+						case '1':
+							var moveToDo=moves[Math.floor(Math.random()*moves.length)];//random move
+						break;
+						case '2':
+							var moveToDo=moves[moves.length-1];
+						case '3':
+							var moveToDo=moves[0];
+					}
+				if(moveToDo.y2 == 7 && pieceInMove == 'BP'){
+					pieceInMove='BQ';
+				}
+				var stan2=standardNotation(moveToDo.x1,moveToDo.y1,moveToDo.x2,moveToDo.y2);
+				startX=moveToDo.x1;
+				startY=moveToDo.y1;
+				X=moveToDo.x2;
+				Y=moveToDo.y2;
+				pieceInMove=position[startY][startX];
+				pieceAtEnd=position[Y][X];
+				if(pieceInMove=='BK' && X-startX == 2){
+					position[0][7]='empty';
+					position[0][5]='BR';
+					stan2='O-O';
+				}else if(pieceInMove=='BK' && X-startX == -2){
+					position[0][0]='empty';
+					position[0][3]='BR';
+					stan2='O-O-O';
+				}
+				if(pieceInMove=='BK'){
+					rooksUnmoved[0]=rooksUnmoved[1]=false;
+				}
+				if(pieceInMove=='BR'){
+					if(startX==0 && startY==0){
+						rooksUnmoved[0]=false;
+					}
+					if(startX==7 && startY==0){
+						rooksUnmoved[1]=false;
+					}
+				}
+				if(pieceInMove=='BP'){
+					if(Y-startY == 2){
+						canEP=true;
+						EPrank=X;
+					}
+					if(position[Y][X]=='empty' && X!=startX){//en passant
+						position[startY][X]='empty';
+						stan2+='ep';
+					}
+				}
+				if(X==0 && Y==7){
+					rooksUnmoved[2]=false;
+				}
+				if(X==7 && Y==7){
+					rooksUnmoved[3]=false;
+				}//if one of your opponent's rooks is taken, it can no longer be used to castle (DUH!)
+				executeMove(moveToDo);
+				turn='W';
+				move_board.innerHTML+='<TR>'+'<TD>'+moveCount+'. </TD>'+'<TD>'+stan1+'</TD>'+'<TD>'+stan2+'</TD>'+'</TR>';
+				moveCount++;
+				testThree();
+			}catch(e){
+				//alert(e);
+				var KingPos=getKingPos('B');
+				var KingX=KingPos.x;
+				var KingY=KingPos.y;
+				if(squareControl(KingX,KingY).W){
+					alert('Black is checkmated.');
+					move_board.innerHTML+='<TR>'+'<TD>'+moveCount+'. </TD>'+'<TD>'+stan1+'</TD>'+'<TD>'+'# 1-0'+'</TD>'+'</TR>';
+				}else{
+					alert('Draw by stalemate.');
+					move_board.innerHTML+='<TR>'+'<TD>'+moveCount+'. </TD>'+'<TD>'+stan1+'</TD>'+'<TD>'+'1/2-1/2'+'</TD>'+'</TR>';
+				}
+				turn=null;
+			}
+		}
+	}
+
+	pen.fillStyle = '#640';
+	pen.fillRect(0,0,800,800);
+	pen.fillStyle='#da5';
+	
+	for(var i = 1; i <= 8; i++){
+		for(var j = 1; j <= 8; j++){
+			if(j % 2 === i % 2){
+				pen.fillRect((i * 100) - 100,(j * 100) - 100,100,100);
+			}
+		}
+	}
+	
+	for(var i=0;i<8;i++){
+		for(var j=0;j<8;j++){
+			pen.fillStyle='#000';
+			pen.drawImage( pieces[ position[i][j] ] ,(j*100)+10,(i*100)+10,80,80);
+			//pen.fillText(squareControl(j,i).B,(j*100)+10,(i*100)+10);
+			//alert(squareControl(j,i));
+		}
+	}
+	//this.onmouseup();
+};
+	
+			</SCRIPT>
+			<HR>
+			<!-- And add a copyright notice. -->
+			<P>
+				&copy
+				<A href="../flobit.html" style="color:#f00">
+					flob
+				</A>
+				group.corp
+			</P>
+		</DIV>
+		<canvas width=100 heigth=100></canvas>
+	</body>
+</html>

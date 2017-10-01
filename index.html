@@ -1,224 +1,111 @@
-<!---
-layout: default
---->
-<!--
-<div class="home">
-
-  <h1 class="page-heading">Posts</h1>
-
-  <ul class="post-list">
-    {% for post in site.posts %}
-      <li>
-        <span class="post-meta">{{ post.date | date: "%b %-d, %Y" }}</span>
-
-        <h2>
-          <a class="post-link" href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
-        </h2>
-      </li>
-    {% endfor %}
-  </ul>
-
-  <p class="rss-subscribe">subscribe <a href="{{ "/feed.xml" | prepend: site.baseurl }}">via RSS</a></p>
-
-</div>
--->
 <!DOCTYPE html>
 <html>
 	<head>
-		<LINK type="image/png" href="flobgrp.png" rel="icon"></LINK>
-		<title>Flobit</title>
-		<style>
-A{
-    color:#ffff00;
-}
-BUTTON{
-    border-radius:20px;
-    border-color:#F00;
-    background-color:#080;
-    color:#FFF;
-    font-family:'Ameringo BT';
-}
-INPUT{
-    width:25em;
-    border-radius:15px;
-    border-color:#008;
-    border-width:5px;
-    font-family:'Courier';
-}
-		</style>
+		<LINK type="image/png" href="images/icons/index.png" rel="icon"></LINK>
+		<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+		<LINK rel="stylesheet" type="text/css" href="styles/normal.css"></LINK>
+	
+		<title>ThatChapThere</title>
+		<script type="text/javascript" src="js/index.js"></script>
 	</head>
-	<body style="background-color: #9999ff">
-		<button id="X">flobit</button>
-		<div style="DISPLAY: none" id=flobbed class=infoBlock>it is now flobbed</div>
-		<P align="center">
-			<B>
-				<INPUT TYPE="text" id="searching"></INPUT>
-			</B>
-			<BUTTON id="search">flob this</BUTTON>
-		</P>
-		<P>
-			<div id=searched class=infoBlock></div>
-		</P>
-		<P id=resultList>
-		</P>
-		<P id="passwordThing"></P>
-		<P id="time"></P>
-		<canvas id="clock" width=400 height=400></canvas>
-		<P NAME="Grimbsby Flob Time">GFT (Grimsby Flob Time)</P>
-		<SCRIPT type="text/javascript">
-var hrefs=[
-	"charTester.html",
-	"dino.html",
-	"doNotClick.html",
-	"footy.html",
-	"gamesome.html",
-	"isometric.html",
-	"keytester.html",
-	"life.html",
-	"orbital.html",
-	"pi.html",
-	"plotter.html",
-	"space",
-	"space2",
-	"weBBirds.html",
-	"ChessHome.html",
-	"markov.html",
-	"wattsapp.html",
-	"fidget%20spinner.html",
-	"Politics.html",
-	""
-];
-var names=[
-	"Unicode Character Reference",
-	"Dinosaur Strategy Game",
-	"Preferably, Ignore This Link.",
-	"2Difa",
-	"Flobgames Homepage",
-	"Isometric Paper To Print",
-	"Key Code Tester for Developers",
-	"The game Of Life (John Conway's Cellular Automaton)",
-	"Atomic and Molecular Orbital Simulator",
-	"Pi Calculator (Slow Algorithm)",
-	"Graph Plotter",
-	"Solar System Simulator",
-	"Probe Launcher Game",
-	"WeBBirds",
-	"KnightCobra Chess Game",
-	"Markov Chain Generator",
-	"WattsApp Official Website",
-	"Fidget Spinner Simulation",
-	"Political Party Game",
-	""
-];
-var keywords=[
-	[/ unicode /i, / char/i, / UTF-/, / tool/i],
-	[/ dino/i, / prehistor/i, / ancient /i,/ old /i,/ fossil/i],
-	[/ flop /i,/ \? /, / blob /i, / plop /i],
-	[/ foot/i,/ game/i, / sport/i ],
-	[/ game/i, / play/i, / sport/i],
-	[/ iso/i,/ math/i,/ edu/i],
-	[/ key/i, /code /i, / develop/i, / tool/i],
-	[/ game/i, / play/i, / life /i,/ John /i,/ Conway /i,/ cellular /i,/ automat/i,/ math/i],
-	[/ chem/i,/ orbit/i,/ mol/i,/scien/i],
-	[/ pi /i,/ π /,/ math/i,/ algorithm/i],
-	[/ math/i,/ tool/i,/ graph /i,/ plot/i,/ curve/i],
-	[/ spac/i,/ astro/i,/ cosmo/i,/ star /i,/ sun /i,/ moon /i,/ planet/i,/ comet /i,/ asteroid /i,/ sol/i,/ lun/i,/scien/i],
-	[/ spac/i,/ astro/i,/ cosmo/i,/ star /i,/ sun /i,/ moon /i,/ planet/i,/ comet /i,/ asteroid /i,/ sol/i,/ lun/i,/ gam/i,/ play /i,/ scien/i],
-	[/ web /i,/ bird/i, / gam/i, / play /i],
-	[/ game /i,/ board /i,/ chess /i,/ knight/i, /cobra /i],
-	[/ marko/i, / chain /i,/ math/i,/ gen/i,/ word/i,/ ling/i,/ lang/i],
-	[/ watt/i,/ power/i,/app/i,/ whats/i,/ james /i,/ jim/i],
-	[/ fidget/i, / spin/i, / sim/i],
-	[/ politic/i, / gam/i, / sim/i, / fun /i,/ party/i],
-	[]
-];
-X.onclick=function(){
-	flobbed.style="DISPLAY: all"; 
-};
-searching.onkeyup=function(event) {
-	if(event.keyCode === 13){
-		search.onclick();
-	}
-};
-search.onclick=function(){
-	resultList.textContent='';
-	var results=[];
-	var results_hrefs=[];
-	var links=[];
-	var Ps=[];
-	searched.style="DISPLAY: all";
-	for(var i = 0; i < keywords.length; i++){
-		for(var j = 0; j < keywords[i].length;j++){
-			var word = keywords[i][j];
-			var queiry = searching.value;
-			if( word.test(' '+queiry+' ') ){
-				results.push(names[i]);
-				results_hrefs.push(hrefs[i]);
-                if(i<keywords.length-1){i++;}
-			}
-		};
-	};
-	for(var k = 0;k < results.length;k++){
-		links.push(document.createElement("a"));
-		links[k].href = results_hrefs[k];
-		links[k].textContent = results[k];
-		Ps.push(document.createElement("p"));
-		resultList.appendChild(Ps[k]);
-		resultList.appendChild(links[k]);
-	};
-	searched.textContent = results.length + " Result(s) found for " + searching.value +".";
-};
-var clock=document.getElementById('clock');
-function clockDisp(seconds, minutes, hours) {
-	seconds=(seconds*Math.PI)/90;
-	minutes=(minutes*Math.PI)/90;
-	hours=(hours*Math.PI)/90;
-	var clock=document.getElementById('clock');
-	clock.width=clock.width;
-	var pen=clock.getContext('2d');
-    pen.beginPath();
-    pen.arc(200,200,200,0,Math.PI*2,false);
-        pen.fillStyle='#880';
-	pen.fill();
-	pen.beginPath();
-	pen.moveTo(0,200);
-	Math.sq=function(x) { return(x*x); };
-	pen.stroke();
-	pen.lineWidth=4;
-	pen.beginPath();
-	pen.moveTo(200,200);
-	pen.lineTo(200+( 150 * Math.sin(seconds*3)), 200-( 150 * Math.cos(seconds*3) ));
-	pen.strokeStyle = '#ff0000';
-	pen.stroke();
-	pen.beginPath();
-	pen.moveTo(200,200);
-	pen.lineTo(200+( 100 * Math.sin(minutes*3)), 200-( 100 * Math.cos(minutes*3) ));
-	pen.strokeStyle = '#00ff00';
-	pen.stroke();
-	pen.beginPath();
-	pen.moveTo(200,200);
-	pen.lineTo(200+( 50 * Math.sin(hours*15) ), 200-( 50 * Math.cos(hours*15) ));
-	pen.strokeStyle = '#0000ff';
-	pen.stroke();
-	var r=160;
-	for(var a = 0.2; a <= 12; a += 0.2){
-		if( (Math.round(a*10) / 10) % 1 == 0){
-			pen.fillStyle='#ffff00';
-			pen.fillText(Math.round(a),200+(r*Math.sin((a*30*Math.PI)/180)),200-(r*Math.cos((a*30*Math.PI)/180)));
-		}else{
-			pen.fillStyle='#00ffff';
-			pen.fillRect(195+(r*Math.sin((a*30*Math.PI)/180)),195-(r*Math.cos((a*30*Math.PI)/180)),10,10);
-		}
-	}
-};
-function time() {
-	var time=new Date();
-	clockDisp(time.getUTCSeconds(),time.getUTCMinutes()+(time.getUTCSeconds()/60),time.getUTCHours()+(time.getUTCMinutes()/60)+(time.getUTCHours()/3600));
-	setTimeout("time()",1000);
-};
-time();
-
-		</SCRIPT>
-		<EMBED src="tune.mp3" width="1" height="1" id="sound"></EMBED>
+	<body>
+		<div id="header" class="header">
+			<div id="head_text" class="centralised">
+				<div id="logo_image">
+					<img src="images/logo.png" width="100" height="100" />
+				</div>
+				<div id="title">
+					ThatChapThere
+				</div>
+			</div>
+		</div>
+		<div id="menu_main" class="menu">
+			<div id="menu_item_about" class="menu_item"> About</div>
+			<div id="menu_item_search" class="menu_item"> Search</div>
+			<div id="menu_item_youtube" class="menu_item"> YouTube</div>
+		</div>
+		<div id="menu_main_two" class="menu">
+			<div id="menu_item_chess" class="menu_item"> Chess</div>
+			<div id="menu_item_games" class="menu_item"> Games</div>
+			<div id="menu_item_widgets" class="menu_item"> Widgets</div>
+			<div id="menu_item_pranks" class="menu_item"> Old Prank Webpages</div>
+		</div>
+		<div id="menu_main_three" class="menu">
+			<div id="menu_item_development" class="menu_item"> In development</div>
+		</div>
+		<div id="about" class="content_box">
+			<p class="content_text">
+				Hi, I'm ThatChapThere. I have a <a href="https://www.youtube.com/channel/UCHHH-a92IE47ngqlFTZrPkQ">YouTube channel</a> on which I post a number of different things.
+				Much of this site has existed for many years on an old laptop, before being moved over to <a href="https://github.com/ThatChapThere/ThatChapThere.github.io">github</a>, and finally this site.
+				It contains many of my early coding projects, and you can still see the awful styling in its full glory.
+				This site is also home to the incredibly weak chess engine <a href="chess/">KnightCobra</a>, a project I started a while back and haven't done anything to for a while.
+				Hopefully I will put some Unity games up at some point (<a href="https://www.youtube.com/watch?v=00Gdosi3eO4">one of these can be seen on my YouTube channel.</a>)
+			</p>
+		</div>
+		<div id="search" class="content_box">
+			<div class="link_under">
+				<a class="menu_item" href="flobit.html">Visit the classical flobsearch</a>
+			</div>
+		</div>
+		<div id="youtube" class="content_box">
+			<div class="content_text">
+				This is my channel. I have loads of different things, like gaming, tutorials, unboxing e.t.c.
+				
+				<hr/>
+				<a href="https://www.youtube.com/channel/UCHHH-a92IE47ngqlFTZrPkQ">
+					<img src="images/logo.png" width="50" height="50" />
+					Visit my Channel
+				</a>
+				<br/>
+				<iframe width="560" height="315" src="https://www.youtube.com/embed/x28PGMGg6mU" frameborder="0" allowfullscreen></iframe>
+				<br/>
+				This is one of my comedy videos.
+				<hr/>
+				<h3>
+					Prize Draw:
+				</h3>
+				Win this signed CD of <a href="https://www.youtube.com/watch?v=yOMFcWy4_C4">me reading</a> my <a href="http://thethinkingsofthatchapthere.blogspot.co.uk/2017/07/if-cinderella-was-rational-human-being.html">Cinderella story</a>.
+				<br/>
+				<img src="images/prize_disc.jpg" width="260" height="260" />
+				<br/>
+				To enter, email me at <a href="mailto:ThatChapThere@outlook.com">ThatChapThere@outlook.com</a> and state your intention to win along with a UK postal adress.
+				
+				<br/>
+				<br/>
+				<h4>Terms and conditions:</h4>
+				<ul>
+					<li>You must live inside the UK (includes NI)</li>
+					<li>Offer closes 1st November 2017</li>
+					<li>Winner picked at random by a computer</li>
+				</ul>
+			</div>
+		</div>
+		<div id="chess" class="content_box">
+			<div class="link_under">
+				<a class="menu_item" href="https://www.youtube.com/watch?v=R75UBnaQfhw&list=PLeCVIEbQ6b4uf4c1GaLoZzBCf6C4oDF8t">Visit my chess playlist on YouTube</a>
+				<a class="menu_item" href="chess/">KnightCobra chess engine</a>
+			</div>
+		</div>
+		<div id="games" class="content_box">
+			<div class="link_under">
+				<a class="menu_item" href="games/">Homepage for my JavaScript games</a>
+			</div>
+		</div>
+		<div id="widgets" class="content_box">
+			<div class="link_under">
+				<a class="menu_item" href="widgets/">Homepage for my JavaScript widets and web apps</a>
+			</div>
+		</div>
+		<div id="pranks" class="content_box">
+			<div class="link_under">
+				<a class="menu_item" href="jokes/">Homepage for my joke and prank webpages</a>
+			</div>
+		</div>
+		<div id="development" class="content_box">
+			<div class="link_under">
+				<a class="menu_item" href="development/3D.html">3D API preview</a>
+				<a class="menu_item" href="development/Model%20Creator.html">3D API vertex input modeller</a>
+			</div>
+		</div>
 	</body>
 </html>

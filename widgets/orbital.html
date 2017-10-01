@@ -1,0 +1,182 @@
+﻿<!DOCTYPE html>
+<HTML>
+	<HEAD>
+		<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+		<LINK rel="icon" type="image/png" href="molecule.png"></LINK>
+		<STYLE type="text/css">
+BODY{
+	color:#CCFFFF;
+	background-color:#333333;
+}
+TABLE{
+	border-color: #0000FF;
+	border-radius: 20px;
+	border-width:5px; 
+}
+INPUT{
+	background-color: #FF0;
+	border-color: #004400;
+	border-width: 5px;
+	border-radius: 8px;
+	color: #0000FF;
+	font-family:'lucida console';
+}
+SELECT{
+	background-color: #FF0;
+	border-color: #004400;
+	border-width: 5px;
+	border-radius: 8px;
+	color: #00F;
+	font-family:'courier new';
+}
+OPTION{
+	background-color: #00F;
+	border-color: #004400;
+	border-width: 5px;
+	border-radius: 8px;
+	color: #FF0;
+	font-family:'courier new';
+}
+TD{
+	font-family: 'times new roman';
+	border-color: #880000;
+	border-width: 3px;
+	border-radius: 10px;
+}
+BUTTON{
+	border-radius: 0px;
+	border-width: 5px;
+	border-color:#440;
+	font-family: 'CentSchbook BT';
+	background-color: #777777;
+}
+		</STYLE>
+		<TITLE>
+			molecular orbital creator
+		</TITLE>
+	</HEAD>
+	<BODY>
+		<H1>
+			Molecular Orbital Simulator
+		</H1>
+		<CANVAS id='cnv' width=400 height=400></CANVAS>
+		<BR>
+		<TABLE border=1>
+			<TBODY id='UserTable'>
+				<TR>
+					<TD>
+						Orbital Number
+					</TD>
+					<TD>
+						X Position
+					</TD>
+					<TD>
+						Y position
+					</TD>
+					<TD>
+						Orbital Type
+					</TD>
+					<TD>
+						Orbital Shell
+					</TD>
+					<TD>
+						Rotation
+					</TD>
+				</TR>
+			</TBODY>
+			<TFOOT>
+				<BUTTON id='sim'>Simulate</BUTTON>
+			</TFOOT>
+		</TABLE>
+		<SCRIPT type="text/javascript" language="javascript">
+var numOs=prompt('How many orbitals?');
+var orbitals=[];
+function Orbital(x,y,type,shell,rotation) {
+	this.x=x;
+	this.y=y;
+	this.type=type;
+	this.shell=shell;
+	this.rotation=rotation;
+	this.getWaveFunction=function(x,y) {
+		return(getWaveFunction(x,y,this.x,this.y,this.type,this.shell,this.rotation));
+	};
+}
+for(var i = 1 ; i <= numOs; i++){
+	UserTable.innerHTML += "<TR>\n<TD>"+i+"</TD>\n<TD>\n<INPUT id='X"+i+"'type='text' />\n</TD><TD>\n<INPUT type='text' id='Y"+i+"' />\n</TD><TD>\n<SELECT id='O"+i+"'>\n<OPTION value='S'>s</OPTION>\n<OPTION value='P'>p</OPTION>\n<OPTION value='D'>d</OPTION>\n<OPTION value='F'>f</OPTION>\n<OPTION value='G'>g</OPTION>\n</SELECT>\n</TD><TD>\n<INPUT type='text' id='S"+i+"'/>\n</TD>\n<TD>\n<INPUT id='R"+i+"' type='range' min=0 max=360 value=0 onmousemove=\"document.getElementById('D"+i+"').textContent=this.value;\" onkeyup=\"this.onmousemove()\"></INPUT>\n<SPAN id='D"+i+"'>0</SPAN>\n</TD>\n</TR>"
+}
+function sq(n) {
+	return(n * n);
+}
+function total(a) {var l=0;for(var k in a){l+=a[k]};return l;};
+function polAround(x, y, z) {
+	return(Math.atan(y/x) + (x < 0 ? 0 : Math.PI));//* (x < 0 ? 1 : -1));
+};
+function polFrom(x, y, z) {
+	var XYRad=Math.sqrt(sq(x) + sq(y));
+	return(Math.atan(XYRad/z));
+};
+function polRadius(x, y, z) {
+	return(Math.sqrt(sq(x) + sq(y) + sq(z)));
+};
+var waveFunction;
+var shell;
+function getWaveFunction(x, y, oX, oY, orbitalType, shell, rotation) {
+	var OQN;
+	rotation *= Math.PI / 180;
+	switch(orbitalType.toUpperCase()){
+		case 'S':
+			OQN=0;
+		break;
+		case 'P':
+			OQN=1;
+		break;
+		case 'D':
+			OQN=2;
+		break;
+		case 'F':
+			OQN=3;
+		break;
+		case 'G':
+			OQN=4;
+		break;
+		default:
+			alert('ERROR:\nunrecognised orbital type');
+			return(NaN);
+	}
+	var radialPart = 100 * Math.exp(0 - ((sq(polRadius(x-oX,y-oY,0))) / (2 * sq(shell*10))));//(100/(polRadius(x-oX,y-oY,0)));
+	var rotationalPart = Math.cos(OQN * (polAround(x-oX,y-oY,0)) - rotation);
+	var shellLayerPart = Math.cos(Math.atan(polRadius(x-oX,y-oY,0)/50)*((2 * (shell - OQN)) - 1));
+	return(radialPart * rotationalPart * shellLayerPart);
+}
+var y=200;
+var x = 200;
+var waveFunctions=[];
+var ctx=document.getElementById('cnv').getContext('2d');
+sim.onclick=function() {
+	alert('Initiating');
+	for(var l = 1 ; l <= numOs; l++){
+		orbitals.push(new Orbital(parseInt(document.getElementById('X'+l).value), parseInt(document.getElementById('Y'+l).value), document.getElementById('O'+l).value, parseInt(document.getElementById('S'+l).value), parseInt(document.getElementById('R'+l).value)));
+	}
+	for(var i = 1; i <= 400; i++){
+		for(var j = 1; j <= 400; j++){
+			waveFunctions=[];
+			for(var k = 0 ; k < numOs; k++){
+				waveFunctions.push(orbitals[k].getWaveFunction(i,j));
+			}
+			waveFunction = total(waveFunctions);
+			if(waveFunction > 1){
+				ctx.fillStyle='#00F';
+			}else if(waveFunction < -1){
+				ctx.fillStyle='#F00';
+			}else{
+				ctx.fillStyle='#000';
+			}
+			ctx.fillRect(i,j,1,1);
+		}
+	}
+	orbitals=[];
+	alert('done');
+}
+		</SCRIPT>
+	</BODY>
+</HTML> 

@@ -1,0 +1,1156 @@
+<html><head>
+<LINK type="image/png" href="../images/icons/chessimg.png" rel="icon"></LINK>
+<title>playChess.org</title>
+<STYLE>
+.canvasBox{
+	position:absolute;
+	left:8px;
+	top:200px;
+}
+table{
+	font-size: 13px;
+}
+body{
+	font-family:'Times new Roman';
+}
+</STYLE></head><body style="background-color: #990000; color: #77ffff">
+<h1>Chess</h1>
+<TABLE><TBODY>
+<TR><TD>knightCobra 0.3.1 beta</TR>
+<TR><TD>(60)</TR>
+<TR><TD>Vs</TR>
+<TR><TD id="player_name"></TR>
+<TR><TD id="player_rating"></TR>
+</TBODY></TABLE>
+<DIV class='canvasBox'>
+<TABLE>
+	<TR>
+		<TD>
+			<canvas id="board" width=800 height=800></canvas>
+		</TD><TD>
+			<TABLE><TBODY id="move_board"></TBODY></TABLE>
+		</TD>
+	</TR>
+</TABLE>
+<SCRIPT>
+var moveCount=1;
+var files='abcdefgh';
+var _50moveCounter=0;
+var knightMoves=[[1,2],[2,1],[-1,-2],[-2,-1],[-1,2],[-2,1],[1,-2],[2,-1]];
+var kingMoves=[[-1,-1],[-1,0],[-1,1],[1,-1],[1,0],[1,1],[0,-1],[0,1]];
+var queenMoves=[];
+var rookMoves=[];
+var bishopMoves=[];
+for(var i =-7; i<8;i++){
+	rookMoves.push([i,0]);
+	rookMoves.push([0,i]);
+	queenMoves.push([i,0]);
+	queenMoves.push([0,i]);
+	bishopMoves.push([i,i]);
+	bishopMoves.push([i,-i]);
+	queenMoves.push([i,i]);
+	queenMoves.push([i,-i]);
+}
+var promotion='empty';
+var pen=document.getElementById('board').getContext('2d');
+pen.fillStyle = '#640';
+pen.fillRect(0,0,800,800);
+pen.fillStyle='#da5';
+var turn='W';
+var pieceInMove='empty';
+for(var i = 1; i <= 8; i++){
+	for(var j = 1; j <= 8; j++){
+		if(j % 2 === i % 2){
+			pen.fillRect((i * 100) - 100,(j * 100) - 100,100,100);
+		}
+	}
+
+}
+var rooksUnmoved=[true,true,true,true];//for castling.[BQR,BKR,WQR,WKR]. If the king moves, both rooks are set to false.
+var canEP=false;
+var canEPnext=false;
+var EPrank=0;//for en passant
+var pieces={
+	BP:document.createElement("img"),
+	BR:document.createElement("img"),
+	BN:document.createElement("img"),
+	BB:document.createElement("img"),
+	BQ:document.createElement("img"),
+	BK:document.createElement("img"),
+	WP:document.createElement("img"),
+	WR:document.createElement("img"),
+	WN:document.createElement("img"),
+	WB:document.createElement("img"),
+	WQ:document.createElement("img"),
+	WK:document.createElement("img"),
+	empty:document.createElement("canvas")
+};
+pieces.BP.src="chesspieces/BP.jpg";
+pieces.BR.src="chesspieces/BR.jpg";
+pieces.BN.src="chesspieces/BN.jpg";
+pieces.BB.src="chesspieces/BB.jpg";
+pieces.BQ.src="chesspieces/BQ.jpg";
+pieces.BK.src="chesspieces/BK.jpg";
+pieces.WP.src="chesspieces/WP.jpg";
+pieces.WR.src="chesspieces/WR.jpg";
+pieces.WN.src="chesspieces/WN.jpg";
+pieces.WB.src="chesspieces/WB.jpg";
+pieces.WQ.src="chesspieces/WQ.jpg";
+pieces.WK.src="chesspieces/WK.jpg";
+
+var player=prompt("What is your name?");
+var playerRating=prompt("What is your chess rating?");
+player_name.textContent=player;
+player_rating.textContent = "(" + playerRating + ")";
+
+var position = [
+["BR","BN","BB","BQ","BK","BB","BN","BR"],
+["BP","BP","BP","BP","BP","BP","BP","BP"],
+["empty","empty","empty","empty","empty","empty","empty","empty"],
+["empty","empty","empty","empty","empty","empty","empty","empty"],
+["empty","empty","empty","empty","empty","empty","empty","empty"],
+["empty","empty","empty","empty","empty","empty","empty","empty"],
+["WP","WP","WP","WP","WP","WP","WP","WP"],
+["WR","WN","WB","WQ","WK","WB","WN","WR"]
+];
+var arrayOne=[];
+for(var i = 0; i < 8;i++){
+	arrayOne.push(null);
+}
+var arrayTwo=[];
+for(var i = 0; i < 8;i++){
+	arrayTwo.push(arrayOne);
+}
+var positionInHtmlProtcol=arrayTwo;
+for(var i = 0; i < 8;i++){
+	for(var i = 0; i < 8;i++){
+		positionInHtmlProtcol[i][j] = pieces[ position[i][j] ];
+	}
+}
+var currentSquare;
+for(var i=0;i<8;i++){
+	for(var j=0;j<8;j++){
+		pen.drawImage( pieces[ position[i][j] ] ,(j*100)+10,(i*100)+10,80,80);
+	}
+}
+var EV={};
+var X=0;
+var Y=0;
+var startX=0;
+var startY=0;
+var mouseDown = false;
+function getKingPos(colour) {
+	var king=colour.toUpperCase()+'K';
+	for(var i=0;i<8;i++){
+		for(var j=0;j<8;j++){
+			if(position[i][j]==king){
+				return({x:j,y:i});
+			}
+		}
+	}
+}
+function squareControl(x,y) {
+	var x2=x;
+	var y2=y;
+	var control={
+		W:0,
+		B:0
+	}
+	
+	{//this bit is for horizontal/vertical moves.
+	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2<7){
+		x2++;
+	}
+	
+	if(!(x2==x && y2==y)){
+		switch(position[y2][x2]){
+			case 'WR':
+			case 'WQ':
+				control.W++;
+				break;
+			case 'BR':
+			case 'BQ':
+				control.B++;
+		}
+	}
+	
+	
+	var x2=x;
+	var y2=y;
+	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2>0){
+		x2--;
+	}
+	
+	if(!(x2==x && y2==y)){
+	switch(position[y2][x2]){
+		case 'WR':
+		case 'WQ':
+			control.W++;
+			break;
+		case 'BR':
+		case 'BQ':
+			control.B++;
+	}
+	}
+	
+	var x2=x;
+	var y2=y;
+	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && y2>0){
+		y2--;
+	}
+	
+	if(!(x2==x && y2==y)){
+	switch(position[y2][x2]){
+		case 'WR':
+		case 'WQ':
+			control.W++;
+			break;
+		case 'BR':
+		case 'BQ':
+			control.B++;
+	}
+	}
+	
+	var x2=x;
+	var y2=y;
+	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && y2<7){
+		y2++;
+	}
+	
+	if(!(x2==x && y2==y)){
+	switch(position[y2][x2]){
+		case 'WR':
+		case 'WQ':
+			control.W++;
+			break;
+		case 'BR':
+		case 'BQ':
+			control.B++;
+	}
+	}
+	}
+	{//then diagonal.
+	var x2=x;
+	var y2=y;
+	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2<7 && y2<7){
+		y2++;
+		x2++;
+	}
+	
+	if(!(x2==x && y2==y)){
+	switch(position[y2][x2]){
+		case 'WB':
+		case 'WQ':
+			control.W++;
+			break;
+		case 'BB':
+		case 'BQ':
+			control.B++;
+	}
+	}
+	
+	var x2=x;
+	var y2=y;
+	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2<7 && y2>0){
+		y2--;
+		x2++;
+	}
+	
+	if(!(x2==x && y2==y)){
+	switch(position[y2][x2]){
+		case 'WB':
+		case 'WQ':
+			control.W++;
+			break;
+		case 'BB':
+		case 'BQ':
+			control.B++;
+	}
+	}
+	var x2=x;
+	var y2=y;
+	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2>0 && y2<7){
+		y2++;
+		x2--;
+	}
+	
+	if(!(x2==x && y2==y)){
+	switch(position[y2][x2]){
+		case 'WB':
+		case 'WQ':
+			control.W++;
+			break;
+		case 'BB':
+		case 'BQ':
+			control.B++;
+	}
+	}
+	
+	var x2=x;
+	var y2=y;
+	while((position[y2][x2] == 'empty' || (x2==x && y2==y)) && x2>0 && y2>0){
+		y2--;
+		x2--;
+	}
+	
+	if(!(x2==x && y2==y)){
+	switch(position[y2][x2]){
+		case 'WB':
+		case 'WQ':
+			control.W++;
+			break;
+		case 'BB':
+		case 'BQ':
+			control.B++;
+	}
+	}
+	
+	}
+	{//for pawns
+	x2=x-1;
+	y2=y-1;
+	if(x2>-1 && y2>-1){
+		if(position[y2][x2]=='BP'){
+			control.B++;
+		}
+	}
+	x2=x+1;
+	y2=y-1;
+	if(x2<8 && y2>-1){
+		if(position[y2][x2]=='BP'){
+			control.B++;
+		}
+	}
+	x2=x-1;
+	y2=y+1;
+	if(x2>-1 && y2<8){
+		if(position[y2][x2]=='WP'){
+			control.W++;
+		}
+	}
+	x2=x+1;
+	y2=y+1;
+	if(x2<8 && y2<8){
+		if(position[y2][x2]=='WP'){
+			control.W++;
+		}
+	}
+	}
+	
+	{//knight
+		for(var i in knightMoves){
+			try{
+				var pieceInSquare=position[y+knightMoves[i][0]][x+knightMoves[i][1]];
+			}catch(e){
+				pieceInSquare='empty';
+			}
+			if(pieceInSquare=='BN'){
+				control.B+=1;
+			}
+			if(pieceInSquare=='WN'){
+				control.W+=1;
+			}
+		}
+	}
+	{//king
+		for(var i in kingMoves){
+			try{
+				var pieceInSquare=position[y+kingMoves[i][0]][x+kingMoves[i][1]];
+			}catch(e){
+				pieceInSquare='empty';
+			}
+			if(pieceInSquare=='BK'){
+				control.B+=0.5;
+			}
+			if(pieceInSquare=='WK'){
+				control.W+=0.5;
+			}
+		}
+	}
+	return(control);
+}
+function isMoveLegal(x1,y1,x2,y2) {
+	if(x1 == x2 && y1 == y2){
+		return(false);
+	}//if the same square
+	var dx=x1-x2;
+	var dy=y1-y2;
+	var ady=Math.abs(dy);
+	var adx=Math.abs(dx);
+	var pieceToMove=position[y1][x1];
+	var colour=position[y1][x1][0];
+	var endColour=position[y2][x2][0];
+	var inBetweenSquares=[];
+	{
+	if(dx < -1 && dy==0){
+		for(var x=x1+1;x<x2;x++){
+			inBetweenSquares.push(position[y1][x]);
+		}
+	}
+	if(dx > 1 && dy==0){
+		for(var x=x1-1;x>x2;x--){
+			inBetweenSquares.push(position[y1][x]);
+		}
+	}
+	if(dy < -1 && dx==0){
+		for(var y=y1+1;y<y2;y++){
+			inBetweenSquares.push(position[y][x1]);
+		}
+	}
+	if(dy > 1 && dx==0){
+		for(var y=y1-1;y>y2;y--){
+			inBetweenSquares.push(position[y][x1]);
+		}
+	}
+	if(dy == dx){
+		if(dy > 1){
+			for(var y=y1-1,x=x1-1;    y>y2;    x--,y--){
+				inBetweenSquares.push(position[y][x]);
+			}
+		}
+		if(dy < -1){
+			for(var y=y1+1,x=x1+1;    y<y2;    x++,y++){
+				inBetweenSquares.push(position[y][x]);
+			}
+		}
+	}
+	if(dy == -dx){
+		if(dy > 1){
+			for(var y=y1-1,x=x1+1;    y>y2;    x++,y--){
+				inBetweenSquares.push(position[y][x]);
+			}
+		}
+		if(dy < -1){
+			for(var y=y1+1,x=x1-1;    y<y2;    x--,y++){
+				inBetweenSquares.push(position[y][x]);
+			}
+		}
+	}
+	if(pieceToMove[1]=='K' && adx==2){//castling
+		var KingX=getKingPos('w').x;
+		var KingY=getKingPos('w').y;
+		if(squareControl(KingX,KingY).B){
+			alert('You can\'t castle out of check.');
+			return(false);//can't castle out of check
+		}
+		inBetweenSquares=[];
+		var inBetweenChecks=[];
+		if(dx > 1){
+			for(var x=x1-1;    x>0;    x--){
+				inBetweenSquares.push(position[y1][x]);
+				inBetweenChecks.push(squareControl(x,y1).B);
+			}
+		}
+		if(dx < -1){
+			for(var x=x1+1;    x<7;    x++){
+				inBetweenSquares.push(position[y1][x]);
+				inBetweenChecks.push(squareControl(x,y1).B);
+			}
+		}
+		for(var i in inBetweenChecks){
+			if(inBetweenChecks[i]){
+				alert('That move is blocked.');
+				return(false);
+			}
+		}
+	}
+	//console.log(inBetweenSquares);
+	}//Do not delete this curly bracket.
+	for(var i in inBetweenSquares){
+		if(inBetweenSquares[i] !== 'empty'){
+			alert('That move is blocked.');
+			return(false);
+		}
+	}
+	if(colour !== turn){
+		alert('It\'s not your move.')
+		return(false);
+	}
+	if(colour==endColour){
+		alert('You can\'t take your own pieces.');
+		return(false);
+	}
+	switch(pieceToMove){
+		case 'BP':
+			if((dx == 0) && dy==-1){//same file, 1 rank away
+				if(endColour != 'e'){
+					alert('Pawns can\'t capture straight ahead.');
+					return(false);
+				}
+				if(y2==7){
+					while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+						var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
+					}
+					if(promotion=='K'){
+						promotion='N';
+					}
+					pieceInMove='B'+promotion;
+				}
+				return(true);
+			}else if((dx==0) && (y1==1) && (dy==-2)){//initial rank, same file, two squares
+				if(endColour != 'e'){
+					alert('Pawns can\'t capture straight ahead.');
+					return(false);
+				}
+				EPrank=x1;
+				canEPnext=true;
+				return(true);
+			}else if(adx==1 && dy==-1 && endColour=='W'){
+				if(y2==7){
+					while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+						var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
+					}
+					if(promotion=='K'){
+						promotion='N';
+					}
+					pieceInMove='B'+promotion;
+				}
+				return(true);
+			}else if(adx==1 && dy==-1 && endColour=='e' && canEP && EPrank==x2 && y2==5){
+				position[y1][x2]='empty';
+				return(true);//en passant
+			}
+			break;
+		case 'BR':
+			if((dx==0) || (dy==0)){//same file or rank
+				if(x==0 && y==0){
+					rooksUnmoved[0]=false;
+				}
+				if(x==7 && y==0){
+					rooksUnmoved[1]=false;
+				}
+				return(true);
+			}
+			break;
+		case 'BN':
+			if((adx==2 && ady==1)  ||  (adx==1 && ady==2)){//knight move
+				return(true);
+			}
+			break;
+		case 'BB':
+			if(adx==ady){
+				return(true);
+			}
+			break;
+		case 'BQ':
+			if(adx==ady){
+				return(true);
+			}else if((dx==0) || (dy==0)){//same file or rank
+				return(true);
+			}
+			break;
+		case 'BK':
+			if((adx==1 || ady==1) && adx+ady <3){
+				rooksUnmoved[0]=rooksUnmoved[1]=false;
+				return(true);
+			}else if(dx == 2 && rooksUnmoved[0]){//queenside
+				position[0][0]='empty';
+				position[0][3]='BR';
+				return(true);
+			}else if(dx == -2 && rooksUnmoved[1]){//kingside
+				position[0][7]='empty';
+				position[0][5]='BR';
+				return(true);
+			}
+			break;
+		case 'WP':
+			if((x1 == x2) && (y1-y2)==1){//same file, 1 rank away
+				if(endColour != 'e'){
+					alert('Pawns can\'t capture straight ahead.');
+					return(false);
+				}
+				if(y2==0){
+					while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+						var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
+					}
+					if(promotion=='K'){
+						promotion='N';
+					}
+					pieceInMove='W'+promotion;
+				}
+				return(true);
+			}else if((x1 == x2) && (y1==6) && ((y1-y2)==2)){//initial rank, same file, two squares
+				if(endColour != 'e'){
+					alert('Pawns can\'t capture straight ahead.');
+					return(false);
+				}
+				EPrank=x1;
+				canEPnext=true;
+				return(true);
+			}else if(adx==1 && dy==1 && endColour=='B'){
+				if(y2==0){
+					while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+						var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
+					}
+					if(promotion=='K'){
+						promotion='N';
+					}
+					pieceInMove='W'+promotion;
+				}
+				return(true);
+			}else if(adx==1 && dy==1 && endColour=='e' && canEP && EPrank==x2 && y2==2){
+				position[y1][x2]='empty';
+				return(true);//en passant
+			}
+			break;
+		case 'WR':
+			if((dx==0) || (dy==0)){//same file or rank
+				if(x==0 && y==7){
+					rooksUnmoved[2]=false;
+				}
+				if(x==7 && y==7){
+					rooksUnmoved[3]=false;
+				}
+				return(true);
+			}
+			break;
+		case 'WN':
+			if((adx==2 && ady==1)  ||  (adx==1 && ady==2)){//knight move
+				return(true);
+			}
+			break;
+		case 'WB':
+			if(adx==ady){
+				return(true);
+			}
+			break;
+		case 'WQ':
+			if(adx==ady){
+				return(true);
+			}else if((dx==0) || (dy==0)){//same file or rank
+				return(true);
+			}
+			break;
+		case 'WK':
+			if((adx==1 || ady==1) && adx+ady <3){
+				rooksUnmoved[2]=rooksUnmoved[3]=false;
+				return(true);
+			}else if(dx == 2 && rooksUnmoved[2]){//queenside
+				position[7][0]='empty';
+				position[7][3]='WR';
+				return(true);
+			}else if(dx == -2 && rooksUnmoved[3]){//kingside
+				position[7][7]='empty';
+				position[7][5]='WR';
+				return(true);
+			}
+			break;
+		default:
+		return(false);
+	}
+	alert('That move is not legal.');
+};
+function isMoveLegalCPU(x1,y1,x2,y2) {
+	if(x1 == x2 && y1 == y2){
+		return(false);
+	}//if the same square
+	var dx=x1-x2;
+	var dy=y1-y2;
+	var ady=Math.abs(dy);
+	var adx=Math.abs(dx);
+	var pieceToMove=position[y1][x1];
+	var colour=position[y1][x1][0];
+	var endColour=position[y2][x2][0];
+	if(pieceToMove=='empty'){
+		return(false);
+	}
+	var inBetweenSquares=[];
+	{//in between squares
+	if(dx < -1 && dy==0){
+		for(var x=x1+1;x<x2;x++){
+			inBetweenSquares.push(position[y1][x]);
+		}
+	}
+	if(dx > 1 && dy==0){
+		for(var x=x1-1;x>x2;x--){
+			inBetweenSquares.push(position[y1][x]);
+			//console.log(x);
+		}
+	}
+	if(dy < -1 && dx==0){
+		for(var y=y1+1;y<y2;y++){
+			inBetweenSquares.push(position[y][x1]);
+		}
+	}
+	if(dy > 1 && dx==0){
+		for(var y=y1-1;y>y2;y--){
+			inBetweenSquares.push(position[y][x1]);
+		}
+	}
+	if(dy == dx){
+		if(dy > 1){
+			for(var y=y1-1,x=x1-1;    y>y2;    x--,y--){
+				inBetweenSquares.push(position[y][x]);
+			}
+		}
+		if(dy < -1){
+			for(var y=y1+1,x=x1+1;    y<y2;    x++,y++){
+				inBetweenSquares.push(position[y][x]);
+			}
+		}
+	}
+	if(dy == -dx){
+		if(dy > 1){
+			for(var y=y1-1,x=x1+1;    y>y2;    x++,y--){
+				inBetweenSquares.push(position[y][x]);
+			}
+		}
+		if(dy < -1){
+			for(var y=y1+1,x=x1-1;    y<y2;    x--,y++){
+				inBetweenSquares.push(position[y][x]);
+			}
+		}
+	}
+	if(pieceToMove[1]=='K' && adx==2){//castling
+		var KingX=getKingPos('b').x;
+		var KingY=getKingPos('b').y;
+		if(squareControl(KingX,KingY).W){
+			return(false);//can't castle out of check
+		}
+		inBetweenSquares=[];
+		var inBetweenChecks=[];
+		if(dx > 1){
+			for(var x=x1-1;    x>0;    x--){
+				inBetweenSquares.push(position[y1][x]);
+				inBetweenChecks.push(squareControl(x,y1).B);
+			}
+		}
+		if(dx < -1){
+			for(var x=x1+1;    x<7;    x++){
+				inBetweenSquares.push(position[y1][x]);
+				inBetweenChecks.push(squareControl(x,y1).B);
+			}
+		}
+		for(var i in inBetweenChecks){
+			if(inBetweenChecks[i]){
+				//alert('That move is blocked.');
+				return(false);
+			}
+		}
+	}
+	//console.log(inBetweenSquares);
+	}//Do not delete this curly bracket.
+	for(var i in inBetweenSquares){
+		if(inBetweenSquares[i] !== 'empty'){
+			//void('That move is blocked.');
+			return(false);
+			alert();
+		}
+	}
+	if(colour !== turn){
+		void('It\'s not your move.')
+		return(false);
+	}
+	if(colour==endColour){
+		void('You can\'t take your own pieces.');
+		return(false);
+	}
+	switch(pieceToMove){
+		case 'BP':
+			if((dx == 0) && dy==-1){//same file, 1 rank away
+				if(endColour != 'e'){
+					void('Pawns can\'t capture straight ahead.');
+					return(false);
+				}
+				if(y2==7){/*
+					while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+						var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
+					}
+					if(promotion=='K'){
+						promotion='N';
+					}*/
+					pieceInMove='BQ';//+promotion;
+				}
+				return(true);
+			}else if((dx==0) && (y1==1) && (dy==-2)){//initial rank, same file, two squares
+				if(endColour != 'e'){
+					void('Pawns can\'t capture straight ahead.');
+					return(false);
+				}
+				EPrank=x1;
+				canEPnext=true;
+				return(true);
+			}else if(adx==1 && dy==-1 && endColour=='W'){
+				if(y2==7){/*
+					while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+						var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
+					}
+					if(promotion=='K'){
+						promotion='N';
+					}*/
+					pieceInMove='BQ';//+promotion;
+				}
+				return(true);
+			}else if(adx==1 && dy==-1 && endColour=='e' && canEP && EPrank==x2 && y2==5){
+				position[y1][x2]='empty';
+				return(true);//en passant
+			}
+			break;
+		case 'BR':
+			if((dx==0) || (dy==0)){//same file or rank
+				if(x==0 && y==0){
+					rooksUnmoved[0]=false;
+				}
+				if(x==7 && y==0){
+					rooksUnmoved[1]=false;
+				}
+				return(true);
+			}
+			break;
+		case 'BN':
+			if((adx==2 && ady==1)  ||  (adx==1 && ady==2)){//knight move
+				return(true);
+			}
+			break;
+		case 'BB':
+			if(adx==ady){
+				return(true);
+			}
+			break;
+		case 'BQ':
+			if(adx==ady){
+				return(true);
+			}else if((dx==0) || (dy==0)){//same file or rank
+				return(true);
+			}
+			break;
+		case 'BK':
+			if((adx==1 || ady==1) && adx+ady <3){
+				rooksUnmoved[0]=rooksUnmoved[1]=false;
+				return(true);
+			}else if(dx == 2 && rooksUnmoved[0]){//queenside
+				position[0][0]='empty';
+				position[0][3]='BR';
+				return(true)
+			}else if(dx == -2 && rooksUnmoved[1]){//kingside
+				position[0][7]='empty';
+				position[0][5]='BR';
+				return(true);
+			}
+			break;
+		case 'WP':
+			if((x1 == x2) && (y1-y2)==1){//same file, 1 rank away
+				if(endColour != 'e'){
+					void('Pawns can\'t capture straight ahead.');
+					return(false);
+				}
+				if(y2==0){
+					while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+						var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
+					}
+					if(promotion=='K'){
+						promotion='N';
+					}
+					pieceInMove='W'+promotion;
+				}
+				return(true);
+			}else if((x1 == x2) && (y1==6) && ((y1-y2)==2)){//initial rank, same file, two squares
+				if(endColour != 'e'){
+					void('Pawns can\'t capture straight ahead.');
+					return(false);
+				}
+				EPrank=x1;
+				canEPnext=true;
+				return(true);
+			}else if(adx==1 && dy==1 && endColour=='B'){
+				if(y2==0){
+					while(promotion != 'K' && promotion != 'B' && promotion != 'R' && promotion != 'Q'){
+						var promotion=prompt('Promote to:\nKnight, Bishop, Rook or Queen.')[0].toUpperCase();
+					}
+					if(promotion=='K'){
+						promotion='N';
+					}
+					pieceInMove='W'+promotion;
+				}
+				return(true);
+			}else if(adx==1 && dy==1 && endColour=='e' && canEP && EPrank==x2 && y2==2){
+				position[y1][x2]='empty';
+				return(true);//en passant
+			}
+			break;
+		case 'WR':
+			if((dx==0) || (dy==0)){//same file or rank
+				if(x==0 && y==7){
+					rooksUnmoved[2]=false;
+				}
+				if(x==7 && y==7){
+					rooksUnmoved[3]=false;
+				}
+				return(true);
+			}
+			break;
+		case 'WN':
+			if((adx==2 && ady==1)  ||  (adx==1 && ady==2)){//knight move
+				return(true);
+			}
+			break;
+		case 'WB':
+			if(adx==ady){
+				return(true);
+			}
+			break;
+		case 'WQ':
+			if(adx==ady){
+				return(true);
+			}else if((dx==0) || (dy==0)){//same file or rank
+				return(true);
+			}
+			break;
+		case 'WK':
+			if((adx==1 || ady==1) && adx+ady <3){
+				rooksUnmoved[2]=rooksUnmoved[3]=false;
+				return(true);
+			}else if(dx == 2 && rooksUnmoved[2]){//queenside
+				position[7][0]='empty';
+				position[7][3]='WR';
+				return(true);
+			}else if(dx == -2 && rooksUnmoved[3]){//kingside
+				position[7][7]='empty';
+				position[7][5]='WR';
+				return(true);
+			}
+			break;
+		default:
+		return(false);
+	}
+	void('That move is not legal.');
+	return(false);
+};
+function getCPUmoves(){
+	var moves=[];
+	for(var i=0;i<8;i++){
+			for(var j=0;j<8;j++){
+				for(var k=0;k<8;k++){
+					for(var l=0;l<8;l++){
+						if(isMoveLegalCPU(i,j,k,l) && (i!=k || j!=l)){
+		pieceInMove=position[j][i];
+		pieceAtEnd=position[l][k];
+		//isMoveLegalCPU(i,j,k,l);//in case of pawn promotion, this will make pieceInMove=queen.
+		position[j][i]="empty";
+		position[l][k]=pieceInMove;
+		if(!canEPnext){
+			canEP=false;
+		}else{
+			canEP=true;
+		}
+		canEPnext=false;
+		var KingX=getKingPos('b').x;
+		var KingY=getKingPos('b').y;
+		if(squareControl(KingX,KingY).W){
+			position[j][i]=pieceInMove;
+			position[l][k]=pieceAtEnd;//undoes the move
+		}else{
+			//alert('done');					
+			moves.push({x1:i,y1:j,x2:k,y2:l});
+			position[j][i]=pieceInMove;
+			position[l][k]=pieceAtEnd;//undoes the move
+		}
+					}
+				}
+			}
+		}
+	}
+	return(moves);
+}
+function standardNotation(x1,y1,x2,y2){
+	var pieceInMove=position[y1][x1];
+	var pieceAtEnd=position[y2][x2];
+	var stan=pieceInMove[1];
+	stan+=files[x1] + (8-y1);
+	if(pieceAtEnd != 'empty'){
+		stan+='x';
+	}
+	stan+=files[x2] + (8-y2);
+	return(stan);
+}
+function executeMove(move) {
+	pieceInMove=position[move.y1][move.x1];
+	pieceAtEnd=position[move.y2][move.x2];
+	if(move.y2==7 && pieceInMove=='BP'){
+		pieceInMove='BQ';
+	}
+	position[move.y1][move.x1]="empty";
+	position[move.y2][move.x2]=pieceInMove;
+	if(pieceAtEnd != 'empty' || pieceInMove=='WP'){
+		_50moveCounter=0;
+	}
+}
+
+document.getElementById('board').onmousemove=function(event) {
+	X = Math.floor((event.clientX-8+scrollX) / 100);
+	Y = Math.floor((event.clientY-200+scrollY) / 100);
+	if(mouseDown){
+		pen.drawImage( pieces[ position[startY][startX] ] ,event.clientX-58+scrollX,event.clientY-250+scrollY,80,80);
+	}
+	//console.log(X+', '+Y);
+};
+document.getElementById('board').onmousedown=function(event) {
+	mouseDown=true;
+	startX=X;//Math.ceil(event.clientX / 100);
+	startY=Y;//Math.ceil(event.clientY / 100);
+};
+document.getElementById('board').onmouseup=function(event) {
+	_50moveCounter++;
+	mouseDown=false;
+	pieceInMove=position[startY][startX];
+	pieceAtEnd=position[Y][X];
+	if(pieceInMove !== 'empty' && isMoveLegal(startX,startY,X,Y)){
+		var stan1=standardNotation(startX,startY,X,Y);
+		position[startY][startX]="empty";
+		position[Y][X]=pieceInMove;
+		if(turn=='W'){
+			turn='B';
+		}else{
+			turn='W';
+		}
+		var notTurn;
+		if(turn=='W'){
+			notTurn='B';
+		}else{
+			notTurn='W';
+		}
+		if(!canEPnext){
+			canEP=false;
+		}else{
+			canEP=true;
+		}
+		canEPnext=false;
+		var KingX=getKingPos(notTurn).x;
+		var KingY=getKingPos(notTurn).y;
+		if(squareControl(KingX,KingY)[turn]){
+			alert('That move would put your king in check.');
+			position[startY][startX]=pieceInMove;
+			position[Y][X]=pieceAtEnd;
+			_50moveCounter--;
+			if(turn=='W'){
+				turn='B';
+			}else{
+				turn='W';
+			}
+			var notTurn;
+			if(turn=='W'){
+				notTurn='B';
+			}else{
+				notTurn='W';
+			}
+		}else{
+			if(pieceAtEnd != 'empty' || pieceInMove=='WP'){
+				_50moveCounter=0;
+			}
+		}
+	}
+	pen.fillStyle = '#640';
+	pen.fillRect(0,0,800,800);
+	pen.fillStyle='#da5';
+	for(var i = 1; i <= 8; i++){
+		for(var j = 1; j <= 8; j++){
+			if(j % 2 === i % 2){
+				pen.fillRect((i * 100) - 100,(j * 100) - 100,100,100);
+			}
+		}
+	}
+	for(var i=0;i<8;i++){
+		for(var j=0;j<8;j++){
+			pen.fillStyle='#000';
+			pen.drawImage( pieces[ position[i][j] ] ,(j*100)+10,(i*100)+10,80,80);
+			//pen.fillText(squareControl(j,i).W,(j*100)+10,(i*100)+10);
+			//alert(squareControl(j,i));
+		}
+	}
+	if(turn=='B'){//alert('Thinking...');
+		/*var done=false;
+		for(var i=0;i<8;i++){
+			for(var j=0;j<8;j++){
+				for(var k=0;k<8;k++){
+					for(var l=0;l<8;l++){
+						if(isMoveLegalCPU(i,j,k,l) && (i!=k || j!=l)){
+		pieceInMove=position[j][i];
+		pieceAtEnd=position[l][k];
+		isMoveLegalCPU(i,j,k,l);//in case of pawn promotion, this will make pieceInMove=queen.
+		position[j][i]="empty";
+		position[l][k]=pieceInMove;
+		if(!canEPnext){
+			canEP=false;
+		}else{
+			canEP=true;
+		}
+		canEPnext=false;
+		var KingX=getKingPos('b').x;
+		var KingY=getKingPos('b').y;
+		if(squareControl(KingX,KingY).W){
+			position[j][i]=pieceInMove;
+			position[l][k]=pieceAtEnd;//undoes the move
+		}else{
+			//alert('done');					
+			done=true;
+			if(pieceAtEnd != 'empty' || pieceInMove=='WP'){
+				_50moveCounter=0;
+			
+			//alert(i+''+j+k+l);
+			break;
+		}
+						}
+					if(done){break;}
+					}
+				if(done){break;}
+				}
+			if(done){break;}
+			}
+		if(done){break;}
+		}
+		if(!done){
+			var KingX=getKingPos('b').x;
+			var KingY=getKingPos('b').y;
+			if(squareControl(KingX,KingY).W){
+				alert('Oh plop, I\'m checkmated.');
+			}else{
+				alert('Draw by stalemate.');
+			}
+		}
+		turn='W';
+		notTurn='B';
+	}*/
+	var moves=getCPUmoves();
+	try{
+		var moveToDo=moves[moves.length-1];
+		var stan2=standardNotation(moveToDo.x1,moveToDo.y1,moveToDo.x2,moveToDo.y2);
+		executeMove(moveToDo);
+		turn='W';
+		move_board.innerHTML+='<TR>'+'<TD>'+moveCount+'. </TD>'+'<TD>'+stan1+'</TD>'+'<TD>'+stan2+'</TD>'+'</TR>';
+	}catch(e){
+		var KingX=getKingPos('b').x;
+		var KingY=getKingPos('b').y;
+		if(squareControl(KingX,KingY).W){
+			alert('Oh plop, I\'m checkmated.');
+		move_board.innerHTML+='<TR>'+'<TD>'+moveCount+'. </TD>'+'<TD>'+stan1+'</TD>'+'<TD>'+'# 1-0'+'</TD>'+'</TR>';
+		}else{
+			alert('Draw by stalemate.');
+		move_board.innerHTML+='<TR>'+'<TD>'+moveCount+'. </TD>'+'<TD>'+stan1+'</TD>'+'<TD>'+'1/2-1/2'+'</TD>'+'</TR>';
+		}
+	}
+	}
+	pen.fillStyle = '#640';
+	pen.fillRect(0,0,800,800);
+	pen.fillStyle='#da5';
+	for(var i = 1; i <= 8; i++){
+		for(var j = 1; j <= 8; j++){
+			if(j % 2 === i % 2){
+				pen.fillRect((i * 100) - 100,(j * 100) - 100,100,100);
+			}
+		}
+	}
+	for(var i=0;i<8;i++){
+		for(var j=0;j<8;j++){
+			pen.fillStyle='#000';
+			pen.drawImage( pieces[ position[i][j] ] ,(j*100)+10,(i*100)+10,80,80);
+			//pen.fillText(squareControl(j,i).W,(j*100)+10,(i*100)+10);
+			//alert(squareControl(j,i));
+		}
+	}
+};
+</SCRIPT><HR>
+<!-- And add a copyright notice. -->
+<P>&copy <A href="../flobit.html" style="color:#f00">flob</A>group.corp</P>
+</DIV>
+<canvas width=100 heigth=100></canvas>
+</body></html>

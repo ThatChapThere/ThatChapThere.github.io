@@ -1,0 +1,135 @@
+﻿<HTML><HEAD><LINK type="image/png" href="../images/icons/space.png" rel="icon"></LINK>
+<title>planets</title>
+</HEAD><BODY bgColor="#333333">
+<canvas id="space" width=700 height=700></canvas>
+<!--<BUTTON id="new">Make a new body</BUTTON>-->
+<TABLE id="oof" border=3 style="border-color:#fff;"><TBODY>
+<TR><TD>Body<TD width=250>X position<TD width=250>Y position<TD width=400>X velocity<TD width=400>Y velocity
+<TR id="the sun">
+<TR id="mercury">
+<TR id="venus">
+<TR id="earth">
+<TR id="mars">
+<TR id="the moon">
+<TR id="phobos">
+<TR id="deimos">
+<TR id="your probe">
+<TR id="comet a-0001-timsaff">
+</TBODY></TABLE>
+X Velocity of launchers:<INPUT id='xv'></INPUT><BR>
+Y Velocity of launchers:<INPUT id='yv'></INPUT><BR>
+<BUTTON id="launch">LAUNCH</BUTTON>
+<SCRIPT>
+var bodyNames=[
+  'the sun',
+  'mercury',
+  'venus',
+  'earth',
+  'mars',
+  'the moon',
+  'phobos',
+  'deimos',
+  'your probe',
+  'comet a-0001-thatchapthere-poppy',
+];
+function getNumber(string){
+    var input=NaN;
+    while(isNaN(input) && !input) {
+        input=prompt(string+' (must be a number)');
+    }
+    return(input);
+};
+function sq(num) {
+  return(num*num);
+};
+space.width=space.width;
+space.height=space.height;
+var pen=space.getContext('2d');
+function Body(x, y, xv, yv, mass, w, color) {
+  this.x = x;
+  this.y = y;
+  this.mass = mass;
+  this.xv = xv;
+  this.yv = yv;
+  this.w = w;
+  this.color=color;
+};
+var G = 0.0005;
+var launched = false;
+var bodies = [
+  new Body(350, 350, 0, 0, 330000, 70, '#ffff00'),//the sun
+  new Body(350,292,132.5,0,0.06,4,'#664'),//mercury
+  new Body(350,242,130,0,0.82,12,'#8e6644'),//venus
+  new Body(350,200,135,0,1,13,'#0000ff'),//earth
+  new Body(350,122,132.5,0,0.11,7,'#ff0000'),//mars
+  new Body(350, 200.3, 135, 0, 0.01, 3, '#888'),//the moon
+  new Body(350,122.006,132.5,0,0.00000002,2,'#888'),//phobos
+  new Body(350,121.98,132.5,0.000000003,1,'#888'),//deimos
+  new Body(350,200,0,0,0,1,'#fff'),//probe
+  new Body(350,0,10,0,0.0000001,2,'#aaffaa'),
+];
+function ___disp___() {
+  pen.fillStyle='#000';
+  pen.fillRect(0,0,700,700);
+  for(var i = 0; i < bodies.length; i++){
+    bodies[i].x += bodies[i].xv/100;
+    bodies[i].y += bodies[i].yv/100;
+    pen.fillStyle = bodies[i].color;
+    pen.beginPath();
+    pen.arc(bodies[i].x, bodies[i].y, bodies[i].w/2, 0,Math.PI*2,false);
+    pen.fill();
+    for(var j = 0; j < bodies.length; j++){
+      if(i !== j){
+        var M = bodies[j].mass;//my equation: mass = mass.
+        var r = Math.sqrt(sq(bodies[i].x - bodies[j].x) + sq(bodies[i].y - bodies[j].y));//pythagorus, Hypotenuse = square root [x^2 + y^2]
+        var A = -G * (M / (r * r));//Isaac Newton. F= -G times: (M1 M2) over r squared, modified into aceleration.
+        bodies[i].xv += A * (bodies[i].x - bodies[j].x)
+        bodies[i].yv += A * (bodies[i].y - bodies[j].y)//A = delta d
+      }
+    var stats=document.getElementById(bodyNames[i]);
+    stats.innerHTML='<TD>'+bodyNames[i]+'<TD>'+bodies[i].x+'<TD>'+bodies[i].y+'<TD>'+bodies[i].xv+'<TD>'+bodies[i].yv;
+    }
+  }
+  if(!launched){
+    bodies[8].x=bodies[3].x+8;
+    bodies[8].y=bodies[3].y;
+  }
+  setTimeout('___disp___()',1000);
+};
+document.getElementById('launch').onclick = function() {
+  if(!launched){
+    launched=true;
+    bodies[8].xv = eval(document.getElementById('xv').value);
+    bodies[8].yv = eval(document.getElementById('yv').value);
+  }else{
+    alert('Already launched!');
+  }
+};
+/*document.getElementById('new').onclick = function() {
+  var ax=getNumber('x Position?');
+  var ay=getNumber('y Position?');
+  var amass=getNumber('Mass?');
+  var aw=getNumber('Size ?');
+  var color='#';
+  if( confirm('use red?') ){
+    color += 'ff';
+  }else{
+    color += '00';
+  }
+  if( confirm('use green?') ){
+    color += 'ff';
+  }else{
+    color += '00';
+  }
+  if( confirm('use blue?') ){
+    color += 'ff';
+  }else{
+    color += '00';
+  }
+  bodies.push(new Body(ax,ay,0,0,amass,aw,'#112233'));
+};*/
+___disp___();
+</SCRIPT><HR>
+<!-- And add a copyright notice. -->
+<P>&copy <A href="../flobit.html" style="color:#ccc">flob</A>group.corp</P>
+</BODY></HTML>

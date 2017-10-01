@@ -1,0 +1,27 @@
+﻿<HTML><HEAD><title>Keycode tester</title></HEAD><BODY>
+<LI>You:
+<SCRIPT>
+var started=[];
+var o=0;
+while(o<250){
+  o++;
+  started.push(false);
+}
+function onkeyhit() {};
+function onkeyrelease() {};
+onkeydown=function(event){
+  if( !started[event.keyCode] ){
+    document.body.innerHTML+='<LI>pressed key '+event.keyCode;
+    started[event.keyCode]=true;
+    onkeyhit(event.keyCode);
+  }
+  return false;
+};
+onkeyup=function(event){
+  started[event.keyCode]=false;
+  document.body.innerHTML+='<LI>released key '+event.keyCode;
+  onkeyrelease(event.keyCode);
+  return false;
+};
+</SCRIPT>
+</BODY></HTML>
