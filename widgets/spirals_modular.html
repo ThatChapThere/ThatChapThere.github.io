@@ -36,13 +36,13 @@
 	<canvas></canvas>
 	<div>
 		Number of points:
-		<input type="range" id="sectors" min="1" max="100" />
+		<input type="range" id="sectors" min="1" max="2000" />
 		<span id="sectors_value"></span>
 	</div>
 	
 	<div>
 		Increment:
-		<input type="range" id="increment" min="1" max="100" />
+		<input type="range" id="increment" min="1" max="1000" />
 		<span id="increment_value"></span>
 	</div>
 <script>
@@ -59,8 +59,8 @@ var centre = {
 
 var colours = {
 	'circle' : '#000000',
-	'background' : '#BBBBBB',
-	'line' : '#0029FF'
+	'background' : '#ffffff',
+	'line' : ['#FF0000','#00FF00','#0000FF']
 }
 
 
@@ -84,8 +84,8 @@ function getPosition(fraction, amount) {
 	);
 }
 
-var sectors = 150;
-var jump = 64;
+var sectors = 27;
+var jump = 3;
 
 function updateSliders(){
 	sectors = document.getElementById('sectors_value').textContent = document.getElementById('sectors').value;
@@ -102,17 +102,18 @@ function draw() {
 	ctx.arc(centre.x, centre.y, radius, 0, Math.PI * 2, false);
 	ctx.stroke();
 	
-	ctx.strokeStyle=colours.line;
-	ctx.beginPath();
-	ctx.moveTo(centre.x, centre.y - radius);
 	
 	var i;
-	for(i = 0; (i * jump) % sectors != 0 || i == 0; i++){
+	for(i = 0; i < sectors; i++){
+		
+		ctx.strokeStyle=colours.line[i % colours.line.length];
+		ctx.beginPath();
+		ctx.moveTo( getPosition(sectors, i).x, getPosition(sectors, i).y );
 		ctx.lineTo( getPosition(sectors, i * jump).x, getPosition(sectors, i * jump).y );
+		ctx.stroke();
 		//~ alert(getPosition(sectors, i * jump).x);
 	}
-	ctx.lineTo( getPosition(sectors, i * jump).x, getPosition(sectors, i * jump).y );
-	ctx.stroke();
+	//~ ctx.lineTo( getPosition(sectors, i * jump).x, getPosition(sectors, i * jump).y );
 	ctx.beginPath();
 }
 
