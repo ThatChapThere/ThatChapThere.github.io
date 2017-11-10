@@ -1,0 +1,132 @@
+<!--
+   spirals_modular.html
+   
+   Copyright 2017 customer <customer@DESKTOP-563VRSA>
+   
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+   
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+   
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+   MA 02110-1301, USA.
+   
+   
+-->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>Spiral Patterns</title>
+	<LINK type="image/png" href="../images/icons/spiral.png" rel="icon"></LINK>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="generator" content="Geany 1.30.1" />
+</head>
+
+<body>
+	<canvas></canvas>
+	<div>
+		Number of points:
+		<input type="range" id="sectors" min="1" max="100" />
+		<span id="sectors_value"></span>
+	</div>
+	
+	<div>
+		Increment:
+		<input type="range" id="increment" min="1" max="100" />
+		<span id="increment_value"></span>
+	</div>
+<script>
+	
+var width = 720;
+var height = width;
+
+const TAU = Math.PI * 2;
+
+var centre = {
+	'x' : width/2,
+	'y' : height/2
+}
+
+var colours = {
+	'circle' : '#000000',
+	'background' : '#BBBBBB',
+	'line' : '#0029FF'
+}
+
+
+
+var radius = 350;
+
+var ctx=document.getElementsByTagName('canvas')[0].getContext('2d');
+
+ctx.canvas.width = width;
+ctx.canvas.height = height;
+
+function getPosition(fraction, amount) {
+	
+	var angle = TAU * amount / fraction;
+	
+	return(
+		{
+			'x' : (Math.sin(angle) * radius) + centre.x,
+			'y' : centre.y - (Math.cos(angle) * radius),
+		}
+	);
+}
+
+var sectors = 150;
+var jump = 64;
+
+function updateSliders(){
+	sectors = document.getElementById('sectors_value').textContent = document.getElementById('sectors').value;
+	jump = document.getElementById('increment_value').textContent = document.getElementById('increment').value;
+}
+
+function draw() {
+	updateSliders();
+	
+	ctx.fillStyle = colours.background;
+	ctx.fillRect(0, 0, width, height);
+	
+	ctx.strokeStyle=colours.circle;
+	ctx.arc(centre.x, centre.y, radius, 0, Math.PI * 2, false);
+	ctx.stroke();
+	
+	ctx.strokeStyle=colours.line;
+	ctx.beginPath();
+	ctx.moveTo(centre.x, centre.y - radius);
+	
+	var i;
+	for(i = 0; (i * jump) % sectors != 0 || i == 0; i++){
+		ctx.lineTo( getPosition(sectors, i * jump).x, getPosition(sectors, i * jump).y );
+		//~ alert(getPosition(sectors, i * jump).x);
+	}
+	ctx.lineTo( getPosition(sectors, i * jump).x, getPosition(sectors, i * jump).y );
+	ctx.stroke();
+	ctx.beginPath();
+}
+
+draw();
+
+document.getElementById('increment').onmousemove=function() {
+	draw();
+}
+
+document.getElementById('sectors').onmousemove=function() {
+	draw();
+}
+
+</script>
+</body>
+
+</html>
