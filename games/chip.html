@@ -260,6 +260,23 @@ function draw() {
 								break;
 						}
 					}
+					
+					if( (regions[x][y] == 2 || regions[x][y] == 3) && voltages[x][y]){//is a biased semiconductor and is charged
+						switch(regions[i][j]){
+							case 1:
+							case 2:
+							case 3:
+							case 6:
+								numberOfNeighbors++;
+								sumOfNeighbors+=voltages[x][y];
+								break;
+							case 0:
+							case 4:
+							case 5:
+							default:
+								break;
+						}
+					}
 				}catch(e){
 					//~ console.log(e);
 				}
@@ -276,10 +293,10 @@ function draw() {
 		for(var j=0;j<20;j++){
 			voltages[i][j]+=voltageChanges[i][j];
 			voltageChanges[i][j]=0;
-			if(regions[i][j]==2 && voltages[i][j]>0){
+			if(regions[i][j]==2 && voltages[i][j]>0){//N biased
 				voltages[i][j]=0;
 			}
-			if(regions[i][j]==3 && voltages[i][j]<0){
+			if(regions[i][j]==3 && voltages[i][j]<0){//P biased
 				voltages[i][j]=0;
 			}
 			if(regions[i][j]==6){

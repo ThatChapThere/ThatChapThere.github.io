@@ -1,0 +1,59 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>untitled</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="generator" content="Geany 1.30.1" />
+	<LINK type="image/png" href="../images/icons/pattern.png" rel="icon"></LINK>
+</head>
+
+<body>
+	<canvas/>
+	<script>
+function hyp(x,y){return(Math.sqrt((x*x)+(y*y)))}
+		
+var canvasSize = {
+	w:800,
+	h:800
+}//size of canvas
+
+var ctx=document.getElementsByTagName('canvas')[0].getContext('2d');//create context
+
+ctx.canvas.width=canvasSize.w;
+ctx.canvas.height=canvasSize.h;//set canvas size
+
+ctx.fillStyle='#EEE';
+ctx.fillRect(0,0,canvasSize.w, canvasSize.h);//fill background
+
+function Branch(x,y,depth){
+	if(depth==0){return;}
+	this.x=x;
+	this.y=y;
+	this.branches=[];
+	this.branchAmount=1;
+	this.addBranches=function() {
+		for(var i = 0; i < this.branchAmount; i++){
+			this.branches.push(new Branch(x + ( (Math.random()*100) - 50  ) , y - 100 ), depth - 1);
+		}
+	}
+	this.addBranches();
+	this.draw=function(){
+		for(var i=0;i < this.branches.length;i++){
+			ctx.beginPath();
+			ctx.moveTo(this.x,this.y);
+			ctx.lineTo(this.branches[i].x,this.branches[i].y);
+			ctx.stroke();
+			ctx.beginPath();
+			this.branches[i].draw();
+		}
+	}
+	this.draw();
+}
+var a=new Branch();
+	</script>
+</body>
+
+</html>

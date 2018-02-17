@@ -1,0 +1,140 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>untitled</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="generator" content="Geany 1.30.1" />
+	<LINK type="image/png" href="../images/icons/pattern.png" rel="icon"></LINK>
+</head>
+
+<body>
+	<canvas/>
+	<script>
+function hyp(x,y){return(Math.sqrt((x*x)+(y*y)))}
+		
+var canvasSize = {
+	w:800,
+	h:800
+}//size of canvas
+
+var ctx=document.getElementsByTagName('canvas')[0].getContext('2d');//create context
+
+ctx.canvas.width=canvasSize.w;
+ctx.canvas.height=canvasSize.h;//set canvas size
+
+ctx.fillRect(0,0,canvasSize.w, canvasSize.h);//fill background
+
+function rangeRandomInteger(size) {//random integer less than or eqaual to number
+	return(Math.round(   (Math.random()*size*size) / size  ));//technically less likely to be 0 or size
+}
+
+function pointGenerate() {//generate a point on the plane
+	return(
+		{
+			x:rangeRandomInteger(canvasSize.w),
+			y:rangeRandomInteger(canvasSize.h)
+		}
+	);
+}
+
+function colourGenerate() {//random colour
+	return('rgb(' + rangeRandomInteger(255) + ',' + rangeRandomInteger(255) + ',' + rangeRandomInteger(255) + ')');
+	//~ if(Math.random() > 0.5){
+		//~ return('blue');
+	//~ }
+	//~ return('red');
+}
+
+function RegionCentre() {//region center point object
+	this.colour=colourGenerate();
+	this.position=pointGenerate();
+}
+
+var regionQuantity = 100;//number of regions
+
+var points=[];
+
+for(var i = 0; i < regionQuantity; i++){
+	points.push(new RegionCentre());//make an array of regions
+}
+
+
+
+function getRegionDistance(x, y, i) {//i = index
+	return(  hyp(
+		points[i].position.x - x,
+		points[i].position.y - y
+	));//hypotenuse
+}
+
+
+
+function getNearestRegion(x, y) {
+	var regionIndex=0;//index of nearest region
+	var distanceMinimum=Infinity;
+	
+	for(var i = 0; i < regionQuantity; i++){
+		var r = getRegionDistance(x, y, i);
+		if(r < distanceMinimum){//if region is closer
+			distanceMinimum=r;
+			regionIndex=i;//use its index
+		}
+	}
+	return(regionIndex);
+}
+
+for(var i = 0; i < canvasSize.w; i++){
+	for(var j = 0; j < canvasSize.h; j++){
+		ctx.fillStyle=points[getNearestRegion(i,j)].colour;//set colour 
+		ctx.fillRect(i,j,1,1);
+	}
+}
+
+for(var i = 0; i < regionQuantity; i++){
+	ctx.fillStyle='black';
+	//~ ctx.fillRect(points[i].position.x - 5, points[i].position.y - 5, 10, 10);//draw a rectangle for each region
+}
+	</script>
+</body>
+
+</html>
+<!--
+   untitled.html
+   
+   Copyright 2018 customer <customer@DESKTOP-563VRSA>
+   
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+   
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+   
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+   MA 02110-1301, USA.
+   
+   
+-->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>untitled</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="generator" content="Geany 1.30.1" />
+</head>
+
+<body>
+	
+</body>
+
+</html>

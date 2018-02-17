@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>untitled</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<canvas></canvas>
+	<style>
+	
+	</style>
+</head>
+
+<body>
+	
+	<script>
+var ctx=document.getElementsByTagName('canvas')[0].getContext('2d');
+
+var size={
+	x:1900,
+	y:900
+};//size of canvas
+
+ctx.canvas.width=size.x;
+ctx.canvas.height=size.y;
+
+//~ ctx.fillRect(0,0,size.x,size.y);//fill up for test
+
+function decimalTo255(dec){ // 0-1 into 0-255 with bounding and rounding
+	if(dec > 1){
+		return 255;
+		
+	}else if(dec < 0){
+		return 0;
+		
+	}else{
+		return(Math.round(dec * 255));
+	}
+}
+
+function generateColour(r, g, b){ // 0-1 rgb to valid DOM value
+	r=decimalTo255(r);
+	g=decimalTo255(g);
+	b=decimalTo255(b);
+	
+	return "rgb("+r+","+g+","+b+")";
+}
+
+function getSpectrumColour(num) { // 0-1 colour into colour on spectrum
+	var red = 1 - num * 2 ;
+	var green = 1 - (Math.abs(num - 0.5) * 2);
+	var blue = num * 2 - 1;
+	
+	return(generateColour(red,green,blue));
+} 
+
+{/* draw a spectrum
+for(var i = 0; i < size.x; i++){
+	ctx.fillStyle=getSpectrumColour(i / size.x);
+	ctx.fillRect(i,0,1,size.y);
+}
+*/}
+
+function P(x,y){//position
+	this.x=x;
+	this.y=y;
+}
+
+function L(index, weight){ //link to another node, weight 0-1
+	this.index=index;
+	this.weight=weight;
+}
+
+function Node(position,links,name,weight) { //idea node
+	this.position=position; // where to draw
+	this.links=links; //what ideas it is derived from
+	this.name=name; // name
+	this.weight=weight;
+	
+	this.draw = function() { //draw the idea
+		ctx.fillStyle='#787878';
+		ctx.font='20px Georgia';
+		ctx.fillText(this.name + ' ' + (this.getWeight() +'').substring(0,5) , this.position.x + 1, this.position.y + 1);
+		ctx.fillStyle='#C800FF';
+		ctx.fillText(this.name + ' ' + (this.getWeight() +'').substring(0,5) , this.position.x, this.position.y);
+	}
+	
+	this.getWeight=function() {
+		var w=1;
+		for(var i =0;i<this.links.length;i++){//go through links
+			 var linkWeight = this.links[i].weight;
+			 var nodeWeight = ideas[this.links[i].index].getWeight();
+			 w*=linkWeight;
+			 w*=nodeWeight;
+		}
+		this.weight = w;
+		return w;
+	}
+}
+
+var ideas = [//list of ideas
+	new Node(new P(size.x - 150 ,size.y / 2 - 10), [], 'Reality', 1),
+	
+	new Node(new P(8, size.y / 4 - 10), [new L(5, 1), new L(3, 1), new L(4, 1) ], 'Atheism', 1),
+	new Node(new P(8, size.y / 1.33 - 10), [new L(0, 0.5)], 'Jehovah\'s Witnesses', 1),
+	
+	new Node(new P(158, size.y * 0.1 - 10), [new L(0, 0.5)], 'Abiogenesis', 1),
+	new Node(new P(158, size.y * 0.2 - 10), [new L(0, 0.5)], 'Evolution', 1),
+	new Node(new P(158, size.y * 0.3 - 10), [new L(0, 0.5)], 'Non-sentient Prime Mover', 1),
+];
+
+function drawWeb(){//draw entire matrix of concepts
+	
+	ctx.fillStyle='#EEEEEE';
+	ctx.fillRect(0,0,size.x,size.y);//background
+	
+	
+	for(var i=0;i<ideas.length;i++){//go through ideas and draw connections
+		for(var j=0; j < ideas[i].links.length; j++){//go through links
+			
+			ctx.lineWidth=5;
+			ctx.lineCap='round';
+			
+			ctx.strokeStyle=getSpectrumColour(ideas[i].links[j].weight);//get colour for strength of link
+			ctx.beginPath(); 
+			ctx.moveTo(ideas[i].position.x, ideas[i].position.y); //the idea's pos
+			ctx.lineTo(ideas[ideas[i].links[j].index].position.x, ideas[ideas[i].links[j].index].position.y); //other idea's pos
+			ctx.stroke();
+			ctx.beginPath();
+			
+		}
+		
+	}
+	
+	for(var i=0;i<ideas.length;i++){//go through ideas again but draw the text
+		ctx.fillStyle=getSpectrumColour(ideas[i].getWeight());
+		ctx.fillRect(ideas[i].position.x - 10, ideas[i].position.y - 10, 20, 20);
+		
+		ideas[i].draw();
+	}
+};
+
+drawWeb();
+	</script>
+
+</body>
+
+</html>
