@@ -6,6 +6,8 @@ var ctx = document.getElementsByTagName('canvas')[0].getContext('2d'); // get co
 
 var canvasSize = new Position(1800, 800); //cartesian for the size of the canvas
 
+// This function gets the offset either top or left for a html element,
+// usually a canvas
 function getOffset(left) {//true=left, false=top
 	var offset=0;
 	if(left){
@@ -30,6 +32,7 @@ var colours = { // colours for drawing
 	'text' : '#000',
 	'bones' : '#00CEC9',
 	'joints' : '#CAC700',
+	'features' : '#F5776D',
 	'background' : '#fff',
 	'floor' : '#08BF00',
 }
@@ -44,18 +47,34 @@ const TAU = Math.PI * 2;
 const DEG = TAU / 360;
 
 var gameDimensions = {
-	'groundHeight' : 50, // how high the ground is
-	'pixelsPerMetre' : 50, // for drawing dinosaurs
-	'jointBallRadius' : 3,
+	'groundHeight' : 20, // how high the ground is
+	'pixelsPerMetre' : 40, // for drawing dinosaurs
+	'jointBallRadius' : 3, // ball joint circle drawing radius
 }
 
 const groundY = canvasSize.y - gameDimensions.groundHeight;
 
 var gameTimer = 0; // itme since game start in milliseconds
 
-const gameFPS = 25;
+const gameFPS = 240;
 
 const frameDelay = Math.round(1000 / gameFPS);
+
+var keyCodes = [];
+
+// add a false value for every possible key
+for(var i = 0; i < 225; i++){
+	keyCodes.push(false);
+}
+
+//when a key is released or pressed, change the respective boolean value
+document.body.onkeydown = function(event) {
+	keyCodes[event.keyCode] = true;
+}
+
+document.body.onkeyup = function(event) {
+	keyCodes[event.keyCode] = false;
+}
 
 function sq(a) { // square function
 	return(a * a);
@@ -73,8 +92,19 @@ function Position(x,y){ // Cartesian point
 			)
 		);
 	}
+	
+	this.multiply = function(n) {
+		this.x *= n;
+		this.y *= n;
+	}
+
+	this.copyPosition = function(position) {
+		this.x = position.x;
+		this.y = position.y;
+	}
 }
 
+// get a vector of radius 1 metre for an angle in radians
 function getNormalVector(angle){
 	var x = Math.cos(angle) * gameDimensions.pixelsPerMetre;
 	var y = Math.sin(angle) * gameDimensions.pixelsPerMetre;
@@ -83,6 +113,7 @@ function getNormalVector(angle){
 
 //*********************ADVANCED FUNCTIONS*******************************
 
+// enter a value between 0 and 1 and it will return a smoothed value
 function getSinusoidalProportion(amount) { // stays 0 - 1, but slopes
 	amount *= PI; // now in angle form
 	
@@ -94,12 +125,14 @@ function getSinusoidalProportion(amount) { // stays 0 - 1, but slopes
 	return(newProportion);
 }
 
+// the angle of a specific vertebra on a curved spine
 function getVertebraAngle(angle, spineVertebrae, currentVertebra) { // an additive angle
 	var proportionOfAngle = currentVertebra / spineVertebrae;
 	
 	return(angle * proportionOfAngle);
 }
 
+// get an angle for realistic "breating" animation in a smooth form
 function getIdleAngle(angleSize, period) { // an additive angle
 	var timeIntoIdle = gameTimer % period; // time compared to main time, repeats
 	
@@ -110,11 +143,7 @@ function getIdleAngle(angleSize, period) { // an additive angle
 	return(angleSize);
 }
 
-function getLimbAngle(maxBendAngle ) {
-	
-}
-
-//**********************DINOSAUR OBJECTS********************************
+//**********************DINOSAUR BODY OBJECTS***************************
 
 function Bone(name, parentName, length, angle) { // bone as a point, line drawn from parent
 	
@@ -165,18 +194,163 @@ function Skeleton(tail, back, neck, leg, arm, jawLength) { // the details of a s
 	this.jawLength = jawLength;
 }
 
+//**************************FEATURES OBJECTS****************************
+
+var featureType = {
+	'SAIL' : 0,
+	'PLATE' : 1,
+	'SPIKE' : 2,
+}
+
+/*
+ * feature sizes in metres
+ * angles are relative to the parent bone, not absolute like other bones
+ * 
+ * curved spike : two parabolas
+ * spike : triangle
+ * blunt spine : parabola (from two mirror parabolas)
+ * arc : semicircle
+ * rectangle
+ * plate : rhombus
+ * 
+ * sail : array for tail, neck and
+ * 
+ */
+
+function Spike(distanceOnBone, height, width, angle) {
+	this.distanceOnBone = distanceOnBone; // back toward the pelvis
+	this.height = height;
+	this.width = width;
+	this.angle = angle;
+	
+	this.draw = function(dinosaur, parentName) {
+		var parentIndex = dinosaur.indexOfBones[ parentName ]; // numeric index of bone
+		var parentPosition = dinosaur.skeletalArray[ parentIndex ].position; // position of bone
+		var parentAngle = dinosaur.skeletalArray[ parentIndex ].angle;
+		
+		parentAngle += PI; // back toward parent of parent
+		
+		var vector = getNormalVector(parentAngle);
+		
+		var anchor1 = new Position(vector.x, vector.y); // copy direction
+		var anchor1Distance = this.distanceOnBone - this.width / 2;
+		anchor1.multiply(anchor1Distance); // set a distance
+		
+		var anchor2 = new Position(vector.x, vector.y); // copy direction
+		var anchor2Distance = this.distanceOnBone;
+		anchor2.multiply(anchor2Distance); // set a distance
+		
+		var anchor3 = new Position(vector.x, vector.y); // copy direction
+		var anchor3Distance = this.distanceOnBone + this.width / 2;
+		anchor3.multiply(anchor3Distance); // set a distance
+		
+		var centreSpine = getNormalVector(parentAngle + this.angle); // this.angle relative to parentangle
+		centreSpine.multiply(this.height);
+		
+		ctx.beginPath();
+		
+		ctx.moveTo(
+			parentPosition.x + anchor1.x,
+			parentPosition.y + anchor1.y,
+		); // point 1
+		
+		ctx.lineTo(
+			parentPosition.x + anchor2.x + centreSpine.x,
+			parentPosition.y + anchor2.y + centreSpine.y,
+		); // top of spike
+		
+		ctx.lineTo(
+			parentPosition.x + anchor3.x,
+			parentPosition.y + anchor3.y,
+		); // bottom of spine
+		
+		ctx.stroke();
+		ctx.beginPath();
+	}
+}
+
+function BluntSpike(distanceOnBone, height, width, angle) {
+	this.distanceOnBone = distanceOnBone; // back toward the pelvis
+	this.height = height;
+	this.width = width;
+	this.angle = angle;
+	
+	this.draw = function(dinosaur, parentName) {
+		var parentIndex = dinosaur.indexOfBones[ parentName ]; // numeric index of bone
+		var parentPosition = dinosaur.skeletalArray[ parentIndex ].position; // position of bone
+		var parentAngle = dinosaur.skeletalArray[ parentIndex ].angle;
+		
+		parentAngle += PI; // back toward parent of parent
+		
+		var vector = getNormalVector(parentAngle);
+		
+		var anchor1 = new Position(vector.x, vector.y); // copy direction
+		var anchor1Distance = this.distanceOnBone - this.width / 2;
+		anchor1.multiply(anchor1Distance); // set a distance
+		
+		var anchor2 = new Position(vector.x, vector.y); // copy direction
+		var anchor2Distance = this.distanceOnBone;
+		anchor2.multiply(anchor2Distance); // set a distance
+		
+		var anchor3 = new Position(vector.x, vector.y); // copy direction
+		var anchor3Distance = this.distanceOnBone + this.width / 2;
+		anchor3.multiply(anchor3Distance); // set a distance
+		
+		var centreSpine = getNormalVector(parentAngle + this.angle); // this.angle relative to parentangle
+		centreSpine.multiply(this.height);
+		
+		ctx.beginPath();
+		
+		ctx.moveTo(
+			parentPosition.x + anchor1.x,
+			parentPosition.y + anchor1.y,
+		); // point 1
+		
+		ctx.quadraticCurveTo(
+			parentPosition.x + anchor1.x + centreSpine.x,
+			parentPosition.y + anchor1.y + centreSpine.y,
+			
+			parentPosition.x + anchor2.x + centreSpine.x,
+			parentPosition.y + anchor2.y + centreSpine.y,
+		); // top of spike
+		
+		ctx.quadraticCurveTo(
+			parentPosition.x + anchor3.x + centreSpine.x,
+			parentPosition.y + anchor3.y + centreSpine.y,
+			
+			parentPosition.x + anchor3.x,
+			parentPosition.y + anchor3.y,
+		); // bottom of spine
+		
+		ctx.stroke();
+		ctx.beginPath();
+	}
+}
+
+
+
+function Feature(feature, parentName, colour) {
+	this.feature = feature;
+	this.parentName = parentName;
+	this.colour = colour;
+	this.draw = function (dinosaur) {
+		ctx.strokeStyle = colours.features;
+		this.feature.draw(dinosaur, parentName);
+	}
+}
+
 //***********************DRAWING AND ANIMATION OBJECTS******************
 
 function AnglesToInterPolateTo(angles) { // make many of these objects for animation steps
 	this.angles = angles;
 }
 
-function SpineAnglesObject(main, curve) {
+function SpineAnglesObject(main, curve) { // store the angle of a spine section with the curvature and the main rotation
 	this.main = main;
 	this.curve = curve;
 }
 
-function LimbAnglesObject(upper, lower, joint, digit, digitGap) {
+function LimbAnglesObject(upper, lower, joint, digit, digitGap) { // store all of the angles of a limb
 	this.upper = upper;
 	this.lower = lower;
 	this.joint = joint;
@@ -189,16 +363,16 @@ function JawAnglesObject(top, bottom) {
 	this.bottom = bottom;
 }
 
-function AnglesObject(tail, spine, neck, leg, arm, jaw) { // each of these include idling details
+function AnglesObject(tail, back, neck, leg, arm, jaw) { // each of these include idling details
 	this.tail = tail;
-	this.spine = spine;
+	this.back = back;
 	this.neck = neck;
 	this.leg = leg;
 	this.arm = arm;
 	this.jaw = jaw;
 }
 
-function AllAnglesObject(main, idling, animation){
+function AllAnglesObject(main, idling, animation){ // object for storing all of the angles
 	this.main = main;
 	this.idling = idling;
 	this.animation = animation;
@@ -209,173 +383,317 @@ function AllAnglesObject(main, idling, animation){
  * then the walking / breathing animations are additive to this.
 */
 
-function DetailsObject(angles,idleTime) { // object for extra details (spines, plates, number of teeth, e.t.c)
+//************************ANIMATION KEYFRAMING**************************
+
+function KeyFramesObject(last, next, startTime, period) { // stores keyframes for a dinosaur
+	this.last = last;
+	this.next = next;
+	this.startTime = startTime;
+	this.period = period;
+	
+	this.getSmoothAngle = function(boneName) { // get the angle of a bone
+		
+		var timeThrough = gameTimer - this.startTime; // how far in milliseconds
+		
+		timeThrough /= this.period; // how far as a proportion
+		
+		var proportionThrough = getSinusoidalProportion(timeThrough); // angle proportion, smoothed
+		var angleGap = this.next[boneName] - this.last[boneName]; // the difference in angle
+		var angleDelta = angleGap * proportionThrough;
+		
+		return(this.last[boneName] + angleDelta);
+		
+	}
+	
+	this.isFinished = function() {
+		if(gameTimer > this.startTime + this.period) { // keyframe finished
+			return true;
+		}
+		return false;
+	}
+	
+	this.storeLastFrame = function() { // set last frame to current frame
+		for(var i in this.next) { // copy angle values
+			this.last[i] = this.next[i];
+		}
+	}
+	
+	this.startToReset = function() { // next keyframe is the standing position
+		this.storeLastFrame();
+		
+		for(var i in this.next) { // set every keyframed bit to 0
+			this.next[i] = 0;
+		}
+		
+		this.startTime = gameTimer; // reset timer for keyframing
+	}
+	
+	this.addNewFrame = function(frame) {
+		this.storeLastFrame();
+		
+		for(var i in this.next) {
+			this.next[i] = 0;
+		}
+		
+		for(var i in frame) { // copy angle values
+			if(    isNaN( this.last[i] )    ) { // if last frame does not have a number index, set it to 0
+				this.last[i] = 0;
+				
+				//~ console.log('new number set to 0');
+			}
+			this.next[i] = frame[i];
+		}
+		
+		this.startTime = gameTimer; // reset timer for keyframing
+	}
+
+}
+
+function WalkAnimation(steps) { // for storing the details of a walk animation
+	
+	this.steps = steps;
+	this.currentStep = 0;
+	
+	this.nextStep = function() {
+		if(this.currentStep == this.steps.length - 1) { // if on last step
+			this.currentStep = 0; // reset
+		}else{ //otherwise
+			this.currentStep ++; // next step
+		}
+	}
+	
+	this.previousStep = function() {
+		if(this.currentStep == 0) { // if on first step
+			this.currentStep = this.steps.length - 1; // reset
+		}else{ //otherwise
+			this.currentStep --; // last step
+		}
+	}
+}
+
+//**************FINAL DINOSAUR GENERATING FUNCTIONS*********************
+
+function DetailsObject(angles, idleTime, animationSpeed, jumpSpeed, features) { // object for extra details (spines, plates, number of teeth, e.t.c)
 	this.angles = angles;
 	this.idleTime = idleTime;
+	this.animationSpeed = animationSpeed;
+	this.jumpSpeed = jumpSpeed;
+	this.features = features;
+}
+
+function generateSpineSection(skeleton, sectionName, array) { // generate a section of spine, used by generateSkeletalArray
+	
+	var parentMainBone = ''; // the joint at which the spine starts
+	
+	switch(sectionName) {
+		case 'neck':
+			parentNameBone = 'shoulder';
+			break;
+		default:
+			parentNameBone = 'pelvis';
+	}
+	
+	array.push(
+		new Bone(sectionName + '1', parentNameBone, skeleton[sectionName].vertebraLength, 0)
+	);
+	
+	for(var i = 1; i < skeleton[sectionName].vertebrae; i++) { // generate spine
+		array.push(
+			new Bone(
+				sectionName + (i+1),
+				sectionName + i,
+				skeleton[sectionName].vertebraLength,
+				0
+			)
+		);
+	}
+	
+}
+
+// generate a jaw, used by generateSkeletalArray
+function addJawSection(skeleton, sectionName, array) {
+	array.push( 
+		new Bone(
+			'jaw' + sectionName,
+			'neck' + skeleton.neck.vertebrae,
+			skeleton.jawLength,
+			0
+		)
+	);
+}
+
+// generate a limb, used by generateSkeletalArray
+function generateLimb(skeleton, limbName, array) {
+	
+	var limbType = limbName.substring(0,3);
+	
+	if(limbType == 'leg'){ // if a leg
+		var parentJointName = 'pelvis'; // connect to pelvis
+	}else{ // if an arm
+		var parentJointName = 'shoulder'; // connect to shoulder
+	}
+	
+	array.push(
+		new Bone(limbName + 'upper', parentJointName, skeleton[limbType].upperLength, DEG * 60)
+	);
+	
+	array.push(
+		new Bone(limbName + 'lower', limbName + 'upper', skeleton[limbType].lowerLength, TAU / 4)
+	);
+	
+	array.push(
+		new Bone(limbName + 'joint', limbName + 'lower', skeleton[limbType].jointLength, TAU / 4)
+	);
+	
+	for(var i = 1; i <= skeleton[limbType].digitAmount; i++){
+		array.push(
+			new Bone(limbName + 'digit' + i, limbName + 'joint', skeleton[limbType].digitLength, DEG * 10 * i)
+		);
+	}
+
+}
+
+function generateLimbPair(skeleton, limbName, array) {
+	generateLimb(skeleton, limbName + 'left', array);
+	generateLimb(skeleton, limbName + 'right', array);
 }
 
 function generateSkeletalArray(skeleton) { // generate an array of bones to form the skeleton described
 	var array = [new Bone('pelvis', '', 0, 0)]; // start from the pelvis
 	
-	// start spine
-	array.push(
-		new Bone('spine1', 'pelvis', skeleton.back.vertebraLength, 0)
-	);
+	// make back
+	generateSpineSection(skeleton, 'back', array);
 	
-	for(var i = 1; i < skeleton.back.vertebrae; i++) { // generate spine
-		array.push(
-			new Bone(
-				'spine' + (i+1),
-				'spine' + i,
-				skeleton.back.vertebraLength,
-				-TAU/17
-			)
-		);
-	}
-	
-	// add shoulder, connected to spine (n)
+	// add shoulder, connected to back (n)
 	array.push( 
 		new Bone(
 			'shoulder',
-			'spine' + skeleton.back.vertebrae,
+			'back' + skeleton.back.vertebrae,
 			0.001,
 			0)
 	);
 	
-	// start neck
-	array.push(
-		new Bone('neck1', 'shoulder', skeleton.neck.vertebraLength, 0)
-	);
-	
-	for(var i = 1; i < skeleton.neck.vertebrae; i++) { // generate neck
-		array.push(
-			new Bone(
-				'neck' + (i+1),
-				'neck' + i,
-				skeleton.neck.vertebraLength,
-				- TAU / 9
-			)
-		);
-	}
+	// make neck
+	generateSpineSection(skeleton, 'neck', array);
 	
 	// add jaw, connected to neck (n)
-	array.push( 
-		new Bone(
-			'jawtop',
-			'neck' + skeleton.neck.vertebrae,
-			skeleton.jawLength,
-			-TAU / 12
-		)
-	);
+	addJawSection(skeleton, 'top', array);
+	addJawSection(skeleton, 'bottom', array);
 	
-	// add jaw, connected to neck (n)
-	array.push( 
-		new Bone(
-			'jawbottom',
-			'neck' + skeleton.neck.vertebrae,
-			skeleton.jawLength,
-			TAU / 12
-		)
-	);
+	// make tail
+	generateSpineSection(skeleton, 'tail', array);
 	
-	// start tail
-	array.push(
-		new Bone('tail1', 'pelvis', skeleton.tail.vertebraLength, PI)
-	);
-	
-	for(var i = 1; i < skeleton.tail.vertebrae; i++) { // generate tail
-		array.push(
-			new Bone(
-				'tail' + (i+1),
-				'tail' + i,
-				skeleton.tail.vertebraLength,
-				PI
-			)
-		);
-	}
-	
-	{ // left arm
-		array.push(
-			new Bone('armleftupper', 'shoulder', skeleton.arm.upperLength, DEG * 60)
-		);
-		
-		array.push(
-			new Bone('armleftlower', 'armleftupper', skeleton.arm.lowerLength, TAU / 4)
-		);
-		
-		array.push(
-			new Bone('armleftjoint', 'armleftlower', skeleton.arm.jointLength, TAU / 4)
-		);
-		
-		for(var i = 1; i <= skeleton.arm.digitAmount; i++){
-			array.push(
-				new Bone('armleftdigit' + i, 'armleftjoint', skeleton.arm.digitLength, DEG * 10 * i)
-			);
-		}
-	}
-	
-	{ // right arm
-		array.push(
-			new Bone('armrightupper', 'shoulder', skeleton.arm.upperLength, TAU / 4)
-		);
-		
-		array.push(
-			new Bone('armrightlower', 'armrightupper', skeleton.arm.lowerLength, TAU / 4)
-		);
-		
-		array.push(
-			new Bone('armrightjoint', 'armrightlower', skeleton.arm.jointLength, TAU / 4)
-		);
-		
-		for(var i = 1; i <= skeleton.arm.digitAmount; i++){
-			array.push(
-				new Bone('armrightdigit' + i, 'armrightjoint', skeleton.arm.digitLength, 0)
-			);
-		}
-	}
-	
-	{ // left leg
-		array.push(
-			new Bone('legleftupper', 'pelvis', skeleton.leg.upperLength, DEG * 120)
-		);
-		
-		array.push(
-			new Bone('legleftlower', 'legleftupper', skeleton.leg.lowerLength, DEG * 100)
-		);
-		
-		array.push(
-			new Bone('legleftjoint', 'legleftlower', skeleton.leg.jointLength, DEG * 70)
-		);
-		
-		for(var i = 1; i <= skeleton.leg.digitAmount; i++){
-			array.push(
-				new Bone('legleftdigit' + i, 'legleftjoint', skeleton.leg.digitLength, 0)
-			);
-		}
-	}
-	
-	{ // right leg
-		array.push(
-			new Bone('legrightupper', 'pelvis', skeleton.leg.upperLength, DEG * 60)
-		);
-		
-		array.push(
-			new Bone('legrightlower', 'legrightupper', skeleton.leg.lowerLength, DEG * 100)
-		);
-		
-		array.push(
-			new Bone('legrightjoint', 'legrightlower', skeleton.leg.jointLength, DEG * 70)
-		);
-		
-		for(var i = 1; i <= skeleton.leg.digitAmount; i++){
-			array.push(
-				new Bone('legrightdigit' + i, 'legrightjoint', skeleton.leg.digitLength, 0)
-			);
-		}
-	}
+	generateLimbPair(skeleton, 'leg', array);
+	generateLimbPair(skeleton, 'arm', array);
 	
 	return(array);
 }
+
+//*************FUNCTIONS FOR USE WITHIN Dinosaur.animate****************
+
+function spineAnglesSetUp(dinosaur, spineName) {
+	for( var i = 1; i <= dinosaur.skeleton[spineName].vertebrae; i++ ){ // tail
+		
+		var boneName = spineName + i;
+		var boneIndex = dinosaur.indexOfBones[boneName];
+		
+		dinosaur.skeletalArray[boneIndex].angle = dinosaur.details.angles.main[spineName].main; // main angle
+		
+		dinosaur.skeletalArray[boneIndex].angle += getIdleAngle(dinosaur.details.angles.idling[spineName].main, dinosaur.details.idleTime); // idling angle
+		
+		dinosaur.skeletalArray[boneIndex].angle += getVertebraAngle(
+			dinosaur.details.angles.main[spineName].curve,
+			dinosaur.skeleton[spineName].vertebrae,
+			i
+		); // curvature
+		
+		var overallAngle = getIdleAngle(dinosaur.details.angles.idling[spineName].curve, dinosaur.details.idleTime);
+		
+		dinosaur.skeletalArray[boneIndex].angle += getVertebraAngle(
+			overallAngle,
+			dinosaur.skeleton[spineName].vertebrae,
+			i
+		); // idling curvature
+	}
+}
+
+function limbAnglesSetUp(dinosaur) {
+	var limbTypes = ['arm', 'leg'];
+	var limbSides = ['left', 'right'];
+	var limbSections = ['upper', 'lower', 'joint', 'digit'];
+	
+	for(var limbTypeIndex = 0;  limbTypeIndex < limbTypes.length;  limbTypeIndex++) {
+		var limbType = limbTypes[limbTypeIndex];
+		
+		for(var limbSideIndex = 0;  limbSideIndex < limbSides.length;  limbSideIndex++) {
+			var limbSide = limbSides[limbSideIndex];
+			
+			for(var limbSectionIndex = 0;  limbSectionIndex < limbSections.length;  limbSectionIndex++) {
+				var limbSection = limbSections[limbSectionIndex];
+				
+				if(limbSection == 'digit') {
+					for(var i = 1; i <= dinosaur.skeleton[limbType].digitAmount; i++) {
+						var boneName = limbType + limbSide + limbSection + i;
+						var boneIndex = dinosaur.indexOfBones[boneName];
+						var digitLift = dinosaur.details.angles.main[limbType].digitGap  *  (i-1);
+						var idlingDigitLift = dinosaur.details.angles.idling[limbType].digitGap  *  (i-1);
+	
+						dinosaur.skeletalArray[boneIndex].angle = dinosaur.details.angles.main[limbType][limbSection] + digitLift;
+						
+						dinosaur.skeletalArray[boneIndex].angle += getIdleAngle(
+							dinosaur.details.angles.idling[limbType][limbSection] + idlingDigitLift,
+							dinosaur.details.idleTime
+						); // idling
+					}
+				}else{
+					var boneName = limbType + limbSide + limbSection;
+					var boneIndex = dinosaur.indexOfBones[boneName];
+
+					dinosaur.skeletalArray[boneIndex].angle = dinosaur.details.angles.main[limbType][limbSection];
+					
+					dinosaur.skeletalArray[boneIndex].angle += getIdleAngle(
+						dinosaur.details.angles.idling[limbType][limbSection],
+						dinosaur.details.idleTime
+					); // idling
+				}
+				
+			}
+		}
+	}
+}
+
+function jawAnglesSetUp(dinosaur) {
+	var boneName = 'jawtop';
+	var boneIndex = dinosaur.indexOfBones[boneName];
+
+	dinosaur.skeletalArray[boneIndex].angle = dinosaur.details.angles.main.jaw.top;
+	dinosaur.skeletalArray[boneIndex].angle += getIdleAngle( dinosaur.details.angles.idling.jaw.top, dinosaur.details.idleTime);
+	
+	boneName = 'jawbottom';
+	boneIndex = dinosaur.indexOfBones[boneName];
+
+	dinosaur.skeletalArray[boneIndex].angle = dinosaur.details.angles.main.jaw.bottom;
+	dinosaur.skeletalArray[boneIndex].angle += getIdleAngle( dinosaur.details.angles.idling.jaw.bottom, dinosaur.details.idleTime);
+}
+
+function addSpineToKeyFrame(dinosaur, keyFrame, spineName) {
+	for(var i = 1; i <= dinosaur.skeleton[spineName].vertebrae; i++) {
+		
+		var main = dinosaur.details.angles.animation[spineName].main;
+		
+		var curve = getVertebraAngle(
+			dinosaur.details.angles.animation[spineName].curve,
+			dinosaur.skeleton[spineName].vertebrae,
+			i
+		); //curvature
+		
+		//~ console.log(main + '   ' + curve);
+		
+		keyFrame[ spineName + i ] = main + curve;
+	}
+}
+
+//****************************DINOSAUR**********************************
 
 function Dinosaur(position, skeleton, details) {
 	
@@ -389,6 +707,7 @@ function Dinosaur(position, skeleton, details) {
 	this.skeletalArray[0].position = position; // set the pelvis of the skeletal array to 
 	
 	this.indexOfBones={}; // index to enter a name to get the numerical index of named bone
+	
 	for(var i = 0; i < this.skeletalArray.length; i++) {
 		this.indexOfBones[  this.skeletalArray[i].name  ] = i;
 	}
@@ -397,7 +716,7 @@ function Dinosaur(position, skeleton, details) {
 	
 	this.lastFrameDigitPositions = {}; // this is to allow walking animations
 	
-	for(var i = 0; i < digitNameArray.length; i++){ // loop through digits and set up lastFRameDigitArray
+	for(var i = 0; i < digitNameArray.length; i++){ // loop through digits and set up lastFrameDigitArray
 		var j = digitNameArray[i]; // name of bone
 		var sk = this.indexOfBones[ j ]; // numeric index of bone
 		var pos = this.skeletalArray[ sk ].position; // position of bone
@@ -405,13 +724,145 @@ function Dinosaur(position, skeleton, details) {
 		this.lastFrameDigitPositions[ j ] = new Position(0, 0);
 	}
 	
-	this.velocity = new Position(0, 0); // velocity of motion
+	this.velocity = new Position(0, 0); // velocity of motion in m/sd
+	this.lastFramePosition = new Position(this.position.x, this.position.y);
 	
 	this.details = details;
 	
+	//**************************ANIMATION VALUES************************
+	
+	this.keyFrames = new KeyFramesObject({}, {}, 0, 1000 / this.details.animationSpeed);
+	
+	// three muscles relaxed on each step
+	this.walking = new WalkAnimation( [
+		{
+			'legrightupper' : 0,
+			'legrightlower' : this.details.angles.animation.leg.lower,
+			'legleftupper' : this.details.angles.animation.leg.upper,
+			'legleftlower' : this.details.angles.animation.leg.lower,
+			
+			'armrightupper' : 0,
+			'armrightlower' : this.details.angles.animation.arm.lower,
+			'armleftupper' : this.details.angles.animation.arm.upper,
+			'armleftlower' : this.details.angles.animation.arm.lower,
+		},
+		{
+			'legrightupper' : this.details.angles.animation.leg.upper,
+			'legrightlower' : this.details.angles.animation.leg.lower,
+			'legleftupper' : this.details.angles.animation.leg.upper,
+			'legleftlower' : 0,
+			
+			'armrightupper' : this.details.angles.animation.arm.upper,
+			'armrightlower' : this.details.angles.animation.arm.lower,
+			'armleftupper' : this.details.angles.animation.arm.upper,
+			'armleftlower' : 0,
+		},
+		{
+			'legrightupper' : this.details.angles.animation.leg.upper,
+			'legrightlower' : this.details.angles.animation.leg.lower,
+			'legleftupper' : 0,
+			'legleftlower' : this.details.angles.animation.leg.lower,
+			
+			'armrightupper' : this.details.angles.animation.arm.upper,
+			'armrightlower' : this.details.angles.animation.arm.lower,
+			'armleftupper' : 0,
+			'armleftlower' : this.details.angles.animation.arm.lower,
+		},
+		{
+			'legrightupper' : this.details.angles.animation.leg.upper,
+			'legrightlower' : 0,
+			'legleftupper' : this.details.angles.animation.leg.upper,
+			'legleftlower' : this.details.angles.animation.leg.lower,
+			
+			'armrightupper' : this.details.angles.animation.arm.upper,
+			'armrightlower' : 0,
+			'armleftupper' : this.details.angles.animation.arm.upper,
+			'armleftlower' : this.details.angles.animation.arm.lower,
+		},
+		
+	] );
+	
+	this.standing = {
+		'legrightupper' : 0,
+		'legrightlower' : this.details.angles.animation.leg.lower * 0.7,
+		'legleftupper' : 0,
+		'legleftlower' : this.details.angles.animation.leg.lower * 0.7,
+		
+		'armrightupper' : 0,
+		'armrightlower' : this.details.angles.animation.arm.lower * 0.7,
+		'armleftupper' : 0,
+		'armleftlower' : this.details.angles.animation.arm.lower * 0.7,
+		
+		'jawtop' : 0,
+		'jawbottom' : 0,
+	};
+	
+	this.crouching = {
+		'legrightupper' : 0,
+		'legrightlower' : 0,
+		'legleftupper' : 0,
+		'legleftlower' : 0,
+	};
+	
+	this.death = {
+		'legrightupper' : 0 - this.details.angles.main.leg.upper,
+		'legrightlower' : PI - this.details.angles.main.leg.lower,
+		'legrightjoint' : 0 - this.details.angles.main.leg.joint,
+		'legleftupper' : 0 - this.details.angles.main.leg.upper,
+		'legleftlower' : PI - this.details.angles.main.leg.lower,
+		'legleftjoint' : 0 - this.details.angles.main.leg.joint,
+		
+		'armrightupper' : 0 - this.details.angles.main.arm.upper,
+		'armrightlower' : 0 - this.details.angles.main.arm.lower,
+		'armrightjoint' : 0 - this.details.angles.main.arm.joint,
+		'armleftupper' : 0 - this.details.angles.main.arm.upper,
+		'armleftlower' : 0 - this.details.angles.main.arm.lower,
+		'armleftjoint' : 0 - this.details.angles.main.arm.joint,
+	}
+	
+	this.roar = {
+		'legrightupper' : 0,
+		'legrightlower' : this.details.angles.animation.leg.lower * 0.5,
+		'legleftupper' : 0,
+		'legleftlower' : this.details.angles.animation.leg.lower * 0.5,
+		
+		'armrightupper' : 0,
+		'armrightlower' : this.details.angles.animation.arm.lower * 0.5,
+		'armleftupper' : 0,
+		'armleftlower' : this.details.angles.animation.arm.lower * 0.5,
+		
+		
+		'jawtop' : this.details.angles.animation.jaw.top,
+		'jawbottom' : this.details.angles.animation.jaw.bottom,
+	}
+	
+	addSpineToKeyFrame(this, this.roar, 'neck');
+	addSpineToKeyFrame(this, this.roar, 'back');
+	
+	//~ console.log(this.roar.neck3);
+	
+	this.canJump = false; // variable for jumping
+	
+	this.isTouchingGround = function() { // so it can only jump when on the ground
+		
+		var touching = false;
+		
+		for(var i = 0; i < digitNameArray.length; i++){ // loop through digits to walk backward or forward
+			var j = digitNameArray[i]; // name of bone
+			var sk = this.indexOfBones[ j ]; // numeric index of bone
+			var pos = this.skeletalArray[ sk ].position; // position of bone
+			
+			if( Math.round(pos.y) >= groundY ) { // if the digit is underground
+				touching = true;
+			}
+		}
+		
+		return(touching);
+	}
+	
 	//********************************LOOPS*****************************
 	
-	this.draw = function() {
+	this.draw = function() { // set up positions and draw onto canvas
 		
 		for(var i = 1; i < this.skeletalArray.length; i++) { // set the position of each bone relative to its parent
 			var parentName = this.skeletalArray[i].parentName; // name of bone
@@ -421,7 +872,7 @@ function Dinosaur(position, skeleton, details) {
 			this.skeletalArray[i].setPositionFromParent(parentPosition);
 		}
 		
-		for(var i = 1; i < this.skeletalArray.length; i++) {
+		for(var i = 1; i < this.skeletalArray.length; i++) { // draw a line for each bone
 			
 			ctx.beginPath(); // begin path
 			
@@ -456,9 +907,9 @@ function Dinosaur(position, skeleton, details) {
 				//~ this.skeletalArray[i].position.y
 			//~ );
 			
-		} // draw a line for each bone
+		}
 		
-		for(var i = 1; i < this.skeletalArray.length; i++) {
+		for(var i = 1; i < this.skeletalArray.length; i++) { // draw a circle for each joint
 			
 			ctx.beginPath(); // begin path
 			
@@ -477,238 +928,92 @@ function Dinosaur(position, skeleton, details) {
 			
 			ctx.beginPath();
 			
-		} // draw a circle for each joint
+		}
+	
+		for(var i = 0; i < this.details.features.length; i++) {
+			this.details.features[i].draw(this);
+		}
 	}
 	
-	this.animate = function() {
+	this.animate = function() { // set up angles
 		
 		//**********************SETUP MAIN ANGLES***********************
 		
-		for( var i = 1; i <= this.skeleton.tail.vertebrae; i++){ // tail
-			var boneName = 'tail' + i;
-			var boneIndex = this.indexOfBones[boneName];
-			
-			this.skeletalArray[boneIndex].angle = this.details.angles.main.tail.main;
-		}
+		spineAnglesSetUp(this, 'back');
+		spineAnglesSetUp(this, 'tail');
+		spineAnglesSetUp(this, 'neck');
 		
-		for( var i = 1; i <= this.skeleton.neck.vertebrae; i++){ // neck
-			var boneName = 'neck' + i;
-			var boneIndex = this.indexOfBones[boneName];
-			
-			this.skeletalArray[boneIndex].angle = this.details.angles.main.neck.main;
-		}
+		limbAnglesSetUp(this);
 		
-		for( var i = 1; i <= this.skeleton.back.vertebrae; i++){ // spine
-			var boneName = 'spine' + i;
-			var boneIndex = this.indexOfBones[boneName];
-			
-			this.skeletalArray[boneIndex].angle = this.details.angles.main.spine.main;
-		}
-		
-		{ // limbs
-			var limbTypes = ['arm', 'leg'];
-			var limbSides = ['left', 'right'];
-			var limbSections = ['upper', 'lower', 'joint', 'digit'];
-			
-			for(var limbTypeIndex = 0;  limbTypeIndex < limbTypes.length;  limbTypeIndex++) {
-				var limbType = limbTypes[limbTypeIndex];
-				
-				for(var limbSideIndex = 0;  limbSideIndex < limbSides.length;  limbSideIndex++) {
-					var limbSide = limbSides[limbSideIndex];
-					
-					for(var limbSectionIndex = 0;  limbSectionIndex < limbSections.length;  limbSectionIndex++) {
-						var limbSection = limbSections[limbSectionIndex];
-						
-						if(limbSection == 'digit') {
-							for(var i = 1; i <= this.skeleton[limbType].digitAmount; i++) {
-								var boneName = limbType + limbSide + limbSection + i;
-								var boneIndex = this.indexOfBones[boneName];
-								var digitLift = this.details.angles.main[limbType].digitGap  *  (i-1);
-			
-								this.skeletalArray[boneIndex].angle = this.details.angles.main[limbType][limbSection] + digitLift;
-							}
-						}else{
-							var boneName = limbType + limbSide + limbSection;
-							var boneIndex = this.indexOfBones[boneName];
-		
-							this.skeletalArray[boneIndex].angle = this.details.angles.main[limbType][limbSection];
-						}
-						
-					}
-				}
-			}
-		}
-		
-		{ // jaw
-			var boneName = 'jawtop';
-			var boneIndex = this.indexOfBones[boneName];
-	
-			this.skeletalArray[boneIndex].angle = this.details.angles.main.jaw.top;
-			
-			boneName = 'jawbottom';
-			boneIndex = this.indexOfBones[boneName];
-	
-			this.skeletalArray[boneIndex].angle = this.details.angles.main.jaw.bottom;
-		}
-		
-		//********************SETUP IDLING ANGLES***********************
-		
-		for( var i = 1; i <= this.skeleton.tail.vertebrae; i++){ // tail
-			var boneName = 'tail' + i;
-			var boneIndex = this.indexOfBones[boneName];
-			
-			this.skeletalArray[boneIndex].angle += getIdleAngle(this.details.angles.idling.tail.main, this.details.idleTime);
-		}
-		
-		for( var i = 1; i <= this.skeleton.neck.vertebrae; i++){ // neck
-			var boneName = 'neck' + i;
-			var boneIndex = this.indexOfBones[boneName];
-			
-			this.skeletalArray[boneIndex].angle += getIdleAngle(this.details.angles.idling.neck.main, this.details.idleTime);
-		}
-		
-		for( var i = 1; i <= this.skeleton.back.vertebrae; i++){ // spine
-			var boneName = 'spine' + i;
-			var boneIndex = this.indexOfBones[boneName];
-			
-			this.skeletalArray[boneIndex].angle += getIdleAngle(this.details.angles.idling.spine.main, this.details.idleTime);
-		}
-		
-		{ // limbs
-			var limbTypes = ['arm', 'leg'];
-			var limbSides = ['left', 'right'];
-			var limbSections = ['upper', 'lower', 'joint', 'digit'];
-			
-			for(var limbTypeIndex = 0;  limbTypeIndex < limbTypes.length;  limbTypeIndex++) {
-				var limbType = limbTypes[limbTypeIndex];
-				
-				for(var limbSideIndex = 0;  limbSideIndex < limbSides.length;  limbSideIndex++) {
-					var limbSide = limbSides[limbSideIndex];
-					
-					for(var limbSectionIndex = 0;  limbSectionIndex < limbSections.length;  limbSectionIndex++) {
-						var limbSection = limbSections[limbSectionIndex];
-						
-						if(limbSection == 'digit') {
-							for(var i = 1; i <= this.skeleton[limbType].digitAmount; i++) {
-								var boneName = limbType + limbSide + limbSection + i;
-								var boneIndex = this.indexOfBones[boneName];
-								var digitLift = this.details.angles.idling[limbType].digitGap  *  (i-1);
-			
-								this.skeletalArray[boneIndex].angle += getIdleAngle(
-									this.details.angles.idling[limbType][limbSection] + digitLift,
-									this.details.idleTime
-								);
-							}
-						}else{
-							var boneName = limbType + limbSide + limbSection;
-							var boneIndex = this.indexOfBones[boneName];
-		
-							this.skeletalArray[boneIndex].angle += getIdleAngle(
-								this.details.angles.idling[limbType][limbSection],
-								this.details.idleTime
-							);
-						}
-						
-					}
-				}
-			}
-		}
-		
-		{ // jaw
-			var boneName = 'jawtop';
-			var boneIndex = this.indexOfBones[boneName];
-	
-			this.skeletalArray[boneIndex].angle += getIdleAngle( this.details.angles.idling.jaw.top, this.details.idleTime);
-			
-			boneName = 'jawbottom';
-			boneIndex = this.indexOfBones[boneName];
-	
-			this.skeletalArray[boneIndex].angle += getIdleAngle( this.details.angles.idling.jaw.bottom, this.details.idleTime);
-		}
-		
-		//*****************SETUP SPINAL CURVATURE***********************
-		
-		for( var i = 1; i <= this.skeleton.tail.vertebrae; i++){ // tail
-			var boneName = 'tail' + i;
-			var boneIndex = this.indexOfBones[boneName];
-			
-			this.skeletalArray[boneIndex].angle += getVertebraAngle(
-				this.details.angles.main.tail.curve,
-				this.skeleton.tail.vertebrae,
-				i
-			);// progressive across spine
-		}
-		
-		for( var i = 1; i <= this.skeleton.neck.vertebrae; i++){ // neck
-			var boneName = 'neck' + i;
-			var boneIndex = this.indexOfBones[boneName];
-			
-			this.skeletalArray[boneIndex].angle += getVertebraAngle(
-				this.details.angles.main.neck.curve,
-				this.skeleton.neck.vertebrae,
-				i
-			);// progressive across spine
-		}
-		
-		for( var i = 1; i <= this.skeleton.back.vertebrae; i++){ // spine
-			var boneName = 'spine' + i;
-			var boneIndex = this.indexOfBones[boneName];
-			
-			this.skeletalArray[boneIndex].angle += getVertebraAngle(
-				this.details.angles.main.spine.curve,
-				this.skeleton.back.vertebrae,
-				i
-			);// progressive across spine
-		}
-		
-		//***************SETUP IDLING SPINAL CURVATURE******************
-		
-		for( var i = 1; i <= this.skeleton.tail.vertebrae; i++){ // tail
-			var boneName = 'tail' + i;
-			var boneIndex = this.indexOfBones[boneName];
-			
-			var overallAngle = getIdleAngle(this.details.angles.idling.tail.curve, this.details.idleTime);
-			
-			this.skeletalArray[boneIndex].angle += getVertebraAngle(
-				overallAngle,
-				this.skeleton.tail.vertebrae,
-				i
-			);// progressive across spine
-		}
-		
-		for( var i = 1; i <= this.skeleton.neck.vertebrae; i++){ // neck
-			var boneName = 'neck' + i;
-			var boneIndex = this.indexOfBones[boneName];
-			
-			var overallAngle = getIdleAngle(this.details.angles.idling.neck.curve, this.details.idleTime);
-			
-			this.skeletalArray[boneIndex].angle += getVertebraAngle(
-				overallAngle,
-				this.skeleton.neck.vertebrae,
-				i
-			);// progressive across spine
-		}
-		
-		for( var i = 1; i <= this.skeleton.back.vertebrae; i++){ // spine
-			var boneName = 'spine' + i;
-			var boneIndex = this.indexOfBones[boneName];
-			
-			var overallAngle = getIdleAngle(this.details.angles.idling.spine.curve, this.details.idleTime);
-			
-			this.skeletalArray[boneIndex].angle += getVertebraAngle(
-				overallAngle,
-				this.skeleton.back.vertebrae,
-				i
-			);// progressive across spine
-		}
+		jawAnglesSetUp(this);
 		
 		//*****************SETUP ANIMATION ANGLES***********************
 		
+		for(var i in this.keyFrames.next) {
+			var boneIndex = this.indexOfBones[i]; // get index for bone
+			this.skeletalArray[boneIndex].angle += this.keyFrames.getSmoothAngle(i);
+		}
+		
+		if(this.keyFrames.isFinished()) { // when the last keyframe has finished in motion
+			if(keyCodes[39]){ //***********************************RIGHT
+				//~ console.log('animation');
+				this.keyFrames.addNewFrame(this.walking.steps[this.walking.currentStep]);
+				this.walking.nextStep();
+				
+				this.canJump = false; // cannot jump after walking
+				
+			}else if(keyCodes[37]){ //******************************LEFT
+				this.keyFrames.addNewFrame(this.walking.steps[this.walking.currentStep]);
+				this.walking.previousStep();
+				
+				this.canJump = false; // cannot jump after walking
+				
+			}else if(keyCodes[40]){ //******************************DOWN
+				this.keyFrames.addNewFrame(this.crouching);
+				
+				this.canJump = true; // can jump after crouching
+			}else if(keyCodes[38]){ //*****************************SPACE
+				
+				this.keyFrames.addNewFrame(this.roar);
+				
+			}else if(keyCodes[32]){ //*****************************SPACE
+				
+				this.keyFrames.addNewFrame(this.death);
+				
+			}else{
+				
+				if(this.canJump) {
+					this.canJump = false; // don't jump twice and fly off the screen
+					if(this.isTouchingGround()) {
+						
+						//~ console.log('asdg');
+						
+						this.position.y -= 5; // move up, otherwise the physics loop will set the velocity to 0
+						
+						this.velocity.x += this.details.jumpSpeed.x;
+						this.velocity.y += this.details.jumpSpeed.y;
+						
+						// obviously divide by how short each frame is, because the velocity is in m/s
+					}
+				}
+				
+				this.keyFrames.addNewFrame(this.standing);
+				
+				//~ this.keyFrames.period = 1000 / this.details.animationSpeed; // normal animation speed
+			}
+		}
+		
 	}
 	
-	this.physics = function() {
-		this.position.x += this.velocity.x / gameFPS;
-		this.position.y += this.velocity.y / gameFPS; // motion
+	this.physics = function() { // gravity and motion
+		
+		this.position.x += this.velocity.x * gameDimensions.pixelsPerMetre / gameFPS;
+		this.position.y += this.velocity.y * gameDimensions.pixelsPerMetre / gameFPS; // motion
+		
+		//~ console.log(this.velocity.y);
+		
+		this.lastFramePosition.x = this.position.x;
+		this.lastFramePosition.y = this.position.y; // store the current position
 		
 		if(
 			this.skeletalArray[   this.indexOfBones[ 'legleftjoint' ]   ].position.y < groundY &&
@@ -716,8 +1021,9 @@ function Dinosaur(position, skeleton, details) {
 			this.skeletalArray[   this.indexOfBones[ 'armleftjoint' ]   ].position.y < groundY &&
 			this.skeletalArray[   this.indexOfBones[ 'armrightjoint' ]   ].position.y < groundY
 		)    {
-			this.velocity.y += 9.8 * gameDimensions.pixelsPerMetre / gameFPS; // gravity
+			this.velocity.y += 9.8 / gameFPS; // gravity
 		} else {
+			this.velocity.x = 0;
 			this.velocity.y = 0;
 		}
 	}
@@ -728,30 +1034,40 @@ function Dinosaur(position, skeleton, details) {
 			return;
 		}
 		
-		for(var i = 0; i < digitNameArray.length; i++){ // loop through digits to stay above ground
-			var j = digitNameArray[i]; // name of bone
-			var sk = this.indexOfBones[ j ]; // numeric index of bone
-			var pos = this.skeletalArray[ sk ].position; // position of bone
-			
-			if( pos.y > groundY ) { // if the digit is underground
-				this.position.y += groundY - pos.y; // move the dinosaur to compensate
-				
-				this.velocity.y = 0;
-				//~ console.log(this.lastFrameDigitPositions[ j ].x - pos.x);
-			}
-			
-		}
-		
 		for(var i = 0; i < digitNameArray.length; i++){ // loop through digits to walk backward or forward
 			var j = digitNameArray[i]; // name of bone
 			var sk = this.indexOfBones[ j ]; // numeric index of bone
 			var pos = this.skeletalArray[ sk ].position; // position of bone
 			
-			if( pos.y > groundY ) { // if the digit is underground
+			if( Math.round(pos.y) >= groundY ) { // if the digit is underground
+				
 				this.position.x += this.lastFrameDigitPositions[ j ].x - pos.x ; // move the dinosaur to compensate
-				//~ console.log(this.lastFrameDigitPositions[ j ].x - pos.x);
-				break; // if more than one digit is underground, this will make it shake disturbingly throughout the step. Brakeing prevents this
+				
+				pos.x += this.lastFrameDigitPositions[ j ].x - pos.x; // move the digit itself to store the correct number later
+				
+				break; // if more than one digit is underground, this will make it shake disturbingly throughout the step. Breaking prevents this
+			}else{
+				
 			}
+		}
+		
+		for(var i = 0; i < digitNameArray.length; i++){ // loop through digits to stay above ground
+			var j = digitNameArray[i]; // name of bone
+			var sk = this.indexOfBones[ j ]; // numeric index of bone
+			var pos = this.skeletalArray[ sk ].position; // position of bone
+			
+			if( Math.round(pos.y) > groundY) { // if the digit is underground
+				
+				this.position.y += groundY - pos.y; // move the dinosaur to compensate
+				
+			}
+			
+		}
+		
+		for(var i = 0; i < digitNameArray.length; i++){ // loop through digits to store this frame's digit positions
+			var j = digitNameArray[i]; // name of bonebone
+			var sk = this.indexOfBones[ j ]; // numeric index of bone
+			var pos = this.skeletalArray[ sk ].position; // position of bone
 			
 			this.lastFrameDigitPositions[ j ].x = pos.x;
 			this.lastFrameDigitPositions[ j ].y = pos.y; // copy the position without reusing the object
@@ -759,19 +1075,21 @@ function Dinosaur(position, skeleton, details) {
 	}
 	
 	this.loop = function() {
-		this.physics();
-		this.animate();
-		this.draw();
-		this.footGripLoop();
+		this.animate(); // angles
+		this.draw(); // positions
+		this.footGripLoop(); // foot friction
+		this.physics(); // move
+		
+		if(this.position.x > canvasSize.x) {
+			this.position.x = 0;
+		}
 	}
 	
 	this.loop();
 }
 
-//****************************DINOSAUR**********************************
-
-var demonstratosaurus = new Dinosaur(
-	new Position(500,500),
+var tyrannosaurus = new Dinosaur(
+	new Position(500, 600),
 	new Skeleton(
 		new SpineSection(7, 6),
 		new SpineSection(7, 3),
@@ -788,26 +1106,117 @@ var demonstratosaurus = new Dinosaur(
 				new SpineAnglesObject(0, - DEG * 15),
 				new LimbAnglesObject(DEG * 50, DEG * 170, DEG * 75, 0, DEG * -10),
 				new LimbAnglesObject(DEG * 80, DEG * 65, DEG * 65, DEG * 10, DEG * 45),
-				new JawAnglesObject(DEG * -5, DEG * 25),
+				new JawAnglesObject(0, 0),
 			),
 			new AnglesObject(
-				new SpineAnglesObject(0, DEG * 4),
+				new SpineAnglesObject(DEG * 2, 0),
 				new SpineAnglesObject(0, DEG * 4),
 				new SpineAnglesObject(0, DEG * 1),
+				new LimbAnglesObject(DEG * 2, DEG * 2, 0, 0, 0),
+				new LimbAnglesObject(DEG * 2, DEG * 2, 0, 0, 0),
+				new JawAnglesObject(0, 0),
+			),
+			new AnglesObject(
+				new SpineAnglesObject(0, 0),
+				new SpineAnglesObject(0, 0),
+				new SpineAnglesObject(0,  DEG * 30),
+				new LimbAnglesObject(DEG * 50, DEG * -67, DEG * 75, 0, 0),
 				new LimbAnglesObject(0, 0, 0, 0, 0),
-				new LimbAnglesObject(0, 0, 0, 0, 0),
+				new JawAnglesObject(DEG * -5, DEG * 25),
+			)
+		),
+		5500,
+		4,
+		new Position(0, 0),
+		[]
+	)
+);
+
+var deinonychus = new Dinosaur(
+	new Position(500, 700),
+	new Skeleton(
+		new SpineSection(7, 2),
+		new SpineSection(7, 0.75),
+		new SpineSection(7, 0.22),
+		new Limb(0.5,0.4,0.15,0.1,3),
+		new Limb(0.25,0.25,0.1,0.1,3),
+		0.5
+	),
+	new DetailsObject(
+		new AllAnglesObject(
+			new AnglesObject(
+				new SpineAnglesObject(PI, 0),
+				new SpineAnglesObject(DEG * -20, 0),
+				new SpineAnglesObject(0, - DEG * 15),
+				new LimbAnglesObject(DEG * 50, DEG * 170, DEG * 75, 0, DEG * -10),
+				new LimbAnglesObject(DEG * 80, DEG * 65, DEG * 65, DEG * 10, DEG * 45),
+				new JawAnglesObject(0, 0),
+			),
+			new AnglesObject(
+				new SpineAnglesObject(DEG * 2, 0),
+				new SpineAnglesObject(0, DEG * 4),
+				new SpineAnglesObject(0, DEG * 1),
+				new LimbAnglesObject(DEG * 2, DEG * 2, 0, 0, 0),
+				new LimbAnglesObject(DEG * 2, DEG * 2, 0, 0, 0),
 				new JawAnglesObject(0, 0),
 			),
 			new AnglesObject(
 				new SpineAnglesObject(PI, 0),
 				new SpineAnglesObject(0, 0),
 				new SpineAnglesObject(0, - DEG * 15),
-				new LimbAnglesObject(DEG * 50, DEG * 170, DEG * 75, 0, 0),
-				new LimbAnglesObject(DEG * 50, DEG * 170, DEG * 75, 0, 0),
-				new JawAnglesObject(0, 0),
+				new LimbAnglesObject(DEG * 50, DEG * -67, DEG * 75, 0, 0),
+				new LimbAnglesObject(0, 0, 0, 0, 0),
+				new JawAnglesObject(DEG * -5, DEG * 25),
 			)
 		),
-		5000
+		5500,
+		15,
+		new Position(3, -6),
+		[]
+	)
+);
+
+var argentinosaurus = new Dinosaur(
+	new Position(500, 500),
+	new Skeleton(
+		new SpineSection(7, 15),
+		new SpineSection(7, 7),
+		new SpineSection(7, 13),
+		new Limb(2.5,2.5,1,0.1,4),
+		new Limb(2,2,1,0.1,4),
+		0.8
+	),
+	new DetailsObject(
+		new AllAnglesObject(
+			new AnglesObject(
+				new SpineAnglesObject(DEG * 180, DEG * -15),
+				new SpineAnglesObject(DEG * 8.5, 0),
+				new SpineAnglesObject(DEG * 0, - DEG * 30),
+				new LimbAnglesObject(DEG * 70, DEG * 120, DEG * 75, 0, DEG * -10),
+				new LimbAnglesObject(DEG * 110, DEG * 90, DEG * 75, 0, DEG * -10),
+				new JawAnglesObject(0, 0),
+			),
+			new AnglesObject(
+				new SpineAnglesObject(DEG * 2, DEG * 10),
+				new SpineAnglesObject(0, 0),
+				new SpineAnglesObject(0, DEG * 1),
+				new LimbAnglesObject(DEG * 2, DEG * 2, 0, 0, 0),
+				new LimbAnglesObject(DEG * 2, DEG * 2, 0, 0, 0),
+				new JawAnglesObject(0, 0),
+			),
+			new AnglesObject(
+				new SpineAnglesObject(0, 0),
+				new SpineAnglesObject(DEG * - 15, DEG * - 15),
+				new SpineAnglesObject(0, - DEG * 15),
+				new LimbAnglesObject(DEG * 20, DEG * -30, DEG * 75, 0, 0),
+				new LimbAnglesObject(DEG * -10, DEG * -40, DEG * 0, 0, 0),
+				new JawAnglesObject(DEG * -5, DEG * 25),
+			)
+		),
+		6500,
+		3,
+		new Position(0, 0),
+		[new Feature(new BluntSpike(0.1, 1, 0.1, DEG * 90), 'jawtop', '#8C8C8C')]
 	)
 );
 
@@ -820,7 +1229,9 @@ function draw() {
 	ctx.fillStyle = colours.floor;
 	ctx.fillRect(0, groundY, canvasSize.x, gameDimensions.groundHeight); // the floor
 	
-	demonstratosaurus.loop();
+	argentinosaurus.loop();
+	tyrannosaurus.loop();
+	deinonychus.loop();
 	
 	gameTimer += frameDelay;
 	setTimeout(draw, frameDelay);
