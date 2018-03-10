@@ -9,9 +9,22 @@ RULES:
 
 var ctx = document.getElementsByTagName('canvas')[0].getContext('2d'); // get context to draw
 
+function P(x,y) {
+	this.x=x;
+	this.y=y;
+} // Cartesian point
+
+var imageOnCanvasSize = new P(
+	160,
+	90
+);
+
+var textMaximumLength = 150;
+var textSize = 10;
+
 var canvasSize = new P(
-	window.innerWidth / 2.5 + 310,
-	window.innerWidth / 2.5,
+	window.innerWidth / 2.5 + imageOnCanvasSize.x + textMaximumLength,
+	window.innerWidth / 2.5
 ); //cartesian for the size of the canvas
 
 var colours = {
@@ -46,18 +59,17 @@ var translation = {
 	'zoom':1,
 }//for zoom and dragging
 
-function P(x,y){this.x=x;this.y=y} // Cartesian point
-
 var dragStart = new P(0,0); // start of mouse drag
 var dragStartTranslation = new P(0,0); // how far mouse dragged
 var mousePosition = new P(0,0); // mouse position relative to canvas
 var mouseIsDown = false; // if the mouse is held down
 
-var doubleClickTime = 300;
-var isDoubleClick = false;
-var isDrag = false; // for zooming on double click
-function notDoubleClick() {
-	isDoubleClick = false;
+var mobileZoomRatio = 2;
+
+var clickDelayTime = 200;
+var isFastClick = false;
+function fastClickTimeUp() {
+	isFastClick = false;
 }
 
 ctx.canvas.onmousemove = function (event) {
@@ -78,21 +90,22 @@ ctx.canvas.onmousedown = function() { // when mouse is pressed
 	dragStartTranslation.x = translation.x;
 	dragStartTranslation.y = translation.y; // the translation at the start of the drag
 	
-	mouseIsDown = true;
+	isFastClick = true;
+	setTimeout(fastClickTimeUp, clickDelayTime);
 	
-	isDrag = false;
+	mouseIsDown = true;
 }
 
 ctx.canvas.onmouseup = function() {
 	mouseIsDown = false;
 	
-	if(isDoubleClick){
+	if(isFastClick){
 		var mousePositionOnTree = new P(
 			translation.x + (mousePosition.x / translation.zoom),
 			translation.y + (mousePosition.y / translation.zoom)
 		);
 		
-		translation.zoom *= 2;
+		translation.zoom *= mobileZoomRatio;
 		
 		var newMousePositionOnTree = new P(
 			translation.x + (mousePosition.x / translation.zoom),
@@ -103,13 +116,9 @@ ctx.canvas.onmouseup = function() {
 		translation.y += newMousePositionOnTree.y - mousePositionOnTree.y;
 	}
 	
-	isDoubleClick = true;
-	
-	console.log(isDoubleClick);
-	
-	setTimeout(notDoubleClick, doubleClickTime);
-	
 	drawTree();
+	
+	fillDetailsDivider( getPositionTaxonName(mousePosition) );
 	
 	return false;
 }
@@ -124,7 +133,7 @@ document.getElementById('zoom_out_button').onclick = function() {
 		translation.y + (mousePosition.y / translation.zoom)
 	);
 	
-	translation.zoom /= 2;
+	translation.zoom /= mobileZoomRatio;
 	
 	var newMousePositionOnTree = new P(
 		translation.x + (mousePosition.x / translation.zoom),
@@ -208,6 +217,9 @@ var genera = { //genera database
 	'Albinykus' : new Genus(86, 72, 2011, 0.5, [], ''),
 	'Alcovasaurus' : new Genus(156, 151, 2016, 7, [], ''),
 	'Alectrosaurus' : new Genus(84, 71, 1933, 5, [], ''),
+	'Aletopelta' : new Genus(84, 71, 2001, 6, [], ''),
+	'Algoasaurus' : new Genus(145, 136, 1904, 9, [], ''),
+	'Alioramus' : new Genus(71, 66, 1976, 6, [], ''),
 } 
 
 var tree = { // basic tree
@@ -243,6 +255,8 @@ var tree = { // basic tree
 														'#Cetiosaurus1' : '#Mamenchisauridae1',
 															'#Jobaria1' : '#Cetiosaurus1',
 																'@Neosauropoda' : '#Jobaria1',
+																	'Algoasaurus' : '@Neosauropoda',
+																		'bauri' : 'Algoasaurus',
 																	'@Macronaria' : '@Neosauropoda',
 																		'Aepisaurus' : '@Macronaria',
 																			'elephantinus' : 'Aepisaurus',
@@ -348,9 +362,14 @@ var tree = { // basic tree
 																	'#Alectrosaurus1' : '@Tyrannosauroidea',
 																		'Alectrosaurus' : '#Alectrosaurus1',
 																			'olseni' : 'Alectrosaurus',
-																		'@Tyrannosauridae' : '#Alectrosaurus1',
-																			'Albertosaurus' : '@Tyrannosauridae',
-																				'sarcophagus' : 'Albertosaurus',
+																			'#Alioramini1' : '#Alectrosaurus1',
+																				'@Alioramini' : '#Alioramini1',
+																					'Alioramus' : '@Alioramini',
+																						'remotus' : 'Alioramus',
+																						'altai' : 'Alioramus',
+																			'@Tyrannosauridae' : '#Alioramini1',
+																				'Albertosaurus' : '@Tyrannosauridae',
+																					'sarcophagus' : 'Albertosaurus',
 																	'@Megaraptora' : '@Tyrannosauroidea',
 																		'Aerosteon' : '@Megaraptora',
 																			'riocoloradense' : 'Aerosteon',
@@ -392,6 +411,8 @@ var tree = { // basic tree
 																'Acanthopholis' : '#Acanthopholis1',
 																	'horrida' : 'Acanthopholis',
 														'@Ankylosauridae' : '@Ankylosauria',
+															'Aletopelta' : '@Ankylosauridae',
+																'coombsi' : 'Aletopelta',
 															'@Ankylosaurinae' : '@Ankylosauridae',
 																'Ahshislepelta' : '@Ankylosaurinae',
 																	'minor' : 'Ahshislepelta',
@@ -527,7 +548,87 @@ for(var i in tree) { // set up detailed tree
 	}
 }
 
+var takenTextPositions = [];
+var takenTextNames = [];
+
+var takenImagePositions = [];
+var takenImageNames = [];
+
+function isSpaceTaken(array, ownP, unitSize) {
+	for(var i = 0; i < array.length; i++) {
+		var yDifference = Math.abs( array[i].y - ownP.y);
+		
+		var xDifference = Math.abs( array[i].x - ownP.x);
+		// diffrences is position
+		
+		if(xDifference < unitSize.x && yDifference < unitSize.y) { /// if both in range, they overlap
+			return(true); // return index
+		}
+	}
+	return(false);
+}
+
+function getPositionTaxon(array, ownP, unitSize) { // differences are positive values going from the top left
+	for(var i = 0; i < array.length; i++) {
+		var yDifference = ownP.y - array[i].y;
+		
+		var xDifference = ownP.x - array[i].x; 
+		// diffrences is position
+		
+		if(
+			xDifference < unitSize.x
+			&&
+			xDifference > 0
+			&&
+			yDifference < unitSize.y
+			&&
+			yDifference > 0
+		) { /// if both in range, they overlap
+			return(i); // return index
+		}
+	}
+	return(NaN);
+}
+
+function getPositionTaxonName(position) {
+	var textTaxonIndex = getPositionTaxon(
+		takenTextPositions,
+		new P(position.x, position.y + textSize),
+		new P(textMaximumLength, textSize)
+	);
+	var textTaxon;
+	
+	if(isNaN(textTaxonIndex)) {
+		textTaxon = '';
+	}else{
+		var textTaxon = takenTextNames[textTaxonIndex];
+		return(textTaxon);
+	}
+	
+	var imageTaxonIndex = getPositionTaxon(
+		takenImagePositions,
+		new P(position.x - textMaximumLength, position.y + imageOnCanvasSize.y / 2),
+		imageOnCanvasSize
+	);
+	var imageTaxon;
+	
+	if(isNaN(imageTaxonIndex)) {
+		imageTaxon = '';
+		return(imageTaxon);
+	}else{
+		var imageTaxon = takenImageNames[imageTaxonIndex];
+		return(imageTaxon);
+	}
+	
+}
+
 function drawTree() {
+	
+	takenTextPositions = [];
+	takenTextNames = [];
+	
+	takenImagePositions = [];
+	takenImageNames = [];
 	
 	if(translation.zoom < 1){
 		translation.zoom = 1;
@@ -552,7 +653,7 @@ function drawTree() {
 	ctx.fillStyle = colours.background;//fill style white
 	ctx.fillRect(0, 0, canvasSize.x, canvasSize.y);//draw background
 	
-	for(var i in tree) {
+	for(var i in tree) { // draw the tree branches
 		
 		if(i != '@Dinosauria'){
 			ctx.strokeStyle = colours.branches;
@@ -576,45 +677,128 @@ function drawTree() {
 		}
 	}
 	
-	for(var i in tree) {
-		
-		ctx.fillStyle=colours.text;
-		
-		var displayName = '';
-		
-		switch(i[0]){
-			case '@':
-				displayName = i.substring(1);
-				ctx.font = "bold 10pt Georgia";
-				break;
-			case '#':
-				displayName = '';
-				break;
-			default:
-				displayName = i;
-				ctx.font = "italic 10pt Georgia";
-				try{
-					genera[i].image.src = 'images/' + i + '.jpg';
-					ctx.drawImage(
-						genera[i].image,
-						(treeWithDetails[i].x + translation.x) * translation.zoom + 150,
-						(treeWithDetails[i].y + translation.y) * translation.zoom - 45,
-						160,
-						90
-						
-					);
-				}catch(e){
-					//~ console.log(e);
-				}
-		}
-		
-		ctx.fillText(
-			displayName,
+	for(var i in tree) { // draw text and images
+		var position = new P(
 			(treeWithDetails[i].x + translation.x) * translation.zoom,
 			(treeWithDetails[i].y + translation.y) * translation.zoom
-		);
+		); // position of drawing point
+		
+		if(
+			position.y < canvasSize.y + imageOnCanvasSize.y
+			&&
+			position.y > 0 - imageOnCanvasSize.y
+		){ // if within the height of the canvas
+			ctx.fillStyle=colours.text;
+			
+			var displayName = '';
+			
+			switch(i[0]){
+				case '@':
+					displayName = i.substring(1);
+					ctx.font = "bold " + textSize + "pt Georgia";
+					break;
+				case '#':
+					displayName = '';
+					break;
+				default:
+					displayName = i;
+					ctx.font = "italic " + textSize + "pt Georgia";
+					
+					if( !isSpaceTaken(takenImagePositions, position, imageOnCanvasSize)) { // test for image overlap
+						try{
+							genera[i].image.src = 'images/' + i + '.jpg';
+							ctx.drawImage(
+								genera[i].image,
+								position.x + textMaximumLength,
+								position.y - imageOnCanvasSize.y / 2,
+								imageOnCanvasSize.x,
+								imageOnCanvasSize.y
+							);
+							
+							takenImagePositions.push(
+								new P(
+									position.x,
+									position.y
+								)
+							); // so no new ones overlap
+							
+							takenImageNames.push(i); // so that when clicked on we can find the indexed position
+						}catch(e){
+							//~ console.log(e);
+						}
+					}
+			}
+			
+			if( !isSpaceTaken(takenTextPositions, position, new P(textMaximumLength, textSize)) ) { // check if overlapping a previously written in taxon
+				ctx.fillText(
+					displayName,
+					(treeWithDetails[i].x + translation.x) * translation.zoom,
+					(treeWithDetails[i].y + translation.y) * translation.zoom
+				); // write name
+				
+				if(displayName != ''){
+					takenTextPositions.push(
+						new P(
+							position.x,
+							position.y
+						)
+					); // so no new ones overlap
+					
+					takenTextNames.push(
+						i
+					); // so that when clicked on we can find the indexed taxon
+				}
+			}
+		}
 	}
 	
+}
+
+function getTaxonRank(name) {
+	if(name.match(/^[A-Z]/)) {
+		return('genus');
+	}else if(name.match(/^[a-z]/)) {
+		return('species');
+	}else if(name.match(/idae$/)) {
+		return('family');
+	}else if(name.match(/inae$/)) {
+		return('subfamily');
+	}else{
+		return('clade');
+	}
+}
+
+function getDescent(taxon) {
+	
+	var currentTaxon = taxon;
+	var taxaArray = [];
+	
+	while(currentTaxon != '@Dinosauria') {
+		taxaArray.push(currentTaxon);
+		currentTaxon = tree[currentTaxon]; // parent name
+		
+		console.log(currentTaxon);
+	}
+	
+	for(var i = 0; i < taxaArray.length; i++) {
+		if(taxaArray[i][0] == '#') {
+			taxaArray.splice(i,1);
+		}
+	}
+	
+	return(taxaArray);
+}
+
+function fillDetailsDivider(taxon) {
+	//if species, get genus
+	//draw title, taxa rank normal font with upper class name, no rank if genus, name of taxa italised if genus
+	//image, representative genus if not genus
+	//specify representative genus
+	//classify from dinosauria, excluding # ranks in table rows
+	//each rank bold, taxa bold if family or subfamily, italisized if genus or species
+	//each rank goes to itself when clicked on
+	//list species if a genus (on right-hand table row)
+	//details if genus (earliest, latest, discovery, length, synonyms, possibleDuplicate)
 }
 
 drawTree();
