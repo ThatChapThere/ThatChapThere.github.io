@@ -9,7 +9,10 @@ RULES:
 
 var ctx = document.getElementsByTagName('canvas')[0].getContext('2d'); // get context to draw
 
-var canvasSize = new P(1110, 800); //cartesian for the size of the canvas
+var canvasSize = new P(
+	window.innerWidth / 2.5 + 310,
+	window.innerWidth / 2.5,
+); //cartesian for the size of the canvas
 
 var colours = {
 	'text' : '#000',
@@ -50,7 +53,14 @@ var dragStartTranslation = new P(0,0); // how far mouse dragged
 var mousePosition = new P(0,0); // mouse position relative to canvas
 var mouseIsDown = false; // if the mouse is held down
 
-document.body.onmousemove = function (event) {
+var doubleClickTime = 300;
+var isDoubleClick = false;
+var isDrag = false; // for zooming on double click
+function notDoubleClick() {
+	isDoubleClick = false;
+}
+
+ctx.canvas.onmousemove = function (event) {
 	mousePosition.x = event.clientX - getOffset(true);
 	mousePosition.y = event.clientY - getOffset(false); // set up mouse position variable
 	
@@ -61,7 +71,7 @@ document.body.onmousemove = function (event) {
 	}
 }
 
-document.body.onmousedown = function() { // when mouse is pressed
+ctx.canvas.onmousedown = function() { // when mouse is pressed
 	dragStart.x = mousePosition.x;
 	dragStart.y = mousePosition.y; // set up where the drag started on the screen
 	
@@ -69,10 +79,61 @@ document.body.onmousedown = function() { // when mouse is pressed
 	dragStartTranslation.y = translation.y; // the translation at the start of the drag
 	
 	mouseIsDown = true;
+	
+	isDrag = false;
 }
 
-document.body.onmouseup = function() {
+ctx.canvas.onmouseup = function() {
 	mouseIsDown = false;
+	
+	if(isDoubleClick){
+		var mousePositionOnTree = new P(
+			translation.x + (mousePosition.x / translation.zoom),
+			translation.y + (mousePosition.y / translation.zoom)
+		);
+		
+		translation.zoom *= 2;
+		
+		var newMousePositionOnTree = new P(
+			translation.x + (mousePosition.x / translation.zoom),
+			translation.y + (mousePosition.y / translation.zoom)
+		);
+		
+		translation.x += newMousePositionOnTree.x - mousePositionOnTree.x;
+		translation.y += newMousePositionOnTree.y - mousePositionOnTree.y;
+	}
+	
+	isDoubleClick = true;
+	
+	console.log(isDoubleClick);
+	
+	setTimeout(notDoubleClick, doubleClickTime);
+	
+	drawTree();
+	
+	return false;
+}
+
+document.getElementById('zoom_out_button').onclick = function() {
+	
+	mousePosition.x = canvasSize.x / 2;
+	mousePosition.y = canvasSize.y / 2;
+	
+	var mousePositionOnTree = new P(
+		translation.x + (mousePosition.x / translation.zoom),
+		translation.y + (mousePosition.y / translation.zoom)
+	);
+	
+	translation.zoom /= 2;
+	
+	var newMousePositionOnTree = new P(
+		translation.x + (mousePosition.x / translation.zoom),
+		translation.y + (mousePosition.y / translation.zoom)
+	);
+	
+	translation.x += newMousePositionOnTree.x - mousePositionOnTree.x;
+	translation.y += newMousePositionOnTree.y - mousePositionOnTree.y;
+	
 	drawTree();
 }
 
@@ -145,6 +206,8 @@ var genera = { //genera database
 	'Albertonykus' : new Genus(71, 66, 2008, 0.7, [], ''),
 	'Albertosaurus' : new Genus(73, 67, 1905, 10, ['Deinodon'], ''),
 	'Albinykus' : new Genus(86, 72, 2011, 0.5, [], ''),
+	'Alcovasaurus' : new Genus(156, 151, 2016, 7, [], ''),
+	'Alectrosaurus' : new Genus(84, 71, 1933, 5, [], ''),
 } 
 
 var tree = { // basic tree
@@ -282,9 +345,12 @@ var tree = { // basic tree
 																		'Aepyornithomimus' : '@Ornithomimosauria',
 																			'tugrikinensis' : 'Aepyornithomimus',
 																'@Tyrannosauroidea' : '@Tyrannoraptora',
-																	'@Tyrannosauridae' : '@Tyrannosauroidea',
-																		'Albertosaurus' : '@Tyrannosauridae',
-																			'sarcophagus' : 'Albertosaurus',
+																	'#Alectrosaurus1' : '@Tyrannosauroidea',
+																		'Alectrosaurus' : '#Alectrosaurus1',
+																			'olseni' : 'Alectrosaurus',
+																		'@Tyrannosauridae' : '#Alectrosaurus1',
+																			'Albertosaurus' : '@Tyrannosauridae',
+																				'sarcophagus' : 'Albertosaurus',
 																	'@Megaraptora' : '@Tyrannosauroidea',
 																		'Aerosteon' : '@Megaraptora',
 																			'riocoloradense' : 'Aerosteon',
@@ -315,8 +381,12 @@ var tree = { // basic tree
 									'#Scutellosaurus1' : '@Thyreophora',
 										'#Emausaurus1' : '#Scutellosaurus1',
 											'#Scelidosaurus1' : '#Emausaurus1',
-												'#Stegosauria1' : '#Scelidosaurus1',
-													'@Ankylosauria' : '#Stegosauria1',
+												'@Eurypoda' : '#Scelidosaurus1',
+													'@Stegosauria' : '@Eurypoda',
+														'@Stegosauridae' : '@Stegosauria',
+															'Alcovasaurus' : '@Stegosauridae',
+																'longispinus' : 'Alcovasaurus',
+													'@Ankylosauria' : '@Eurypoda',
 														'@Nodosauridae' : '@Ankylosauria',
 															'#Acanthopholis1' : '@Nodosauridae',
 																'Acanthopholis' : '#Acanthopholis1',

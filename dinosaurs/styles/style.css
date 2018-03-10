@@ -1,3 +1,9 @@
 body{
 	background-color : #DDD
 }
+
+button#zoom_out_button{
+	color: black;
+	width: 100px;
+	height: 100px;
+}
