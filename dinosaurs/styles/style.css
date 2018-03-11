@@ -13,3 +13,39 @@ button#zoom_out_button{
 	height: 100%;
 	background-color: #BBB;
 }
+
+.genus{
+	font-style: italic;
+}
+
+.species{
+	font-style: italic;
+}
+
+.family{
+	font-weight: bold;
+}
+
+.subfamily{
+	font-weight: bold;
+}
+
+.tribe{
+	font-weight: bold;
+}
+
+.classification_table{
+
+}
+
+.classification_rank{
+	font-weight: bold;
+}
+
+.name-link{
+	cursor: pointer;
+}
+
+.name-link:hover{
+	color: blue;
+}

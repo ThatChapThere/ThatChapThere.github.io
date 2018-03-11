@@ -222,6 +222,9 @@ var genera = { //genera database
 	'Alioramus' : new Genus(71, 66, 1976, 6, [], ''),
 } 
 
+var geologicalTimeRange = [250, 201, 145, 66];
+var discoveryTimeRange = [1824, 2020];
+
 var tree = { // basic tree
 	'@Dinosauria' : '@Dinosauria',
 		'@Saurischia' : '@Dinosauria',
@@ -321,8 +324,8 @@ var tree = { // basic tree
 																			'@Pennaraptora' : '@Aveairfoila',
 																				'@Oviraptorosauria' : '@Pennaraptora',
 																					'@Caenagnathoidea' : '@Oviraptorosauria',
-																						'Oviraptoridae' : '@Caenagnathoidea',
-																							'Ajancingenia' : 'Oviraptoridae',
+																						'@Oviraptoridae' : '@Caenagnathoidea',
+																							'Ajancingenia' : '@Oviraptoridae',
 																								'yanshini' : 'Ajancingenia',
 																				'@Paraves' : '@Pennaraptora',
 																					'@Eumaniraptora' : '@Paraves',
@@ -763,6 +766,8 @@ function getTaxonRank(name) {
 		return('family');
 	}else if(name.match(/inae$/)) {
 		return('subfamily');
+	}else if(name.match(/ini$/)) {
+		return('tribe');
 	}else{
 		return('clade');
 	}
@@ -776,29 +781,166 @@ function getDescent(taxon) {
 	while(currentTaxon != '@Dinosauria') {
 		taxaArray.push(currentTaxon);
 		currentTaxon = tree[currentTaxon]; // parent name
-		
-		console.log(currentTaxon);
 	}
+	taxaArray.push('@Dinosauria');
 	
 	for(var i = 0; i < taxaArray.length; i++) {
 		if(taxaArray[i][0] == '#') {
 			taxaArray.splice(i,1);
+			//~ console.log('cut');
+			
+			i--; // go back one after cutting
 		}
 	}
 	
 	return(taxaArray);
 }
 
+function getTextName(taxon) { // remove @ symbol
+	var rank = getTaxonRank(taxon);
+	if(rank == 'species' || rank == 'genus'){
+		return(taxon);
+	}else{
+		return(taxon.substring(1, taxon.length));
+	}
+}
+
+function getRepresentativeGenus(taxon) {
+	while(getTaxonRank(taxon) != 'genus') {
+		taxon = treeWithDetails[taxon].children[0]; // first child
+	}
+	return(taxon);
+}
+
+function getSpecies(genus, array) {
+	var childrenArray = treeWithDetails[genus].children;
+	for(var i = 0; i < childrenArray.length; i++) {
+		if(getTaxonRank(childrenArray[i]) == 'species') { // if Tt's a species
+			array.push(childrenArray[i]);
+		}else{ // smaller rank
+			getSpecies(childrenArray[i], array); // add members of that
+		}
+	}
+}
+
 function fillDetailsDivider(taxon) {
+	if(taxon == '') { // do nothing if empty taxon
+		return null;
+	}
+	var htmlElement = document.getElementById('details_divider');
+	htmlElement.innerHTML = '';
+	
 	//if species, get genus
+	if(getTaxonRank(taxon) == 'species') {
+		while(getTaxonRank(taxon) != 'genus') {
+			taxon = tree[taxon]; // get parent
+		}
+	}
+	
+	//test for genus
+	var isGenus = false;
+	if(getTaxonRank(taxon) == 'genus') {
+		isGenus = true;
+	}
+	
 	//draw title, taxa rank normal font with upper class name, no rank if genus, name of taxa italised if genus
+	var titleBar = document.createElement('div');
+	titleBar.id = 'title_bar';
+	var taxonTypeSpan = document.createElement('span');
+	var taxonSpan = document.createElement('span');
+	
+	if(isGenus) {
+		taxonSpan.className = 'genus';
+		taxonSpan.textContent = taxon;
+		titleBar.appendChild( taxonSpan );
+	}else{
+		var taxonName = taxon.substring(1, taxon.length); // remove @ or #
+		
+		taxonSpan.textContent = taxonName;
+		
+		var taxonTypeName = getTaxonRank(taxon); // rank of taxon
+		
+		taxonTypeName = taxonTypeName[0].toUpperCase() + taxonTypeName.substring(1, taxon.length) + ' '; // capitalise first letter and add colon
+		
+		taxonTypeSpan.textContent = taxonTypeName;
+		
+		titleBar.appendChild( taxonTypeSpan );
+		titleBar.appendChild( taxonSpan );
+	}
+	
 	//image, representative genus if not genus
-	//specify representative genus
+	
+	var imageBox = document.createElement('div');
+	var image = document.createElement('img');
+	if(isGenus) {
+		image.src = 'images/' + taxon + '.jpg';
+		imageBox.appendChild(image);
+	}else{
+		var representativeGenus = getRepresentativeGenus(taxon);
+		image.src = 'images/' + representativeGenus + '.jpg';
+		//specify representative genus
+		var genusSpecifier = document.createElement('div');
+		genusSpecifier.innerHTML = '<span class="genus name-link">' + representativeGenus + '</span>, a member of ' + taxon.substring(1, taxon.length); // remove @ or #
+		
+		imageBox.appendChild(image);
+		imageBox.appendChild(genusSpecifier);
+	}
+	image.width = 640;
+	image.height = 370;
+	
 	//classify from dinosauria, excluding # ranks in table rows
+	var classificationTable = document.createElement('table');
+	classificationTable.className = 'classification_table';
+	
+	classificationTable.innerHTML += '<tr>Classification:</tr>';
+	
+	var descent = getDescent(taxon);
 	//each rank bold, taxa bold if family or subfamily, italisized if genus or species
 	//each rank goes to itself when clicked on
+	for(var i = descent.length - 1; i >= 0; i--) {
+		classificationTable.innerHTML += '<tr>'+
+			'<td class="classification_rank">' + getTaxonRank(descent[i]) + ':</td>' +
+			'<td class="' + getTaxonRank(descent[i]) + ' name-link"> ' + getTextName(descent[i]) + '</td>';
+	}
+	
 	//list species if a genus (on right-hand table row)
+	if(isGenus) {
+		var speciesArray = [];
+		getSpecies(taxon, speciesArray);
+		classificationTable.innerHTML += '<tr><td class="classification_rank">species: </td></tr>';
+		
+		for(var i = 0; i < speciesArray.length; i++) {
+			classificationTable.innerHTML += '<tr><td></td><td class="species">' + speciesArray[i] + '</td></tr>';
+		}
+	}
+	
 	//details if genus (earliest, latest, discovery, length, synonyms, possibleDuplicate)
+	var detailsTable = document.createElement('table');
+	if(isGenus) {
+		detailsTable
+	}
+	
+	htmlElement.appendChild(titleBar);
+	htmlElement.appendChild(imageBox);
+	htmlElement.appendChild(classificationTable);
+	htmlElement.appendChild(detailsTable);
+	
+	var nameLinks = document.getElementsByClassName('name-link');
+	
+	for(var i = 0; i < nameLinks.length; i++) {
+		nameLinks[i].onclick = function() {
+			//~ console.log(this.textContent);
+			try{
+				fillDetailsDivider('@' + this.textContent.substring(1, this.textContent.length)); // substring, because they start with a space
+			}catch(e){ // if a genus (error is thrown as a genus with an @ sign will not find any actual taxon)
+				try{
+					fillDetailsDivider(this.textContent.substring(1, this.textContent.length)); // substring, because they start with a space
+				}catch(e){ // if not preceeded by a space
+					fillDetailsDivider(this.textContent); // substring, because they start with a space
+				}
+			}
+		}
+	}
 }
 
 drawTree();
