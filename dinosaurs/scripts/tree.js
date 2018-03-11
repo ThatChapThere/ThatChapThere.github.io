@@ -827,6 +827,9 @@ function fillDetailsDivider(taxon) {
 	if(taxon == '') { // do nothing if empty taxon
 		return null;
 	}
+	
+	console.log(taxon);
+	
 	var htmlElement = document.getElementById('details_divider');
 	htmlElement.innerHTML = '';
 	
