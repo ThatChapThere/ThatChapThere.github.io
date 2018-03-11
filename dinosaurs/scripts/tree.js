@@ -7,6 +7,8 @@ RULES:
 * species listed as though genus is common ancestor, even though this is not neccesarily always the case
 **********************************************************************/
 
+console.log('logging');
+
 var ctx = document.getElementsByTagName('canvas')[0].getContext('2d'); // get context to draw
 
 function P(x,y) {
@@ -117,6 +119,8 @@ ctx.canvas.onmouseup = function() {
 	}
 	
 	drawTree();
+	
+	console.log('about to fill details divider for: ' +  getPositionTaxonName(mousePosition) );
 	
 	fillDetailsDivider( getPositionTaxonName(mousePosition) );
 	
@@ -828,7 +832,7 @@ function fillDetailsDivider(taxon) {
 		return null;
 	}
 	
-	console.log(taxon);
+	console.log('attempted to fill details divider');
 	
 	var htmlElement = document.getElementById('details_divider');
 	htmlElement.innerHTML = '';
