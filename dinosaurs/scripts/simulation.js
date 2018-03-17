@@ -209,7 +209,7 @@ var featureType = {
  * curved spike : two parabolas
  * spike : triangle
  * blunt spine : parabola (from two mirror parabolas)
- * arc : semicircle
+ * dome : semicircle
  * rectangle
  * plate : rhombus
  * 
@@ -244,7 +244,12 @@ function Spike(distanceOnBone, height, width, angle) {
 		var anchor3Distance = this.distanceOnBone + this.width / 2;
 		anchor3.multiply(anchor3Distance); // set a distance
 		
-		var centreSpine = getNormalVector(parentAngle + this.angle); // this.angle relative to parentangle
+		if(dinosaur.flipped) {  // when the entire body is flipped, rotate in the opposite direction
+			var centreSpine = getNormalVector(parentAngle - this.angle); // this.angle relative to parentangle
+		}else{
+			var centreSpine = getNormalVector(parentAngle + this.angle); // this.angle relative to parentangle
+		}
+		
 		centreSpine.multiply(this.height);
 		
 		ctx.beginPath();
@@ -296,7 +301,12 @@ function BluntSpike(distanceOnBone, height, width, angle) {
 		var anchor3Distance = this.distanceOnBone + this.width / 2;
 		anchor3.multiply(anchor3Distance); // set a distance
 		
-		var centreSpine = getNormalVector(parentAngle + this.angle); // this.angle relative to parentangle
+		if(dinosaur.flipped) {  // when the entire body is flipped, rotate in the opposite direction
+			var centreSpine = getNormalVector(parentAngle - this.angle); // this.angle relative to parentangle
+		}else{
+			var centreSpine = getNormalVector(parentAngle + this.angle); // this.angle relative to parentangle
+		}
+		
 		centreSpine.multiply(this.height);
 		
 		ctx.beginPath();
@@ -327,7 +337,242 @@ function BluntSpike(distanceOnBone, height, width, angle) {
 	}
 }
 
+function CurvedSpike(distanceOnBone, height, width, guidePointDistanceOnBone, guidePointHeight, angle) {
+	this.distanceOnBone = distanceOnBone; // back toward the pelvis
+	this.height = height;
+	this.width = width;
+	this.angle = angle;
+	this.guidePointDistanceOnBone = guidePointDistanceOnBone;
+	this.guidePointHeight = guidePointHeight;
+	
+	// guide point is rotated by the same angle as the spike
+	// the guide point is used a a centre for quadratic curves
+	
+	this.draw = function(dinosaur, parentName) {
+		var parentIndex = dinosaur.indexOfBones[ parentName ]; // numeric index of bone
+		var parentPosition = dinosaur.skeletalArray[ parentIndex ].position; // position of bone
+		var parentAngle = dinosaur.skeletalArray[ parentIndex ].angle;
+		
+		parentAngle += PI; // back toward parent of parent
+		
+		var vector = getNormalVector(parentAngle);
+		
+		var anchor1 = new Position(vector.x, vector.y); // copy direction
+		var anchor1Distance = this.distanceOnBone - this.width / 2;
+		anchor1.multiply(anchor1Distance); // set a distance
+		
+		var anchor2 = new Position(vector.x, vector.y); // copy direction
+		var anchor2Distance = this.distanceOnBone;
+		anchor2.multiply(anchor2Distance); // set a distance
+		
+		var anchor3 = new Position(vector.x, vector.y); // copy direction
+		var anchor3Distance = this.distanceOnBone + this.width / 2;
+		anchor3.multiply(anchor3Distance); // set a distance
+		
+		
+		if(dinosaur.flipped) {  // when the entire body is flipped, rotate in the opposite direction
+			var centreSpine = getNormalVector(parentAngle - this.angle); // this.angle relative to parentangle
+		}else{
+			var centreSpine = getNormalVector(parentAngle + this.angle); // this.angle relative to parentangle
+		}
+		
+		centreSpine.multiply(this.height);
+		
+		var guidePointAnchor = new Position(vector.x, vector.y); // copy direction
+		guidePointAnchor.multiply(guidePointDistanceOnBone);
+		
+		var guidePoint = getNormalVector(parentAngle + this.angle); // this.angle relative to parentangle
+		guidePoint.multiply(this.guidePointHeight);
+		
+		ctx.beginPath();
+		
+		ctx.moveTo(
+			parentPosition.x + anchor1.x,
+			parentPosition.y + anchor1.y,
+		); // point 1
+		
+		ctx.quadraticCurveTo(
+			parentPosition.x + guidePointAnchor.x + guidePoint.x,
+			parentPosition.y + guidePointAnchor.y + guidePoint.y,
+			
+			parentPosition.x + anchor2.x + centreSpine.x,
+			parentPosition.y + anchor2.y + centreSpine.y,
+		); // top of spike
+		
+		ctx.quadraticCurveTo(
+			parentPosition.x + guidePointAnchor.x + guidePoint.x,
+			parentPosition.y + guidePointAnchor.y + guidePoint.y,
+			
+			parentPosition.x + anchor3.x,
+			parentPosition.y + anchor3.y,
+		); // bottom of spine
+		
+		ctx.stroke();
+		ctx.beginPath();
+	}
+}
 
+function Dome(distanceOnBone, radius, angle) {
+	this.distanceOnBone = distanceOnBone;
+	this.radius = radius * gameDimensions.pixelsPerMetre;
+	this.angle = angle;
+	
+	this.draw = function(dinosaur, parentName) {
+		var parentIndex = dinosaur.indexOfBones[ parentName ]; // numeric index of bone
+		var parentPosition = dinosaur.skeletalArray[ parentIndex ].position; // position of bone
+		var parentAngle = dinosaur.skeletalArray[ parentIndex ].angle;
+		
+		parentAngle += PI; // back toward parent of parent
+		
+		var vector = getNormalVector(parentAngle);
+		
+		var centre = new Position(vector.x, vector.y); // copy direction
+		centre.multiply(this.distanceOnBone); // set a distance
+		
+		ctx.beginPath();
+		
+		ctx.arc(
+			parentPosition.x + centre.x,
+			parentPosition.y + centre.y,
+			this.radius,
+			parentAngle + this.angle,
+			parentAngle + this.angle + PI,
+			false
+		);
+		
+		ctx.stroke();
+		ctx.beginPath();
+		
+	}
+}
+
+function RectangularPlate(distanceOnBone, height, width, angle) {
+	this.distanceOnBone = distanceOnBone; // back toward the pelvis
+	this.height = height;
+	this.width = width;
+	this.angle = angle;
+	
+	this.draw = function(dinosaur, parentName) {
+		var parentIndex = dinosaur.indexOfBones[ parentName ]; // numeric index of bone
+		var parentPosition = dinosaur.skeletalArray[ parentIndex ].position; // position of bone
+		var parentAngle = dinosaur.skeletalArray[ parentIndex ].angle;
+		
+		parentAngle += PI; // back toward parent of parent
+		
+		var vector = getNormalVector(parentAngle);
+		
+		var anchor1 = new Position(vector.x, vector.y); // copy direction
+		var anchor1Distance = this.distanceOnBone - this.width / 2;
+		anchor1.multiply(anchor1Distance); // set a distance
+		
+		var anchor2 = new Position(vector.x, vector.y); // copy direction
+		var anchor2Distance = this.distanceOnBone + this.width / 2;
+		anchor2.multiply(anchor2Distance); // set a distance
+		
+		
+		if(dinosaur.flipped) {  // when the entire body is flipped, rotate in the opposite direction
+			var centreSpine = getNormalVector(parentAngle - this.angle); // this.angle relative to parentangle
+		}else{
+			var centreSpine = getNormalVector(parentAngle + this.angle); // this.angle relative to parentangle
+		}
+		
+		centreSpine.multiply(this.height);
+		
+		ctx.beginPath();
+		
+		ctx.moveTo(
+			parentPosition.x + anchor1.x,
+			parentPosition.y + anchor1.y,
+		); // point 1
+		
+		ctx.lineTo(
+			parentPosition.x + anchor1.x + centreSpine.x,
+			parentPosition.y + anchor1.y + centreSpine.y,
+		); // top point1
+		
+		ctx.lineTo(
+			parentPosition.x + anchor2.x + centreSpine.x,
+			parentPosition.y + anchor2.y + centreSpine.y,
+		); // top point two
+		
+		ctx.lineTo(
+			parentPosition.x + anchor2.x,
+			parentPosition.y + anchor2.y,
+		); // bottom of plate
+		
+		ctx.stroke();
+		ctx.beginPath();
+	}
+}
+
+function RhombicPlate(distanceOnBone, height, width, angle) {
+	this.distanceOnBone = distanceOnBone; // back toward the pelvis
+	this.height = height;
+	this.width = width;
+	this.angle = angle;
+	
+	this.draw = function(dinosaur, parentName) {
+		var parentIndex = dinosaur.indexOfBones[ parentName ]; // numeric index of bone
+		var parentPosition = dinosaur.skeletalArray[ parentIndex ].position; // position of bone
+		var parentAngle = dinosaur.skeletalArray[ parentIndex ].angle;
+		
+		parentAngle += PI; // back toward parent of parent
+		
+		var vector = getNormalVector(parentAngle);
+		
+		var anchor1 = new Position(vector.x, vector.y); // copy direction
+		var anchor1Distance = this.distanceOnBone - this.width / 2;
+		anchor1.multiply(anchor1Distance); // set a distance
+		
+		var anchor2 = new Position(vector.x, vector.y); // copy direction
+		var anchor2Distance = this.distanceOnBone;
+		anchor2.multiply(anchor2Distance); // set a distance
+		
+		var anchor3 = new Position(vector.x, vector.y); // copy direction
+		var anchor3Distance = this.distanceOnBone + this.width / 2;
+		anchor3.multiply(anchor3Distance); // set a distance
+		
+		if(dinosaur.flipped) {  // when the entire body is flipped, rotate in the opposite direction
+			var centreSpine = getNormalVector(parentAngle - this.angle); // this.angle relative to parentangle
+		}else{
+			var centreSpine = getNormalVector(parentAngle + this.angle); // this.angle relative to parentangle
+		}
+		
+		centreSpine.multiply(this.height);
+		
+		ctx.beginPath();
+		
+		ctx.moveTo(
+			parentPosition.x + anchor2.x,
+			parentPosition.y + anchor2.y,
+		); // point 1
+		
+		ctx.lineTo(
+			parentPosition.x + anchor1.x + centreSpine.x/2,
+			parentPosition.y + anchor1.y + centreSpine.y/2,
+		); // top of spike
+		
+		
+		ctx.lineTo(
+			parentPosition.x + anchor2.x + centreSpine.x,
+			parentPosition.y + anchor2.y + centreSpine.y,
+		); // top of spike
+		
+		
+		ctx.lineTo(
+			parentPosition.x + anchor3.x + centreSpine.x/2,
+			parentPosition.y + anchor3.y + centreSpine.y/2,
+		); // top of spike
+		
+		ctx.lineTo(
+			parentPosition.x + anchor2.x,
+			parentPosition.y + anchor2.y,
+		); // bottom of spine
+		
+		ctx.stroke();
+		ctx.beginPath();
+	}
+}
 
 function Feature(feature, parentName, colour) {
 	this.feature = feature;
@@ -599,21 +844,24 @@ function spineAnglesSetUp(dinosaur, spineName) {
 		
 		dinosaur.skeletalArray[boneIndex].angle = dinosaur.details.angles.main[spineName].main; // main angle
 		
-		dinosaur.skeletalArray[boneIndex].angle += getIdleAngle(dinosaur.details.angles.idling[spineName].main, dinosaur.details.idleTime); // idling angle
-		
 		dinosaur.skeletalArray[boneIndex].angle += getVertebraAngle(
 			dinosaur.details.angles.main[spineName].curve,
 			dinosaur.skeleton[spineName].vertebrae,
 			i
 		); // curvature
 		
-		var overallAngle = getIdleAngle(dinosaur.details.angles.idling[spineName].curve, dinosaur.details.idleTime);
+		if(dinosaur.isAlive){
+			dinosaur.skeletalArray[boneIndex].angle += getIdleAngle(dinosaur.details.angles.idling[spineName].main, dinosaur.details.idleTime); // idling angle
+			
+			var overallAngle = getIdleAngle(dinosaur.details.angles.idling[spineName].curve, dinosaur.details.idleTime);
+			
+			dinosaur.skeletalArray[boneIndex].angle += getVertebraAngle(
+				overallAngle,
+				dinosaur.skeleton[spineName].vertebrae,
+				i
+			); // idling curvature
+		}
 		
-		dinosaur.skeletalArray[boneIndex].angle += getVertebraAngle(
-			overallAngle,
-			dinosaur.skeleton[spineName].vertebrae,
-			i
-		); // idling curvature
 	}
 }
 
@@ -640,10 +888,12 @@ function limbAnglesSetUp(dinosaur) {
 	
 						dinosaur.skeletalArray[boneIndex].angle = dinosaur.details.angles.main[limbType][limbSection] + digitLift;
 						
-						dinosaur.skeletalArray[boneIndex].angle += getIdleAngle(
-							dinosaur.details.angles.idling[limbType][limbSection] + idlingDigitLift,
-							dinosaur.details.idleTime
-						); // idling
+						if(dinosaur.isAlive){
+							dinosaur.skeletalArray[boneIndex].angle += getIdleAngle(
+								dinosaur.details.angles.idling[limbType][limbSection] + idlingDigitLift,
+								dinosaur.details.idleTime
+							); // idling
+						}
 					}
 				}else{
 					var boneName = limbType + limbSide + limbSection;
@@ -651,10 +901,13 @@ function limbAnglesSetUp(dinosaur) {
 
 					dinosaur.skeletalArray[boneIndex].angle = dinosaur.details.angles.main[limbType][limbSection];
 					
-					dinosaur.skeletalArray[boneIndex].angle += getIdleAngle(
-						dinosaur.details.angles.idling[limbType][limbSection],
-						dinosaur.details.idleTime
-					); // idling
+					if(dinosaur.isAlive) {
+						dinosaur.skeletalArray[boneIndex].angle += getIdleAngle(
+							dinosaur.details.angles.idling[limbType][limbSection],
+							dinosaur.details.idleTime
+						); // idling
+					}
+					
 				}
 				
 			}
@@ -667,13 +920,18 @@ function jawAnglesSetUp(dinosaur) {
 	var boneIndex = dinosaur.indexOfBones[boneName];
 
 	dinosaur.skeletalArray[boneIndex].angle = dinosaur.details.angles.main.jaw.top;
-	dinosaur.skeletalArray[boneIndex].angle += getIdleAngle( dinosaur.details.angles.idling.jaw.top, dinosaur.details.idleTime);
+	if(dinosaur.isAlive){
+		dinosaur.skeletalArray[boneIndex].angle += getIdleAngle( dinosaur.details.angles.idling.jaw.top, dinosaur.details.idleTime);
+	}
 	
 	boneName = 'jawbottom';
 	boneIndex = dinosaur.indexOfBones[boneName];
 
 	dinosaur.skeletalArray[boneIndex].angle = dinosaur.details.angles.main.jaw.bottom;
-	dinosaur.skeletalArray[boneIndex].angle += getIdleAngle( dinosaur.details.angles.idling.jaw.bottom, dinosaur.details.idleTime);
+	
+	if(dinosaur.isAlive) {
+		dinosaur.skeletalArray[boneIndex].angle += getIdleAngle( dinosaur.details.angles.idling.jaw.bottom, dinosaur.details.idleTime);
+	}
 }
 
 function addSpineToKeyFrame(dinosaur, keyFrame, spineName) {
@@ -730,6 +988,11 @@ function Dinosaur(position, skeleton, details) {
 	this.details = details;
 	
 	//**************************ANIMATION VALUES************************
+	
+	this.flipped = false;
+	this.lastFlipTime = 0;
+	this.flipDelay = 1000; // so it can only flip once per second
+	this.isAlive = true;
 	
 	this.keyFrames = new KeyFramesObject({}, {}, 0, 1000 / this.details.animationSpeed);
 	
@@ -955,30 +1218,50 @@ function Dinosaur(position, skeleton, details) {
 		}
 		
 		if(this.keyFrames.isFinished()) { // when the last keyframe has finished in motion
-			if(keyCodes[39]){ //***********************************RIGHT
+			if(!this.isAlive){ //************DEAD DINOSAUR**************
+				this.keyFrames.addNewFrame(this.death);
+			}else if(keyCodes[39]){ //***********************************RIGHT
 				//~ console.log('animation');
 				this.keyFrames.addNewFrame(this.walking.steps[this.walking.currentStep]);
-				this.walking.nextStep();
+				
+				if(this.flipped){
+					this.walking.previousStep();
+				}else{
+					this.walking.nextStep();
+				}
 				
 				this.canJump = false; // cannot jump after walking
 				
 			}else if(keyCodes[37]){ //******************************LEFT
+				
 				this.keyFrames.addNewFrame(this.walking.steps[this.walking.currentStep]);
-				this.walking.previousStep();
+				
+				if(this.flipped){
+					this.walking.nextStep();
+				}else{
+					this.walking.previousStep();
+				}
 				
 				this.canJump = false; // cannot jump after walking
 				
 			}else if(keyCodes[40]){ //******************************DOWN
+				
 				this.keyFrames.addNewFrame(this.crouching);
 				
 				this.canJump = true; // can jump after crouching
+				
 			}else if(keyCodes[38]){ //*****************************SPACE
 				
 				this.keyFrames.addNewFrame(this.roar);
 				
 			}else if(keyCodes[32]){ //*****************************SPACE
 				
-				this.keyFrames.addNewFrame(this.death);
+				if(gameTimer > this.lastFlipTime + this.flipDelay) { // so it can only flip once per second
+					this.flipped = ! this.flipped;
+					this.lastFlipTime = gameTimer;
+				}
+				
+				this.keyFrames.addNewFrame(this.standing); // so it doesn't wiggle whe flipping
 				
 			}else{
 				
@@ -990,7 +1273,12 @@ function Dinosaur(position, skeleton, details) {
 						
 						this.position.y -= 5; // move up, otherwise the physics loop will set the velocity to 0
 						
-						this.velocity.x += this.details.jumpSpeed.x;
+						if(this.flipped){
+							this.velocity.x -= this.details.jumpSpeed.x;
+						}else{
+							this.velocity.x += this.details.jumpSpeed.x;
+						}
+						
 						this.velocity.y += this.details.jumpSpeed.y;
 						
 						// obviously divide by how short each frame is, because the velocity is in m/s
@@ -1003,6 +1291,11 @@ function Dinosaur(position, skeleton, details) {
 			}
 		}
 		
+		if(this.flipped) {
+			for(var i in this.skeletalArray) {
+				this.skeletalArray[i].angle = DEG * 180 - this.skeletalArray[i].angle;
+			}
+		}
 	}
 	
 	this.physics = function() { // gravity and motion
@@ -1216,7 +1509,7 @@ var argentinosaurus = new Dinosaur(
 		6500,
 		3,
 		new Position(0, 0),
-		[new Feature(new BluntSpike(0.1, 1, 0.1, DEG * 90), 'jawtop', '#8C8C8C')]
+		[new Feature(new RhombicPlate(0.2, 0.5, 0.2, DEG * 110), 'back3', '#8C8C8C')]
 	)
 );
 

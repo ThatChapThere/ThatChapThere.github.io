@@ -1,17 +1,20 @@
 body{
-	background-color : #DDD
+	background-color : #DDD;
+	height : 100%;
+	font-family : Georgia;
 }
 
 button#zoom_out_button{
 	color: black;
 	width: 100px;
-	height: 100px;
 }
 
 #details_divider{
 	width: 100%;
 	height: 100%;
 	background-color: #BBB;
+	overflow-y: scroll;
+	height: 500px;
 }
 
 .genus{

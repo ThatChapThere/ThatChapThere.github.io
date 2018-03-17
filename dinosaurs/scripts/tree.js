@@ -7,7 +7,7 @@ RULES:
 * species listed as though genus is common ancestor, even though this is not neccesarily always the case
 **********************************************************************/
 
-console.log('logging');
+//~ console.log('logging');
 
 var ctx = document.getElementsByTagName('canvas')[0].getContext('2d'); // get context to draw
 
@@ -28,6 +28,11 @@ var canvasSize = new P(
 	window.innerWidth / 2.5 + imageOnCanvasSize.x + textMaximumLength,
 	window.innerWidth / 2.5
 ); //cartesian for the size of the canvas
+
+var detailsImageSize = new P(
+	640,
+	370
+)
 
 var colours = {
 	'text' : '#000',
@@ -50,7 +55,9 @@ function getOffset(left) {//true=left, false=top
 			offset+=element.offsetTop;
 			element=element.offsetParent;
 		}
-		offset+=element.offsetTop;
+		offset += element.offsetTop;
+		
+		offset -= pageYOffset;
 	}
 	return(offset);
 }
@@ -66,10 +73,11 @@ var dragStartTranslation = new P(0,0); // how far mouse dragged
 var mousePosition = new P(0,0); // mouse position relative to canvas
 var mouseIsDown = false; // if the mouse is held down
 
+var humanImage = document.createElement('img');
+humanImage.src = 'alt_images/human.png';
+
 var mobileZoomRatio = 2;
 
-var clickDelayTime = 200;
-var isFastClick = false;
 function fastClickTimeUp() {
 	isFastClick = false;
 }
@@ -92,62 +100,19 @@ ctx.canvas.onmousedown = function() { // when mouse is pressed
 	dragStartTranslation.x = translation.x;
 	dragStartTranslation.y = translation.y; // the translation at the start of the drag
 	
-	isFastClick = true;
-	setTimeout(fastClickTimeUp, clickDelayTime);
-	
 	mouseIsDown = true;
 }
 
 ctx.canvas.onmouseup = function() {
 	mouseIsDown = false;
 	
-	if(isFastClick){
-		var mousePositionOnTree = new P(
-			translation.x + (mousePosition.x / translation.zoom),
-			translation.y + (mousePosition.y / translation.zoom)
-		);
-		
-		translation.zoom *= mobileZoomRatio;
-		
-		var newMousePositionOnTree = new P(
-			translation.x + (mousePosition.x / translation.zoom),
-			translation.y + (mousePosition.y / translation.zoom)
-		);
-		
-		translation.x += newMousePositionOnTree.x - mousePositionOnTree.x;
-		translation.y += newMousePositionOnTree.y - mousePositionOnTree.y;
-	}
-	
 	drawTree();
 	
-	console.log('about to fill details divider for: ' +  getPositionTaxonName(mousePosition) );
+	//~ console.log('about to fill details divider for: ' +  getPositionTaxonName(mousePosition) );
 	
 	fillDetailsDivider( getPositionTaxonName(mousePosition) );
 	
 	return false;
-}
-
-document.getElementById('zoom_out_button').onclick = function() {
-	
-	mousePosition.x = canvasSize.x / 2;
-	mousePosition.y = canvasSize.y / 2;
-	
-	var mousePositionOnTree = new P(
-		translation.x + (mousePosition.x / translation.zoom),
-		translation.y + (mousePosition.y / translation.zoom)
-	);
-	
-	translation.zoom /= mobileZoomRatio;
-	
-	var newMousePositionOnTree = new P(
-		translation.x + (mousePosition.x / translation.zoom),
-		translation.y + (mousePosition.y / translation.zoom)
-	);
-	
-	translation.x += newMousePositionOnTree.x - mousePositionOnTree.x;
-	translation.y += newMousePositionOnTree.y - mousePositionOnTree.y;
-	
-	drawTree();
 }
 
 function Genus (earliest, latest, discovery, length, synonyms, possibleDuplicate) { //this is for the database, not the tree
@@ -204,7 +169,7 @@ var genera = { //genera database
 	'Agilisaurus' : new Genus(171.6, 161.2, 1990, 2, [], ''),
 	'Agnosphitys' : new Genus(205.6, 201.6, 2002, 3, [], ''),
 	'Agrosaurus' : new Genus(205.6, 201.6, 1891, 3, [], 'Thecodontosaurus'),
-	'Agujaceratops' : new Genus(205.6, 201.6, 1989, 4.75, [''], ''),
+	'Agujaceratops' : new Genus(80, 73, 1989, 4.75, [''], ''),
 	'Agustinia' : new Genus(116, 110, 1999, 15, [], ''),
 	'Ahshislepelta' : new Genus(76, 72, 2011, 4, [], ''),
 	'Ajancingenia' : new Genus(85, 66, 1981, 1.4, [], 'Heyuannia'),
@@ -227,7 +192,9 @@ var genera = { //genera database
 } 
 
 var geologicalTimeRange = [250, 201, 145, 66];
-var discoveryTimeRange = [1824, 2020];
+var eraNames = ['Triassic', 'Jurassic', 'Cretaceous'];
+var eraColours = ['#FF7F00', '#7F00FF', '#00FF7F'];
+var discoveryTimeRange = [1800, 1900, 2000, 2050];
 
 var tree = { // basic tree
 	'@Dinosauria' : '@Dinosauria',
@@ -832,10 +799,11 @@ function fillDetailsDivider(taxon) {
 		return null;
 	}
 	
-	console.log('attempted to fill details divider');
+	//~ console.log('attempted to fill details divider');
 	
 	var htmlElement = document.getElementById('details_divider');
 	htmlElement.innerHTML = '';
+	htmlElement.style.height = canvasSize.y + 'px';
 	
 	//if species, get genus
 	if(getTaxonRank(taxon) == 'species') {
@@ -892,8 +860,8 @@ function fillDetailsDivider(taxon) {
 		imageBox.appendChild(image);
 		imageBox.appendChild(genusSpecifier);
 	}
-	image.width = 640;
-	image.height = 370;
+	image.width = detailsImageSize.x;
+	image.height = detailsImageSize.y;
 	
 	//classify from dinosauria, excluding # ranks in table rows
 	var classificationTable = document.createElement('table');
@@ -924,13 +892,316 @@ function fillDetailsDivider(taxon) {
 	//details if genus (earliest, latest, discovery, length, synonyms, possibleDuplicate)
 	var detailsTable = document.createElement('table');
 	if(isGenus) {
-		detailsTable
+		var details = genera[taxon];
+		// varibles are: earliest, latest, discovery, length, synonyms, possibleDuplicate
+		
+		var synonymTable = document.createElement('table');
+		// table listing junior synonyms (none if none)
+		
+		if(details.synonyms.length == 0) { // junior synonyms
+			synonymTable.innerHTML += '<tr> <td class="classification_rank">Junior synonyms:</td> <td> none </td> </tr>';
+		}else{
+			synonymTable.innerHTML += '<tr> <td class="classification_rank">Junior synonyms:</td></tr>';
+			for(var i = 0; i < details.synonyms.length; i++) {
+				synonymTable.innerHTML += '<tr> <td></td> <td class="genus">' + details.synonyms[i] + '</td> </tr>';
+			}
+		}
+		
+		if(! details.possibleDuplicate) { // possible senior synonym
+			synonymTable.innerHTML += '<tr> <td class="classification_rank">Possible duplicate of: </td> <td> none </td> </tr>';
+		}else{
+			synonymTable.innerHTML += '<tr> <td class="classification_rank">Possible duplicate of: </td> <td class="genus name-link"> ' + details.possibleDuplicate + '</td> </tr>';
+		}
+		
+		detailsTable.innerHTML += '<tr><td>Details:</td></tr>';
+		detailsTable.appendChild(synonymTable);
+		
+		// possible duplicate of (link genus) (none if none)
+		
+		
+		// FOLLOWING LINES ALL DRAWN ON ONE CANVAS
+		var timelineHeight = 20;
+		
+		var detailsCanvas = document.createElement('canvas');
+		
+		detailsCanvas.width = detailsImageSize.x;
+		detailsCanvas.height = timelineHeight * 10 + detailsImageSize.x / 2;
+		
+		var detailsCTX = detailsCanvas.getContext('2d');
+		// draw a canvas with the width of the image and with the geological eras written on the respective colours, and a transparent grey mark for when the current genus lived
+		var geologicalEraTime = geologicalTimeRange[0] - geologicalTimeRange[3];
+		var pixelsPerMillionYears = detailsImageSize.x / geologicalEraTime;
+		
+		detailsCTX.fillStyle = colours.text;
+		
+		detailsCTX.font = "bold " + textSize + "pt Georgia";
+		detailsCTX.fillText('Time lived:', textSize / 2, textSize * 1.5);
+		
+		var geologicalTimePositions = [
+			0,
+			(geologicalTimeRange[0] - geologicalTimeRange[1]) * pixelsPerMillionYears,
+			(geologicalTimeRange[0] - geologicalTimeRange[2]) * pixelsPerMillionYears,
+			(geologicalTimeRange[0] - geologicalTimeRange[3]) * pixelsPerMillionYears
+		];
+		
+		var geologicalTimeGaps = [
+			geologicalTimePositions[1] - geologicalTimePositions[0],
+			geologicalTimePositions[2] - geologicalTimePositions[1],
+			geologicalTimePositions[3] - geologicalTimePositions[2]
+		];
+		
+		var taxonTimePositions = [
+			(geologicalTimeRange[0] - details.earliest) * pixelsPerMillionYears,
+			(geologicalTimeRange[0] - details.latest) * pixelsPerMillionYears,
+		];
+		
+		var taxonTimeGap = taxonTimePositions[1] - taxonTimePositions[0];
+		
+		// level 3 : actual period timing
+		
+		detailsCTX.font = "bold " + textSize + "pt Georgia";
+			
+		for(var i = 0; i < geologicalTimeGaps.length; i++) { // Triassic, Jurassic and Cretaceous
+			
+			detailsCTX.fillStyle = eraColours[i];
+			
+			detailsCTX.fillRect(
+				geologicalTimePositions[i],
+				timelineHeight * 3,
+				geologicalTimeGaps[i],
+				timelineHeight
+			);
+			
+			//~ console.log(geologicalTimeGaps[i]);
+			
+			detailsCTX.fillStyle = colours.text;
+			
+			detailsCTX.fillText(
+				eraNames[i],
+				textSize / 2 + geologicalTimePositions[i],
+				timelineHeight * 3 + textSize * 1.5
+			);
+		}
+		
+		detailsCTX.fillStyle = '#0000007F';
+		
+		detailsCTX.fillRect(
+			taxonTimePositions[0],
+			timelineHeight * 3,
+			taxonTimeGap,
+			timelineHeight
+		); // transparent rectangle for when it lived
+		
+		detailsCTX.fillStyle = colours.text;
+		detailsCTX.font = textSize + "pt Georgia";
+		
+		// level 1 : line to start time
+		detailsCTX.beginPath();
+		detailsCTX.moveTo(taxonTimePositions[0], timelineHeight * 2);
+		detailsCTX.lineTo(taxonTimePositions[0], timelineHeight * 4);
+		detailsCTX.stroke();
+		
+		detailsCTX.fillText(
+			details.earliest + ' mya',
+			taxonTimePositions[0] - textSize * 7,
+			timelineHeight * 2 + textSize * 1.5
+		);
+		
+		// level 2 : line to end time
+		detailsCTX.beginPath();
+		detailsCTX.moveTo(taxonTimePositions[1], timelineHeight * 1);
+		detailsCTX.lineTo(taxonTimePositions[1], timelineHeight * 4);
+		detailsCTX.stroke();
+		
+		detailsCTX.fillText(
+			details.latest + ' mya',
+			taxonTimePositions[1] - textSize * 7,
+			timelineHeight + textSize * 1.5
+		);
+		
+		// draw a canvas for the discovery time
+		
+		detailsCTX.fillStyle = colours.text;
+		
+		detailsCTX.font = "bold " + textSize + "pt Georgia";
+		detailsCTX.fillText('Time described:', textSize / 2, timelineHeight * 4 + textSize * 1.5);
+		
+		var realEraTime = discoveryTimeRange[3] - discoveryTimeRange[0];
+		
+		var pixelsPerYear = detailsImageSize.x / realEraTime;
+		
+		var timePositions = [
+			0,
+			(discoveryTimeRange[1] - discoveryTimeRange[0]) * pixelsPerYear,
+			(discoveryTimeRange[2] - discoveryTimeRange[0]) * pixelsPerYear,
+			(discoveryTimeRange[3] - discoveryTimeRange[0]) * pixelsPerYear
+		];
+		
+		var taxonTimePosition = (details.discovery - discoveryTimeRange[0])  * pixelsPerYear;
+		
+		// level 3 : actual period timing
+		
+		detailsCTX.font = "bold " + textSize + "pt Georgia";
+		
+		detailsCTX.fillStyle = colours.background;
+		detailsCTX.fillRect(
+			0,
+			timelineHeight * 6,
+			detailsImageSize.x,
+			timelineHeight
+		);
+		
+		detailsCTX.fillStyle = colours.text;
+		for(var i = 0; i < timePositions.length - 1; i++) { // 1800, 1900, 2000
+			detailsCTX.fillText(
+				discoveryTimeRange[i],
+				textSize / 2 + timePositions[i],
+				timelineHeight * 6 + textSize * 1.5
+			);
+			
+			//~ console.log(timePositions[i]);
+			
+			detailsCTX.beginPath();
+			detailsCTX.moveTo(timePositions[i], timelineHeight * 6);
+			detailsCTX.lineTo(timePositions[i], timelineHeight * 7);
+			detailsCTX.stroke();
+		}
+		
+		detailsCTX.fillStyle = colours.text;
+		detailsCTX.font = textSize + "pt Georgia";
+		
+		// level 1 : line to start time
+		detailsCTX.beginPath();
+		detailsCTX.moveTo(taxonTimePosition, timelineHeight * 5);
+		detailsCTX.lineTo(taxonTimePosition, timelineHeight * 7);
+		detailsCTX.stroke();
+		
+		detailsCTX.fillText(
+			details.discovery + ' A.D.',
+			taxonTimePosition - textSize * 6,
+			timelineHeight * 5 + textSize * 1.5
+		);
+		
+		// size comparison image
+		
+		mainImageSize = new P(
+			details.length,
+			details.length * 8 / 16,
+		);
+		
+		personImageSize = new P(
+			1.8 * 2 / 3,
+			1.8
+		);
+		
+		totalSize = new P(
+			personImageSize.x + mainImageSize.x,
+			Math.max(personImageSize.y, mainImageSize.y),
+		)
+		
+		detailsCTX.font = "bold " + textSize + "pt Georgia";
+		detailsCTX.fillText('Size comparison:', textSize / 2, timelineHeight * 7 + textSize * 1.5);
+		
+		detailsCTX.fillStyle = colours.background;
+		detailsCTX.fillRect(
+			0,
+			timelineHeight * 8,
+			detailsCanvas.width,
+			detailsCanvas.height
+		);
+		
+		var pixelsPerMetre;
+		
+		if(totalSize.x > totalSize.y * 2) { // if on the wide side
+			pixelsPerMetre = detailsCanvas.width / totalSize.x;
+		}else{ // if tall
+			pixelsPerMetre = detailsCanvas.width / 2 / totalSize.y;
+		}
+		
+		try{ // draw dinosaur
+			var image = document.createElement('img');
+			image.src = 'images/' + taxon + '.jpg';
+			
+			var imageStartPosition = new P(
+				0,
+				detailsCanvas.height - mainImageSize.y * pixelsPerMetre
+			);
+			
+			//~ console.log(image);
+			
+			var imageOnCanvasSize = new P(
+				mainImageSize.x * pixelsPerMetre,
+				mainImageSize.y * pixelsPerMetre
+			);
+			
+			detailsCTX.drawImage(
+				image,
+				imageStartPosition.x,
+				imageStartPosition.y,
+				imageOnCanvasSize.x,
+				imageOnCanvasSize.y
+			);
+			
+			detailsCTX.beginPath();
+			detailsCTX.moveTo(2, imageStartPosition.y - timelineHeight);
+			detailsCTX.lineTo(2, imageStartPosition.y);
+			detailsCTX.stroke();
+			
+			detailsCTX.beginPath();
+			detailsCTX.moveTo(imageOnCanvasSize.x, imageStartPosition.y - timelineHeight);
+			detailsCTX.lineTo(imageOnCanvasSize.x, imageStartPosition.y);
+			detailsCTX.stroke();
+			
+			detailsCTX.beginPath();
+			detailsCTX.moveTo(2, imageStartPosition.y - timelineHeight / 2);
+			detailsCTX.lineTo(imageOnCanvasSize.x, imageStartPosition.y - timelineHeight / 2);
+			detailsCTX.stroke();
+			
+			detailsCTX.fillStyle = colours.text;
+			
+			detailsCTX.fillText(
+				details.length + 'm',
+				imageOnCanvasSize.x / 2,
+				imageStartPosition.y - timelineHeight 
+			);
+			
+		}catch(e){
+			//~ console.log(e);
+		}
+		
+		try{ // draw human
+			
+			var humanImageStartPosition = new P(
+				detailsCanvas.width - personImageSize.x * pixelsPerMetre,
+				detailsCanvas.height - personImageSize.y * pixelsPerMetre
+			);
+			
+			var humanImageOnCanvasSize = new P(
+				personImageSize.x * pixelsPerMetre,
+				personImageSize.y * pixelsPerMetre
+			);
+			
+			detailsCTX.drawImage(
+				humanImage,
+				humanImageStartPosition.x,
+				humanImageStartPosition.y,
+				humanImageOnCanvasSize.x,
+				humanImageOnCanvasSize.y
+			);
+			
+		}catch(e){
+			console.log(e);
+		}
+		
+		detailsTable.appendChild(detailsCanvas);
 	}
 	
 	htmlElement.appendChild(titleBar);
 	htmlElement.appendChild(imageBox);
 	htmlElement.appendChild(classificationTable);
 	htmlElement.appendChild(detailsTable);
+	
+	//********************MAKE THE NAMES LINKS**************************
 	
 	var nameLinks = document.getElementsByClassName('name-link');
 	
@@ -943,12 +1214,26 @@ function fillDetailsDivider(taxon) {
 				try{
 					fillDetailsDivider(this.textContent.substring(1, this.textContent.length)); // substring, because they start with a space
 				}catch(e){ // if not preceeded by a space
-					fillDetailsDivider(this.textContent); // substring, because they start with a space
+					fillDetailsDivider(this.textContent);
 				}
 			}
 		}
 	}
+	
+	//*********************ZOOM AND TRANSLATE***************************
+	
+	translation.x = 0 - treeWithDetails[taxon].x;
+	translation.y = 0 - treeWithDetails[taxon].y;
+	var depthOfTaxon = getTreeDepth(taxon);
+	translation.zoom  = Math.pow(2, depthOfTaxon - 1.1); // power of two, doubles each taxon depth
+	
+	translation.y += canvasSize.y / Math.pow(2, depthOfTaxon ); // power of two, doubles each taxon depth
+	
+	//~ translation.y += canvasSize.y / 2;
+	drawTree();
 }
+
+fillDetailsDivider('@Dinosauria');
 
 drawTree();
 setTimeout(drawTree, 50); // so images are loaded
