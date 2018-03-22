@@ -2,6 +2,11 @@ body{
 	background-color : #DDD;
 	height : 100%;
 	font-family : Georgia;
+	margin : 0;
+}
+
+canvas{
+	margin : 8px;
 }
 
 button#zoom_out_button{
@@ -51,4 +56,44 @@ button#zoom_out_button{
 
 .name-link:hover{
 	color: blue;
+}
+
+#home_main_divider{
+	background-color: #FFF;
+	margin-top: 0;
+	margin-left: 10%;
+	margin-right: 10%;
+	width: 80%;
+	text-align: center;
+	padding-bottom: 30px;
+}
+
+.home_title{
+	margin: 0;
+	padding-top: 10px;
+	padding-bottom: 100px;
+}
+
+.home_link{
+	text-align: top;
+	color: black;
+	font-style: regular;
+	background-color: #CCC;
+	padding: 20px;
+}
+
+.home_link:hover{
+	text-align: top;
+	color: black;
+	font-style: regular;
+	background-color: #BBB;
+}
+
+.home_link_image{
+	height: 250px;
+}
+
+.home_link_text{
+	width: 100%;
+	font-size: 20px;
 }
