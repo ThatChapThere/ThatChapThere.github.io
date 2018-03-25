@@ -30,6 +30,14 @@ button#zoom_out_button{
 	font-style: italic;
 }
 
+.superfamily{
+	font-weight: bold;
+}
+
+.epifamily{
+	font-weight: bold;
+}
+
 .family{
 	font-weight: bold;
 }
@@ -38,7 +46,19 @@ button#zoom_out_button{
 	font-weight: bold;
 }
 
+.infrafamily{
+	font-weight: bold;
+}
+
 .tribe{
+	font-weight: bold;
+}
+
+.subtribe{
+	font-weight: bold;
+}
+
+.infratribe{
 	font-weight: bold;
 }
 
