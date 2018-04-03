@@ -200,12 +200,6 @@ function Skeleton(tail, back, neck, leg, arm, jawLength) { // the details of a s
 
 //**************************FEATURES OBJECTS****************************
 
-var featureType = {
-	'SAIL' : 0,
-	'PLATE' : 1,
-	'SPIKE' : 2,
-}
-
 /*
  * feature sizes in metres
  * angles are relative to the parent bone, not absolute like other bones
@@ -221,11 +215,12 @@ var featureType = {
  * 
  */
 
-function Spike(distanceOnBone, height, width, angle) {
+function Spike(distanceOnBone, height, width, angle, damage) {
 	this.distanceOnBone = distanceOnBone; // back toward the pelvis
 	this.height = height;
 	this.width = width;
 	this.angle = angle;
+	this.damage = damage;
 	
 	this.draw = function(dinosaur, parentName) {
 		var parentIndex = dinosaur.indexOfBones[ parentName ]; // numeric index of bone
@@ -275,14 +270,25 @@ function Spike(distanceOnBone, height, width, angle) {
 		
 		ctx.stroke();
 		ctx.beginPath();
+		
+		dinosaur.damagePoints.push(
+			new DamagePoint(
+				new Position(
+					parentPosition.x + anchor2.x + centreSpine.x,
+					parentPosition.y + anchor2.y + centreSpine.y
+				),
+				this.damage
+			)
+		);
 	}
 }
 
-function BluntSpike(distanceOnBone, height, width, angle) {
+function BluntSpike(distanceOnBone, height, width, angle, damage) {
 	this.distanceOnBone = distanceOnBone; // back toward the pelvis
 	this.height = height;
 	this.width = width;
 	this.angle = angle;
+	this.damage = damage;
 	
 	this.draw = function(dinosaur, parentName) {
 		var parentIndex = dinosaur.indexOfBones[ parentName ]; // numeric index of bone
@@ -338,14 +344,26 @@ function BluntSpike(distanceOnBone, height, width, angle) {
 		
 		ctx.stroke();
 		ctx.beginPath();
+		
+		dinosaur.damagePoints.push(
+			new DamagePoint(
+				new Position(
+					parentPosition.x + anchor2.x + centreSpine.x,
+					parentPosition.y + anchor2.y + centreSpine.y
+				),
+				this.damage
+			)
+		);
 	}
 }
 
-function CurvedSpike(distanceOnBone, height, width, guidePointDistanceOnBone, guidePointHeight, angle) {
+function CurvedSpike(distanceOnBone, height, width, guidePointDistanceOnBone, guidePointHeight, angle, damage) {
 	this.distanceOnBone = distanceOnBone; // back toward the pelvis
 	this.height = height;
 	this.width = width;
 	this.angle = angle;
+	this.damage = damage;
+	
 	this.guidePointDistanceOnBone = guidePointDistanceOnBone;
 	this.guidePointHeight = guidePointHeight;
 	
@@ -413,13 +431,28 @@ function CurvedSpike(distanceOnBone, height, width, guidePointDistanceOnBone, gu
 		
 		ctx.stroke();
 		ctx.beginPath();
+		
+		var anchor2 = new Position(vector.x, vector.y); // copy direction
+		var anchor2Distance = this.distanceOnBone;
+		anchor2.multiply(anchor2Distance); // set a distance
+		
+		dinosaur.damagePoints.push(
+			new DamagePoint(
+				new Position(
+					parentPosition.x + anchor2.x + centreSpine.x,
+					parentPosition.y + anchor2.y + centreSpine.y
+				),
+				this.damage
+			)
+		);
 	}
 }
 
-function Dome(distanceOnBone, radius, angle) {
+function Dome(distanceOnBone, radius, angle, damage) {
 	this.distanceOnBone = distanceOnBone;
 	this.radius = radius * gameDimensions.pixelsPerMetre;
 	this.angle = angle;
+	this.damage = damage;
 	
 	this.draw = function(dinosaur, parentName) {
 		var parentIndex = dinosaur.indexOfBones[ parentName ]; // numeric index of bone
@@ -447,6 +480,29 @@ function Dome(distanceOnBone, radius, angle) {
 		ctx.stroke();
 		ctx.beginPath();
 		
+		// The following variables are purely for the damage point, as the furthest point on the dome surface from the actual bone
+		
+		var anchor = new Position(vector.x, vector.y); // copy direction
+		var anchorDistance = this.distanceOnBone;
+		anchor.multiply(anchorDistance); // set a distance
+		
+		var damagePointSpineVector = getNormalVector(parentAngle + this.angle + DEG * 90);
+		var damagePointSpine = new Position(
+			damagePointSpineVector.x,
+			damagePointSpineVector.y
+		);
+		damagePointSpine.multiply(this.radius);
+		// copy direction
+		
+		dinosaur.damagePoints.push(
+			new DamagePoint(
+				new Position(
+					parentPosition.x + anchor.x + centreSpine.x,
+					parentPosition.y + anchor.y + centreSpine.y
+				),
+				this.damage
+			)
+		);
 	}
 }
 
@@ -627,10 +683,11 @@ function Feathers(angle, number, length) {
 	}
 }
 
-function Feature(feature, parentName, colour) {//*****MAIN FEATURES*****
+function Feature(feature, parentName, damage, colour) {//*****MAIN FEATURES*****
 	this.feature = feature;
 	this.parentName = parentName;
 	this.colour = colour;
+	
 	this.draw = function (dinosaur) {
 		ctx.strokeStyle = colours.features;
 		this.feature.draw(dinosaur, parentName);
@@ -1101,7 +1158,7 @@ function DamagePoint(position, damage) {
 	this.damage = damage;
 }
 
-var damageRange = 0.1; // 10 cm
+var damageRange = 1; // 1000 cm
 
 //****************************DINOSAUR**********************************
 
@@ -1134,10 +1191,12 @@ function Dinosaur(position, skeleton, details) {
 		this.lastFrameDigitPositions[ j ] = new Position(0, 0);
 	}
 	
-	this.velocity = new Position(0, 0); // velocity of motion in m/sd
+	this.velocity = new Position(0, 0); // velocity of motion in m/s
 	this.lastFramePosition = new Position(this.position.x, this.position.y);
 	
 	this.details = details;
+	
+	this.damagePoints = [];
 	
 	//**************************ANIMATION VALUES************************
 	
@@ -1352,9 +1411,40 @@ function Dinosaur(position, skeleton, details) {
 			);
 			
 		}
-	
+		
+		this.damagePoints = [];
+		
 		for(var i = 0; i < this.details.features.length; i++) { // draw all of the features
 			this.details.features[i].draw(this);
+		}
+		
+		for(var i = 0; i < this.damagePoints.length; i++) { // draw a circle for all of the damage points
+			
+			ctx.beginPath(); // begin path
+			
+			ctx.fillStyle = colours.features;
+			
+			ctx.arc(
+				this.damagePoints[i].position.x,
+				this.damagePoints[i].position.y,
+				gameDimensions.jointBallRadius,
+				0,
+				Math.PI*2,
+				false
+			);
+			
+			ctx.fill();
+			
+			ctx.beginPath();
+			
+			ctx.fillStyle = 'black';
+			
+			ctx.fillText(
+				this.damagePoints[i].damage,
+				this.damagePoints[i].position.x,
+				this.damagePoints[i].position.y,
+			);
+			
 		}
 		
 		this.details.sail.draw(this);
@@ -1531,7 +1621,7 @@ function Dinosaur(position, skeleton, details) {
 	
 	this.damage = function(damagePoint) { // damage points from a specific point
 		for(var i = 1; i < this.skeletalArray.length; i++) {
-			if(! isNaN(this.skeletalArray[i])) { // if bone actually has a health value
+			if(! isNaN(this.skeletalArray[i].health)) { // if bone actually has a health value
 				var distance = new Position(
 					this.skeletalArray[i].position.x - damagePoint.position.x,
 					this.skeletalArray[i].position.y - damagePoint.position.y
@@ -1542,7 +1632,11 @@ function Dinosaur(position, skeleton, details) {
 				if(range < damageRange * gameDimensions.pixelsPerMetre) {
 					var damage = damagePoint.damage / gameFPS;
 					
+					this.skeletalArray[i].health -= damage;
 					
+					if(this.skeletalArray[i].health < 0) {
+						this.isAlive = false;
+					}
 				}
 			}
 		}
@@ -1569,11 +1663,11 @@ function Dinosaur(position, skeleton, details) {
 var tyrannosaurus = new Dinosaur(
 	new Position(1500, 600),
 	new Skeleton(
-		new SpineSection(7, 6, 1),
-		new SpineSection(7, 3, 1),
-		new SpineSection(7, 1.5, 1),
-		new Limb(2,2,0.5,[0.5, 0.5, 0.5],3, 1),
-		new Limb(0.4,0.4,0.1,[0.1, 0.1],2, 1),
+		new SpineSection(7, 6, 10),
+		new SpineSection(7, 3, 10),
+		new SpineSection(7, 1.5, 10),
+		new Limb(2,2,0.5,[0.5, 0.5, 0.5],3, 10),
+		new Limb(0.4,0.4,0.1,[0.1, 0.1],2, 10),
 		1.5
 	),
 	new DetailsObject(
@@ -1699,10 +1793,16 @@ var argentinosaurus = new Dinosaur(
 		6500,
 		3,
 		new Position(0, 0),
-		[new Feature(new Spike(0, 6, 0.5, DEG * 250), 'neck6', '#512222')],
+		[new Feature(new Spike(0, 6, 0.5, DEG * 250, 1), 'neck6', '#512222')],
 		new Sail([])
 	)
 );
+
+var dinosaurs = [
+	tyrannosaurus,
+	deinonychus,
+	argentinosaurus
+];
 
 //*****************************MAIN LOOP********************************
 
@@ -1713,9 +1813,19 @@ function draw() {
 	ctx.fillStyle = colours.floor;
 	ctx.fillRect(0, groundY, canvasSize.x, gameDimensions.groundHeight); // the floor
 	
-	argentinosaurus.loop();
-	tyrannosaurus.loop();
-	deinonychus.loop();
+	for(var i = 0; i < dinosaurs.length; i++) {
+		dinosaurs[i].loop();
+		
+		for(var j = 0; j < dinosaurs.length; j++) { // go through dinosaurs again
+			if(i != j) { // if it isn't itself
+				for(var k = 0; k < dinosaurs[i].damagePoints.length; k++) {
+					var damagePoint = dinosaurs[i].damagePoints[k];
+					
+					dinosaurs[j].damage(damagePoint);
+				}
+			}
+		}
+	}
 	
 	gameTimer += frameDelay;
 	setTimeout(draw, frameDelay);
