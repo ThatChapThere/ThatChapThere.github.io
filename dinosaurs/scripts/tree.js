@@ -11,6 +11,8 @@ RULES:
 
 var ctx = document.getElementsByTagName('canvas')[0].getContext('2d'); // get context to draw
 
+//~ ctx.imageSmoothingQuality = "high";
+
 function P(x,y) {
 	this.x=x;
 	this.y=y;
@@ -28,6 +30,10 @@ var canvasSize = new P(
 	window.innerWidth / 2.5 + imageOnCanvasSize.x + textMaximumLength,
 	window.innerWidth / 2.5
 ); //cartesian for the size of the canvas
+
+document.getElementById('side_divider').style.height = canvasSize.y + 'px';
+
+//~ console.log(document.getElementById('side_divider').style.height);
 
 var detailsImageSize = new P(
 	640,
@@ -202,7 +208,7 @@ var genera = { //genera database
 	'Albertosaurus' :           new Genus(73,    67,    1905, 10, ['Deinodon'], 
 	                                                                    '', ['Canada'],       'Osborn',                 false, ''),
 	'Albinykus' :               new Genus(86,    72,    2011, 0.5,  [], '', ['Mongolia'],     'Nesbitt et al',          false, ''),
-	'Alcovasaurus' :            new Genus(156,   151,   2016, 7,    [], '', ['USA'],          'Galton and Carpenter',   false, ''),
+	'Alcovasaurus' :            new Genus(156,   151,   2016, 7,    [], '', ['USA'],          'Galton & Carpenter',   false, ''),
 	'Alectrosaurus' :           new Genus(84,    71,    1933, 5,    [], '', ['Mongolia'],     'Gilmore',                false, ''),
 	'Aletopelta' :              new Genus(84,    71,    2001, 6,    [], '', ['USA'],          'Ford & Kirkland',        false, ''),
 	'Algoasaurus' :             new Genus(145,   136,   1904, 9,    [], '', ['South Africa'], 'Bloom',                  false, ''),
@@ -248,7 +254,7 @@ var genera = { //genera database
 	'Angulomastacator' :        new Genus(75.7,  78.1,  2009, 8,    [], '', ['USA'],          'Wagner & Lehman,',       false, 
 		'The left maxilla (the main tooth-bearing bone of the upper jaw) is curved down approximately 45° at its anterior end, with the tooth row bent to fit, unlike any other hadrosaur.'),
 	'Angolatitan' :             new Genus(94,    89,    2011, 12,   [], '', ['Angola'],       'Mateus et al.',          false, ''),
-	'Aniksosaurus' :            new Genus(96,    91,    2006, 2.5,  [], '', ['Aregntina'],    'Martínez & Novas',       false, ''),
+	'Aniksosaurus' :            new Genus(96,    91,    2006, 2.5,  [], '', ['Argentina'],    'Martínez & Novas',       false, ''),
 	'Animantarx' :              new Genus(102,   99,    1999, 3,    [], '', ['USA'],          'Carpenter et al.',       false, ''),
 	'Ankylosaurus' :            new Genus(67,    66,    1908, 9,    [], '', ['USA'],          'Brown',                  false, ''),
 	'Anodontosaurus' :          new Genus(73,    67,    1929, 5,    [], '', ['Canada'],       'Sternberg',              false, ''),
@@ -264,10 +270,55 @@ var genera = { //genera database
 	'Apatoraptor' :             new Genus(84,    71,    2016, 2,    [], '', ['Canada'],       'Funston & Currie',       false, ''),
 	'Apatosaurus' :             new Genus(156,   151,   1877, 23,   [], '', ['USA'],          'Marsh',                  false, ''),
 	'Appalachiosaurus' :        new Genus(82,    76,    2005, 10.5, [], '', ['USA'],          'Carr et al.',            false, ''),
-	'Aquilops' :                new Genus(108,   104,   2014, 0.6,  [], '', ['USA'],          'Farke et al.',            false, ''),
-} // Draw Anomalipes image first
+	'Aquilops' :                new Genus(108,   104,   2014, 0.6,  [], '', ['USA'],          'Farke et al.',           false, ''),
+	'Aragosaurus' :             new Genus(130,   125,   1987, 12,   [], '', ['Spain'],        'Sanz et al.',            false, ''),
+	'Aralosaurus' :             new Genus(86,    71,    1968, 8,    [], '', ['Kazakhstan'],   'Rozhdestvensky',         false, ''),
+	'Archaeoceratops' :         new Genus(130,   125,   1997, 1.5,  [], '', ['China'],        'Dong & Azuma',           false, ''),
+	'Archaeodontosaurus' :      new Genus(174.1, 163.5, 2005, 3,    [], '', ['Madagascar'],   'Buffetaut',              false, 'This was probably a true sauropod, but had prosauropod like teeth.'),
+	'Archaeopteryx' :           new Genus(151,   145,   1861, 0.4,  ['Griphosaurus', 'Griphornis', 'Jurapteryx', 'Archaeornis'], 
+	                                                                    '', ['Germany'],      'von Meyer',              false, ''),
+	'Archaeornithoides' :       new Genus(84,    71,    1992, 1,    [], 'Velociraptor',
+	                                                                        ['Mongolia'],     'Elzanowksi & Wellnhofer',false, 'In 1992 Andrzej Elżanowski and Peter Wellnhofer noted that the only known specimen of Archaeornithoides sported distinct bite marks and suggested its braincase had been chewed off by a weasel-like critter, then a decade later Jim Clark and colleagues mused that it may have passed through the digestive tract of the predator before fossilization. If true, this is the first evidence of Mesozoic mammals eating dinosaurs and, as far as we know, the only example of such a journey in the entire fossil record.'),
+	'Archaeornithomimus' :      new Genus(84,    71,    1972, 3.3,  [], '', ['China'],        'Russel',                 false, ''),
+	'Arcovenator' :             new Genus(76,    72,    2013, 5.8,  [], '', ['France'],       'Tortosa et al.',         false, ''),
+	'Arcusaurus' :              new Genus(201.3, 190.8, 2011, 6.5,  [], '', ['South Africa'], 'Yates et al.',           false, ''),
+	'Arkansaurus' :             new Genus(125,   99,    2018, 3.5,  [], '', ['USA'],          'Hunt & Quinn',           false, ''),
+	'Arkharavia' :              new Genus(71,    66,    2010, 10,   [], '', ['Russia'],       'Alifanov & Bolotsky',    true,  ''),
+	'Arrhinoceratops' :         new Genus(73,    67,    1925, 7,    [], '', ['Canada'],       'parks',                  true,  ''),
+	'Arstanosaurus' :           new Genus(86,    71,    1982, 4,    [], 'Batyrosaurus',
+	                                                                        ['Kazakhstan'],   'Shilin & Suslov',        false, ''),
+	'Asiaceratops' :            new Genus(100,   95,    1989, 1,    [], '', ['Uzbekistan', 'China', 'Mongolia'],
+	                                                                                          'Lev Nesov, L.F. Kaznyshkina & Gennadiy Olegovich Cherepanov',
+	                                                                                                                    true,  ''),
+	'Asiatosaurus' :            new Genus(125,   100,   1924, 10,   [], '', ['China'],        'Osborn',                 true,  'Tooth taxon'),
+	'Astrodon' :                new Genus(118,   110,   1865, 15,   ['Pleurocoelus', 'Astrodontaurus', 'Astrodonius', 'Astrodontosaurus'], 
+	                                                                    '', ['USA'],          'Leidy',                  false, ''),
+	'Astrophocaudia' :          new Genus(112,   99,    2012, 10,   [], '', ['USA'],          'D’Emic',                 false, ''),
+	'Asylosaurus' :             new Genus(209,   201,   1936, 2,    [], '', ['England'],      'Galton',                 false, ''),
+}
 
-var geologicalTimeRange = [250, 201, 145, 66];
+var countryImages = {};
+
+var worldMapImage = document.createElement('img');
+worldMapImage.src = 'alt_images/geography/world_coloured.png';
+
+var worldMapSizeRatio = 552 / 1280;
+
+for(var i in genera) { // add all of the country images
+	var countries = genera[i].countries;
+	
+	for(var j = 0; j < countries.length; j++) { // loop through the countries of a genus
+		var country = countries[j];
+		
+		if( !countryImages[country] ){ // if not already registered
+			//~ console.log(country);
+			countryImages[country] = document.createElement('img');
+			countryImages[country].src = 'alt_images/geography/' + country + '.png';
+		}
+	}
+}
+
+var geologicalTimeRange = [251.9, 201.3, 140, 66];
 var eraNames = ['Triassic', 'Jurassic', 'Cretaceous'];
 var eraColours = ['#FF7F00', '#7F00FF', '#00FF7F'];
 var discoveryTimeRange = [1800, 1900, 2000, 2050];
@@ -276,112 +327,135 @@ var tree = { // basic tree
 	'@Dinosauria' : '@Dinosauria',
 		'@Saurischia' : '@Dinosauria',
 			'@Sauropodomorpha' : '@Saurischia',
-				'@Guaibasauridae' : '@Sauropodomorpha',
-					'-Guaibasauridae' : '@Guaibasauridae',
-						'Agnosphitys' : '-Guaibasauridae',
-							'cromhallensis' : 'Agnosphitys',
-				'#Thecodontosauridae1' : '@Sauropodomorpha',
-					'@Thecodontosauridae' : '#Thecodontosauridae1',
-						'-Thecodontosauridae' : '@Thecodontosauridae',
-							'Agrosaurus' : '-Thecodontosauridae',
-								'macgillivrayi' : 'Agrosaurus',
-					'#Massospondylidae1' : '#Thecodontosauridae1',
-						'@Massospondylidae' : '#Massospondylidae1',
-							'Adeopapposaurus' : '@Massospondylidae',
-								'mognai' : 'Adeopapposaurus',
-						'@Anchisauria' : '#Massospondylidae1',
-							'Anchisaurus' : '@Anchisauria',
-								 'polyzelus' : 'Anchisaurus',
-							'#Aardonyx1' : '@Anchisauria',
-								'Aardonyx' : '#Aardonyx1',
-									'celestae' : 'Aardonyx',
-								'@Sauropoda' : '#Aardonyx1',
-									'-Sauropoda' : '@Sauropoda',	
-										'Aepisaurus' : '-Sauropoda',
-											'elephantinus' : 'Aepisaurus',
-									'#Antetonitrus1' : '@Sauropoda',
-										'Antetonitrus' : '#Antetonitrus1',
-											'ingenipes': 'Antetonitrus',
-									'#Gravisauria1' : '#Antetonitrus1',
-										'Amygdalodon' : '#Gravisauria1',
-											'patagonicus' : 'Amygdalodon',
-										'@Gravisauria' : '#Gravisauria1',
-											'@Eusauropoda' : '@Gravisauria',
-												'@Neosauropoda' : '@Eusauropoda',
-													'-Neosauropoda' : '@Neosauropoda',
-														'Algoasaurus' : '-Neosauropoda',
-															'bauri' : 'Algoasaurus',
-													'@Macronaria' : '@Neosauropoda',
-														'#Diplodocoidea1' : '@Macronaria',
-															'@Diplodocoidea' : '#Diplodocoidea1',
-																'@Diplodocimorpha' : '@Diplodocoidea',
-																	'@Rebbachisauridae' : '@Diplodocimorpha',
-																		'Amazonsaurus' : '@Rebbachisauridae',
-																			'maranhensis' : 'Amazonsaurus',
-																	'@Flagellicaudata' : '@Diplodocimorpha',
-																		'@Diplodocidae' : '@Flagellicaudata',
-																			'#Amphicoelias1' : '@Diplodocidae',
-																				'Amphicoelias' : '#Amphicoelias1',
-																					'altus' : 'Amphicoelias',
-																					'fragillimus?' : 'Amphicoelias',
-																				'#Apatosaurinae1' : '#Amphicoelias1',
-																					'@Apatosaurinae' : '#Apatosaurinae1',
-																						'Apatosaurus' : '@Apatosaurinae',
-																							'ajax' : 'Apatosaurus',
-																							'louisae' : 'Apatosaurus',
-																		'@Dicraeosauridae' : '@Flagellicaudata',
-																			'#Suuwassea1' : '@Dicraeosauridae',
-																				'Amargatitanis' : '#Suuwassea1',
-																					'macni' : 'Amargatitanis',
-																			'Amargasaurus' : '@Dicraeosauridae',
-																				'cazaui' : 'Amargasaurus',
-															'#Camarasauridae1' : '#Diplodocoidea1',
-																'@Camarasauridae' : '#Camarasauridae1',
-																	'Abrosaurus' : '@Camarasauridae',
-																		'dongpoi' : 'Abrosaurus',
-																'#Tehuelchesaurus1' : '#Camarasauridae1',
-																	'@Titanosauriformes' : '#Tehuelchesaurus1',
-																		'@Brachiosauridae' : '@Titanosauriformes',
-																			'-Brachiosauridae' : '@Brachiosauridae',
-																				'Abydosaurus' : '-Brachiosauridae',
-																					'mcintoshi' : 'Abydosaurus',
-																		'@Somphospondyli' : '@Titanosauriformes',
-																			'-Somphospondyli' : '@Somphospondyli',
-																				'Agustinia' : '-Somphospondyli',
-																					'ligabuei' : 'Agustinia',
-																			'#Titanosauria1' : '@Somphospondyli',
-																			'Angolatitan' : '#Titanosauria1',
-																				'adamastor' : 'Angolatitan',
-																			'@Titanosauria' : '#Titanosauria1',
-																				'#Andesaurus1' : '@Titanosauria',
-																					'Andesaurus' : '#Andesaurus1',
-																						'delgadoi' : 'Andesaurus',
-																					'@Lithostrotia' : '#Andesaurus1',
-																						'-Lithostrotia' : '@Lithostrotia',
-																							'@Antarctosauridae' : '-Lithostrotia',
-																								'Antarctosaurus' : '@Antarctosauridae',
-																									'wichmannianus' : 'Antarctosaurus',
-																						'#Lognkosauria1' : '@Lithostrotia',
-																							'@Lognkosauria' : '#Lognkosauria1',
-																								'Aegyptosaurus' : '@Lognkosauria',
-																									'baharijensis' : 'Aegyptosaurus',
-																							'#Saltasauroidea1' : '#Lognkosauria1',
-																								'@Nemegtosauridae' : '#Saltasauroidea1',
-																									'Ampelosaurus' : '@Nemegtosauridae',
-																										'atacis' : 'Ampelosaurus',
-																								'@Saltasauroidea' : '#Saltasauroidea1' ,
-																									'@Saltasauridae' : '@Saltasauroidea',
-																										'@Opisthocoelicaudiinae' : '@Saltasauridae',
-																											'Alamosaurus' : '@Opisthocoelicaudiinae',
-																												'sanjuanensis' : 'Alamosaurus',
-																									'@Aeolosaurini' : '@Saltasauroidea',
-																										'Adamantisaurus' : '@Aeolosaurini',
-																											'mezzalirai' : 'Adamantisaurus',
-																										'Aeolosaurus' : '@Aeolosaurini',
-																											'maximus' : 'Aeolosaurus',
-																											'#colhuehuapensis1' : 'Aeolosaurus',
-																												'colhuehuapensis' : '#colhuehuapensis1',
-																												'rionegrinus' : '#colhuehuapensis1',
+				'-Sauropodomorpha' : '@Sauropodomorpha',
+					'Asylosaurus' : '-Sauropodomorpha',
+						'yalensis' : 'Asylosaurus',
+				'#Guaibasauridae1' : '@Sauropodomorpha',
+					'@Guaibasauridae' : '#Guaibasauridae1',
+						'-Guaibasauridae' : '@Guaibasauridae',
+							'Agnosphitys' : '-Guaibasauridae',
+								'cromhallensis' : 'Agnosphitys',
+					'#Thecodontosauridae1' : '#Guaibasauridae1',
+						'@Thecodontosauridae' : '#Thecodontosauridae1',
+							'-Thecodontosauridae' : '@Thecodontosauridae',
+								'Agrosaurus' : '-Thecodontosauridae',
+									'macgillivrayi' : 'Agrosaurus',
+						'#Efraasia1' : '#Thecodontosauridae1',
+							'#Efraasia2' : '#Efraasia1',
+								'Arcusaurus' : '#Efraasia2',
+									'pereirabdalorum' : 'Arcusaurus',
+							'@Plateosauria' : '#Efraasia1',
+								'@Massopoda' : '@Plateosauria',
+									'#Massospondylidae1' : '@Massopoda',
+										'@Massospondylidae' : '#Massospondylidae1',
+											'Adeopapposaurus' : '@Massospondylidae',
+												'mognai' : 'Adeopapposaurus',
+										'@Anchisauria' : '#Massospondylidae1',
+											'Anchisaurus' : '@Anchisauria',
+												 'polyzelus' : 'Anchisaurus',
+											'#Aardonyx1' : '@Anchisauria',
+												'Aardonyx' : '#Aardonyx1',
+													'celestae' : 'Aardonyx',
+												'@Sauropoda' : '#Aardonyx1',
+													'-Sauropoda' : '@Sauropoda',	
+														'Aepisaurus' : '-Sauropoda',
+															'elephantinus' : 'Aepisaurus',
+														'Archaeodontosaurus' : '-Sauropoda',
+															'descouensi' : 'Archaeodontosaurus',
+														'Asiatosaurus' : '-Sauropoda',
+															'mongoliensis' : 'Asiatosaurus',
+															'kwangshiensis' : 'Asiatosaurus',
+													'#Antetonitrus1' : '@Sauropoda',
+														'Antetonitrus' : '#Antetonitrus1',
+															'ingenipes': 'Antetonitrus',
+													'#Gravisauria1' : '#Antetonitrus1',
+														'Amygdalodon' : '#Gravisauria1',
+															'patagonicus' : 'Amygdalodon',
+														'@Gravisauria' : '#Gravisauria1',
+															'@Eusauropoda' : '@Gravisauria',
+																'@Neosauropoda' : '@Eusauropoda',
+																	'-Neosauropoda' : '@Neosauropoda',
+																		'Algoasaurus' : '-Neosauropoda',
+																			'bauri' : 'Algoasaurus',
+																	'@Macronaria' : '@Neosauropoda',
+																		'#Diplodocoidea1' : '@Macronaria',
+																			'@Diplodocoidea' : '#Diplodocoidea1',
+																				'@Diplodocimorpha' : '@Diplodocoidea',
+																					'@Rebbachisauridae' : '@Diplodocimorpha',
+																						'Amazonsaurus' : '@Rebbachisauridae',
+																							'maranhensis' : 'Amazonsaurus',
+																					'@Flagellicaudata' : '@Diplodocimorpha',
+																						'@Diplodocidae' : '@Flagellicaudata',
+																							'#Amphicoelias1' : '@Diplodocidae',
+																								'Amphicoelias' : '#Amphicoelias1',
+																									'altus' : 'Amphicoelias',
+																									'fragillimus?' : 'Amphicoelias',
+																								'#Apatosaurinae1' : '#Amphicoelias1',
+																									'@Apatosaurinae' : '#Apatosaurinae1',
+																										'Apatosaurus' : '@Apatosaurinae',
+																											'ajax' : 'Apatosaurus',
+																											'louisae' : 'Apatosaurus',
+																						'@Dicraeosauridae' : '@Flagellicaudata',
+																							'#Suuwassea1' : '@Dicraeosauridae',
+																								'Amargatitanis' : '#Suuwassea1',
+																									'macni' : 'Amargatitanis',
+																							'Amargasaurus' : '@Dicraeosauridae',
+																								'cazaui' : 'Amargasaurus',
+																			'#Camarasauridae1' : '#Diplodocoidea1',
+																				'@Camarasauridae' : '#Camarasauridae1',
+																					'Abrosaurus' : '@Camarasauridae',
+																						'dongpoi' : 'Abrosaurus',
+																				'#Aragosaurus1' : '#Camarasauridae1',
+																					'Aragosaurus' : '#Aragosaurus1',
+																						'ischiaticus' : 'Aragosaurus',
+																					'@Titanosauriformes' : '#Aragosaurus1',
+																						'@Brachiosauridae' : '@Titanosauriformes',
+																							'-Brachiosauridae' : '@Brachiosauridae',
+																								'Abydosaurus' : '-Brachiosauridae',
+																									'mcintoshi' : 'Abydosaurus',
+																						'@Somphospondyli' : '@Titanosauriformes',
+																							'-Somphospondyli' : '@Somphospondyli',
+																								'Agustinia' : '-Somphospondyli',
+																									'ligabuei' : 'Agustinia',
+																								'Arkharavia' : '-Somphospondyli',
+																									'heterocoelica' : 'Arkharavia',
+																								'Astrophocaudia' : '-Somphospondyli',
+																							'#Astrodon1' : '@Somphospondyli',
+																								'Astrodon' : '#Astrodon1',
+																									'johnstoni' : 'Astrodon',
+																								'#Angolatitan1' : '#Astrodon1',
+																									'Angolatitan' : '#Angolatitan1',
+																										'adamastor' : 'Angolatitan',
+																									'@Titanosauria' : '#Angolatitan1',
+																										'#Andesaurus1' : '@Titanosauria',
+																											'Andesaurus' : '#Andesaurus1',
+																												'delgadoi' : 'Andesaurus',
+																											'@Lithostrotia' : '#Andesaurus1',
+																												'-Lithostrotia' : '@Lithostrotia',
+																													'@Antarctosauridae' : '-Lithostrotia',
+																														'Antarctosaurus' : '@Antarctosauridae',
+																															'wichmannianus' : 'Antarctosaurus',
+																												'#Lognkosauria1' : '@Lithostrotia',
+																													'@Lognkosauria' : '#Lognkosauria1',
+																														'Aegyptosaurus' : '@Lognkosauria',
+																															'baharijensis' : 'Aegyptosaurus',
+																													'#Saltasauroidea1' : '#Lognkosauria1',
+																														'@Nemegtosauridae' : '#Saltasauroidea1',
+																															'Ampelosaurus' : '@Nemegtosauridae',
+																																'atacis' : 'Ampelosaurus',
+																														'@Saltasauroidea' : '#Saltasauroidea1' ,
+																															'@Saltasauridae' : '@Saltasauroidea',
+																																'@Opisthocoelicaudiinae' : '@Saltasauridae',
+																																	'Alamosaurus' : '@Opisthocoelicaudiinae',
+																																		'sanjuanensis' : 'Alamosaurus',
+																															'@Aeolosaurini' : '@Saltasauroidea',
+																																'Adamantisaurus' : '@Aeolosaurini',
+																																	'mezzalirai' : 'Adamantisaurus',
+																																'Aeolosaurus' : '@Aeolosaurini',
+																																	'maximus' : 'Aeolosaurus',
+																																	'#colhuehuapensis1' : 'Aeolosaurus',
+																																		'colhuehuapensis' : '#colhuehuapensis1',
+																																		'rionegrinus' : '#colhuehuapensis1',
 		'@Ornithoscelida' : '@Dinosauria',
 			'@Ornithischia' : '@Ornithoscelida',
 				'-Ornithischia' : '@Ornithischia',
@@ -463,39 +537,49 @@ var tree = { // basic tree
 														'#Aquilops1' : '@Neoceratopsia',
 															'Aquilops' :  '#Aquilops1',
 																'americanus' : 'Aquilops',
-														'@Coronosauria' : '#Aquilops1',
-															'@Protoceratopsidae' : '@Coronosauria',
-																'@Bagaceratopidae' : '@Protoceratopsidae',
-																	'Ajkaceratops' : '@Bagaceratopidae',
-																		'kozmai' : 'Ajkaceratops',
-															'#Leptoceratopsidae1' : '@Coronosauria',
-																'@Ceratopsidae' : '#Leptoceratopsidae1',
-																	'-Ceratopsidae' : '@Ceratopsidae',
-																		'Agathaumas' : '-Ceratopsidae',
-																			'sylvestris' : 'Agathaumas',
-																	'#Chasmosaurinae1' : '@Ceratopsidae',
-																		'@Centrosaurinae' : '#Chasmosaurinae1',
-																			'#Nasutoceratopsini1' : '@Centrosaurinae',
-																				'#Xenoceratops1' : '#Nasutoceratopsini1',
-																					'#Albertaceratops1' : '#Xenoceratops1',
-																						'Albertaceratops' : '#Albertaceratops1',
-																							'nesmoi' : 'Albertaceratops',
-																						'@Eucentrosaura' : '#Albertaceratops1',
-																							'@Pachyrhinosaurini' : '@Eucentrosaura',
-																								'@Pachyrostra' : '@Pachyrhinosaurini',
-																									'Achelousaurus' : '@Pachyrostra',
-																										'horneri' : 'Achelousaurus',
-																		'@Chasmosaurinae' : '#Chasmosaurinae1',
-																			'Agujaceratops' : '@Chasmosaurinae',
-																				'mariscalensis' : 'Agujaceratops',
-																				'mavericus' : 'Agujaceratops',
-																			'Anchiceratops' : '@Chasmosaurinae',
-																				'ornatus' : 'Anchiceratops',
-																		
+															'#Archaeoceratops1' : '#Aquilops1',
+																'Archaeoceratops' : '#Archaeoceratops1',
+																	'oshimai' : 'Archaeoceratops',
+																	'yujingziensis' : 'Archaeoceratops',
+															'@Coronosauria' : '#Archaeoceratops1',
+																'@Protoceratopsidae' : '@Coronosauria',
+																	'@Bagaceratopidae' : '@Protoceratopsidae',
+																		'Ajkaceratops' : '@Bagaceratopidae',
+																			'kozmai' : 'Ajkaceratops',
+																'#Leptoceratopsidae1' : '@Coronosauria',
+																	'@Leptoceratopsidae' : '#Leptoceratopsidae1',
+																		'Asiaceratops' : '@Leptoceratopsidae',
+																			'salsopaludalis' : 'Asiaceratops',
+																			'sulcidens?' : 'Asiaceratops',
+																	'@Ceratopsidae' : '#Leptoceratopsidae1',
+																		'-Ceratopsidae' : '@Ceratopsidae',
+																			'Agathaumas' : '-Ceratopsidae',
+																				'sylvestris' : 'Agathaumas',
+																		'#Chasmosaurinae1' : '@Ceratopsidae',
+																			'@Centrosaurinae' : '#Chasmosaurinae1',
+																				'#Nasutoceratopsini1' : '@Centrosaurinae',
+																					'#Xenoceratops1' : '#Nasutoceratopsini1',
+																						'#Albertaceratops1' : '#Xenoceratops1',
+																							'Albertaceratops' : '#Albertaceratops1',
+																								'nesmoi' : 'Albertaceratops',
+																							'@Eucentrosaura' : '#Albertaceratops1',
+																								'@Pachyrhinosaurini' : '@Eucentrosaura',
+																									'@Pachyrostra' : '@Pachyrhinosaurini',
+																										'Achelousaurus' : '@Pachyrostra',
+																											'horneri' : 'Achelousaurus',
+																			'@Chasmosaurinae' : '#Chasmosaurinae1',
+																				'Agujaceratops' : '@Chasmosaurinae',
+																					'mariscalensis' : 'Agujaceratops',
+																					'mavericus' : 'Agujaceratops',
+																				'#Anchiceratops1' : '@Chasmosaurinae',
+																					'Anchiceratops' : '#Anchiceratops1',
+																						'ornatus' : 'Anchiceratops',
+																					'Arrhinoceratops' : '#Anchiceratops1',
+																						'brachyops' : 'Arrhinoceratops',
 										'@Ornithopoda' : '@Cerapoda',
 											'@Iguanodontia' : '@Ornithopoda',
-												'Elasmaria' : '@Iguanodontia',
-													'Anabisetia' : 'Elasmaria',
+												'@Elasmaria' : '@Iguanodontia',
+													'Anabisetia' : '@Elasmaria',
 														'saldiviai' : 'Anabisetia',
 												'@Dryomorpha' : '@Iguanodontia',
 													'@Ankylopollexia' : '@Dryomorpha',
@@ -504,24 +588,32 @@ var tree = { // basic tree
 																'Altirhinus' : '@Hadrosauriformes',
 																	'kurzanovi' : 'Altirhinus',
 																'@Hadrosauromorpha' : '@Hadrosauriformes',
-																	'@Hadrosauridae' : '@Hadrosauromorpha',
-																		'-Hadrosauridae' : '@Hadrosauridae',
-																			'Anasazisaurus' : '-Hadrosauridae',
-																				'horneri ' : 'Anasazisaurus',
-																		'@Saurolophidae' : '@Hadrosauridae',
-																			'@Saurolophinae' : '@Saurolophidae',
-																				'@Brachylophosaurini' : '@Saurolophinae',
-																					'Acristavus' : '@Brachylophosaurini',
-																						'gagslarsoni' : 'Acristavus',
-																			'@Lambeosaurinae' : '@Saurolophidae',
-																				'-Lambeosaurinae' : '@Lambeosaurinae',
-																					'Adelolophus' : '-Lambeosaurinae',
-																						'hutchisoni' : 'Adelolophus',
-																					'Angulomastacator' : '-Lambeosaurinae',
-																						'daviesi' : 'Angulomastacator',
-																				'@Lambeosaurini' : '@Lambeosaurinae',
-																					'Amurosaurus' : '@Lambeosaurini',
-																						'riabinini' : 'Amurosaurus',
+																	'@Hadrosauroidea' : '@Hadrosauromorpha',
+																		'-Hadrosauroidea' : '@Hadrosauroidea',
+																			'Arstanosaurus' : '-Hadrosauroidea',
+																				'akkurganensis' : 'Arstanosaurus',
+																		'@Hadrosauridae' : '@Hadrosauroidea',
+																			'-Hadrosauridae' : '@Hadrosauridae',
+																				'Anasazisaurus' : '-Hadrosauridae',
+																					'horneri ' : 'Anasazisaurus',
+																			'@Saurolophidae' : '@Hadrosauridae',
+																				'@Saurolophinae' : '@Saurolophidae',
+																					'@Brachylophosaurini' : '@Saurolophinae',
+																						'Acristavus' : '@Brachylophosaurini',
+																							'gagslarsoni' : 'Acristavus',
+																				'@Lambeosaurinae' : '@Saurolophidae',
+																					'-Lambeosaurinae' : '@Lambeosaurinae',
+																						'Adelolophus' : '-Lambeosaurinae',
+																							'hutchisoni' : 'Adelolophus',
+																						'Angulomastacator' : '-Lambeosaurinae',
+																							'daviesi' : 'Angulomastacator',
+																					'#Aralosaurini1' : '@Lambeosaurinae',
+																						'@Aralosaurini' : '#Aralosaurini1',
+																							'Aralosaurus' : '@Aralosaurini',
+																								'tuberiferus' : 'Aralosaurus',
+																						'@Lambeosaurini' : '#Aralosaurini1',
+																							'Amurosaurus' : '@Lambeosaurini',
+																								'riabinini' : 'Amurosaurus',
 			'@Theropoda' : '@Ornithoscelida',
 				'#Eoraptor1' : '@Theropoda',
 					'Alwalkeria' : '#Eoraptor1',
@@ -531,8 +623,13 @@ var tree = { // basic tree
 						'@Ceratosauria' : '@Averostra',
 							'@Abelisauroidea' : '@Ceratosauria',
 								'@Abelisauridae' : '@Abelisauroidea',
-									'Abelisaurus' : '@Abelisauridae',
-										'comahuensis' : 'Abelisaurus',
+									'@Majungasaurinae' : '@Abelisauridae',
+										'Arcovenator' : '@Majungasaurinae',
+											'escotae' : 'Arcovenator',
+									'@Brachyrostra' : '@Abelisauridae',
+										'@Carnotaurini' : '@Brachyrostra',
+											'Abelisaurus' : '@Carnotaurini',
+												'comahuensis' : 'Abelisaurus',
 						'@Tetanurae' : '@Averostra',
 							'-Tetanurae' : '@Tetanurae',
 								'Altispinax' : '-Tetanurae',
@@ -586,7 +683,11 @@ var tree = { // basic tree
 														'Aniksosaurus' : '#Compsognathidae1',
 															'darwini' : 'Aniksosaurus',
 													'@Maniraptoriformes' : '#Compsognathidae2',
-														'@Ornithomimosauria' : '@Maniraptoriformes',
+														'-Maniraptoriformes' : '@Maniraptoriformes',
+															'Archaeornithoides' : '-Maniraptoriformes',
+																'deinosauriscus' : 'Archaeornithoides',
+														'#Ornithomimosauria1' : '@Maniraptoriformes',
+														'@Ornithomimosauria' : '#Ornithomimosauria1',
 															'-Ornithomimosauria' : '@Ornithomimosauria',
 																'Afromimus' : '-Ornithomimosauria',
 																	'tenerensis' : 'Afromimus',
@@ -594,9 +695,15 @@ var tree = { // basic tree
 																	'-Ornithomimidae' : '@Ornithomimidae',
 																		'Aepyornithomimus' : '-Ornithomimidae',
 																			'tugrikinensis' : 'Aepyornithomimus',
-																	'Anserimimus' : '@Ornithomimidae',
-																		'planinychus' : 'Anserimimus',
-														'@Maniraptora' : '@Maniraptoriformes',
+																		'Arkansaurus' : '-Ornithomimidae',
+																			'fridayi' : 'Arkansaurus',
+																	'#Archaeornithomimus1' : '@Ornithomimidae',
+																		'Archaeornithomimus' : '#Archaeornithomimus1',
+																			'asiaticus' : 'Archaeornithomimus',
+																			'bissektensis?' : 'Archaeornithomimus',
+																		'Anserimimus' : '#Archaeornithomimus1',
+																			'planinychus' : 'Anserimimus',
+														'@Maniraptora' : '#Ornithomimosauria1',
 															'@Alvarezsauroidea' : '@Maniraptora',
 																'@Alvarezsauridae' : '@Alvarezsauroidea',
 																	'#Parvicursorinae1' : '@Alvarezsauridae',
@@ -626,7 +733,7 @@ var tree = { // basic tree
 																		'@Caenagnathoidea' : '@Oviraptorosauria',
 																			'@Caenagnathidae' : '@Caenagnathoidea',
 																				'Anomalipes' : '@Caenagnathidae',
-																					'zhaoi' : 'Anomalipes',
+																					'zhaoi ' : 'Anomalipes',
 																				'#Anzu1' : '@Caenagnathidae',
 																					'Anzu' : '#Anzu1',
 																						'wyliei' : 'Anzu',
@@ -637,13 +744,16 @@ var tree = { // basic tree
 																				'Ajancingenia' : '@Oviraptoridae',
 																					'yanshini' : 'Ajancingenia',
 																	'@Paraves' : '@Pennaraptora',
+																		'@Anchiornithidae' : '@Paraves',
+																			'Anchiornis' : '@Anchiornithidae',
+																				'huxleyi' : 'Anchiornis',
 																		'@Eumaniraptora' : '@Paraves',
 																			'@Deinonychosauria' : '@Eumaniraptora',
 																				'@Dromaeosauridae' : '@Deinonychosauria',
 																					'@Eudromaeosauria' : '@Dromaeosauridae',
 																						'@Velociraptorinae' : '@Eudromaeosauria',
 																							'Adasaurus' : '@Velociraptorinae',
-																								'mongoliensis' : 'Adasaurus',
+																								'mongoliensis ' : 'Adasaurus',
 																							'#Acheroraptor1' : '@Velociraptorinae',
 																								'Acheroraptor' : '#Acheroraptor1',
 																									'temertyorum' : 'Acheroraptor',
@@ -659,9 +769,9 @@ var tree = { // basic tree
 																						'Almas' : '@Jinfengopteryginae',
 																							'ukhaa' : 'Almas',
 																			'@Avialae' : '@Eumaniraptora',
-																				'@Anchiornithidae' : '@Avialae',
-																					'Anchiornis' : '@Anchiornithidae',
-																						'huxleyi' : 'Anchiornis',
+																				'Archaeopteryx' : '@Avialae',
+																					'lithographica' : 'Archaeopteryx',
+																					'siemensii' : 'Archaeopteryx',
 }
 
 var treeHeight = canvasSize.y - 100; // height for the tree
@@ -696,6 +806,10 @@ function getHeightProportion(index, siblings) { // zero indexed
 	fraction *= 2; // 0 to 2
 	
 	fraction -= 1; // -1 to 1
+	
+	if(fraction == 0) { // stop overlap in the middle
+		fraction = -0.15;
+	}
 	
 	return(fraction);
 }
@@ -740,7 +854,12 @@ for(var i in tree) { // set up detailed node relations
 	}
 }
 
+var n = 0;
+
 for(var i in tree) { // set up node positions
+	
+	n++;
+	
 	if(i != '@Dinosauria'){
 		
 		var siblings = treeWithDetails[tree[i]].children.length;
@@ -754,7 +873,11 @@ for(var i in tree) { // set up node positions
 			siblings
 		); // the proportion of height
 		
-		treeWithDetails[i].alottedHeight = treeWithDetails[tree[i]].alottedHeight / siblings ;
+		treeWithDetails[i].alottedHeight = treeWithDetails[tree[i]].alottedHeight / siblings;
+		
+		if(siblings == 1) {
+			//~ treeWithDetails[i].alottedHeight = treeWithDetails[tree[i]].alottedHeight / 2;
+		}
 		
 		treeWithDetails[i].x = treeWithDetails[tree[i]].x + treeWithDetails[tree[i]].alottedHeight * branchWidthScale; // shift by calculated value
 		treeWithDetails[i].y = treeWithDetails[tree[i]].y + treeWithDetails[tree[i]].alottedHeight * branchHeightDelta; // shift by calculated value
@@ -824,7 +947,7 @@ function getPositionTaxonName(position) {
 	
 	var imageTaxonIndex = getPositionTaxon(
 		takenImagePositions,
-		new P(position.x - textMaximumLength, position.y + imageOnCanvasSize.y / 2),
+		new P(position.x - textMaximumLength - canvasSize.y / 4, position.y + imageOnCanvasSize.y / 2),
 		imageOnCanvasSize
 	);
 	var imageTaxon;
@@ -930,7 +1053,7 @@ function drawTree() {
 							genera[i].image.src = 'images/' + i + '.jpg';
 							ctx.drawImage(
 								genera[i].image,
-								position.x + textMaximumLength,
+								position.x + textMaximumLength + canvasSize.y / 4,
 								position.y - imageOnCanvasSize.y / 2,
 								imageOnCanvasSize.x,
 								imageOnCanvasSize.y
@@ -946,6 +1069,7 @@ function drawTree() {
 							takenImageNames.push(i); // so that when clicked on we can find the indexed position
 						}catch(e){
 							//~ console.log(e);
+							//~ console.log(i);
 						}
 					}
 			}
@@ -957,6 +1081,8 @@ function drawTree() {
 				if(genera[displayName]) {
 					isDubious = genera[displayName].isDubious;
 				}
+				
+				//~ displayName = '';
 				
 				ctx.fillText(
 					displayName,
@@ -1045,8 +1171,14 @@ function getTextName(taxon) { // remove @ symbol
 }
 
 function getRepresentativeGenus(taxon) {
-	while(getTaxonRank(taxon) != 'genus') {
-		taxon = treeWithDetails[taxon].children[0]; // first child
+	if(getTaxonRank(taxon) == 'species') {
+		while(getTaxonRank(taxon) != 'genus') {
+			taxon = tree[taxon]; // first child
+		}
+	}else{
+		while(getTaxonRank(taxon) != 'genus') {
+			taxon = treeWithDetails[taxon].children[0]; // first child
+		}
 	}
 	return(taxon);
 }
@@ -1061,6 +1193,103 @@ function getSpecies(genus, array) {
 		}
 	}
 }
+
+function SearchResult(taxon, text, imageSRC) {
+	this.taxon = taxon;
+	this.text = text;
+	this.imageSRC = imageSRC;
+}
+
+function getSearchResults(string) {
+	
+	if(string == '') {
+		return(0);
+	}
+	
+	var results = [];
+	var resultsLimit = 10;
+	var nameRegExp = new RegExp('^.?' + string, 'i');
+	
+	for(var i in tree) {
+		if(
+			i.match(nameRegExp)
+			&&
+			i[0] != '#'
+			&&
+			i[0] != '-'
+		) {
+			
+			var text = '';
+			var rank = getTaxonRank(i);
+			var imageGenus = '';
+			
+			switch(rank) {
+				case 'species':
+					imageGenus = getRepresentativeGenus(i);
+					text = '<i>' + i + '</i>, a species of <i>' + imageGenus + '</i>';
+					break;
+				case 'genus':
+					imageGenus = i;
+					text = '<i>' + i + '</i>';
+					break;
+				default:
+					imageGenus = getRepresentativeGenus(i);
+					text = '<b>' + getTaxonRank(i) + ' ' + i.substring(1,100) + '</b>';
+			}
+			
+			results.push( new SearchResult(
+				i,
+				text,
+				'images/' + imageGenus + '.jpg'
+			));
+		}
+		
+		if(results.length >= resultsLimit) {
+			break;
+		}
+	}
+	
+	return(results);
+}
+
+var searchInputBar = document.getElementById('search_input');
+
+var searchResultsDivider = document.getElementById('results_divider');
+
+searchInputBar.onkeyup = function() {
+	var results = getSearchResults(searchInputBar.value);
+	
+	searchResultsDivider.innerHTML = '';
+	
+	for(var i = 0; i < results.length; i++) {
+		var result = results[i];
+		
+		searchResultsDivider.innerHTML += '\
+			<table class="result_table" id="search_result_' + result.taxon + '"><tbody><tr>\
+				<td>\
+					<img class="result_image" src="' + result.imageSRC + '">\
+				</td>\
+				<td  style="width: 100%">\
+					' + result.text + '\
+				</td>\
+			</tr></tbody></table>';
+	}
+	
+	for(var i = 0; i < results.length; i++) {
+		var result = results[i];
+		
+		console.log(document.getElementById('search_result_' + result.taxon));
+		console.log(result.taxon);
+		
+		document.getElementById('search_result_' + result.taxon).addEventListener("click", function(){
+				console.log(this.id.substring(14));
+				fillDetailsDivider(this.id.substring(14));
+				
+				searchResultsDivider.innerHTML = '';
+			}
+		);
+	}
+};
 
 function fillDetailsDivider(taxon) {
 	if(taxon == '') { // do nothing if empty taxon
@@ -1135,7 +1364,7 @@ function fillDetailsDivider(taxon) {
 	var classificationTable = document.createElement('table');
 	classificationTable.className = 'classification_table';
 	
-	classificationTable.innerHTML += '<tr>Classification:</tr>';
+	classificationTable.innerHTML += '<tr class="details_header">Classification:</tr>';
 	
 	var descent = getDescent(taxon);
 	//each rank bold, taxa bold if family or subfamily, italisized if genus or species
@@ -1150,9 +1379,9 @@ function fillDetailsDivider(taxon) {
 	if(isGenus) {
 		var speciesArray = [];
 		getSpecies(taxon, speciesArray);
-		classificationTable.innerHTML += '<tr><td class="classification_rank">species: </td></tr>';
+		classificationTable.innerHTML += '<tr><td class="classification_rank">species: </td><td class="species">' + speciesArray[0] + '</td></tr>';
 		
-		for(var i = 0; i < speciesArray.length; i++) {
+		for(var i = 1; i < speciesArray.length; i++) {
 			classificationTable.innerHTML += '<tr><td></td><td class="species">' + speciesArray[i] + '</td></tr>';
 		}
 	}
@@ -1166,8 +1395,14 @@ function fillDetailsDivider(taxon) {
 		var synonymTable = document.createElement('table');
 		// table listing junior synonyms (none if none)
 		
+		synonymTable.innerHTML += '<table> <tr> <td class="classification_rank">Described by: </td> <td> ' + details.describedBy + ' </td> </tr> </table>';
+		if(details.notes) {
+			synonymTable.innerHTML += '<table> <tr> <td class="classification_rank">Notes: </td> <td> ' + details.notes + ' </td> </tr> </table>';
+		}
+		// scientist who described it
+		
 		if(details.synonyms.length == 0) { // junior synonyms
-			synonymTable.innerHTML += '<tr> <td class="classification_rank">Junior synonyms:</td> <td> none </td> </tr>';
+			//~ synonymTable.innerHTML += '<tr> <td class="classification_rank">Junior synonyms:</td> <td> none </td> </tr>';
 		}else{
 			synonymTable.innerHTML += '<tr> <td class="classification_rank">Junior synonyms:</td></tr>';
 			for(var i = 0; i < details.synonyms.length; i++) {
@@ -1176,12 +1411,13 @@ function fillDetailsDivider(taxon) {
 		}
 		
 		if(! details.possibleDuplicate) { // possible senior synonym
-			synonymTable.innerHTML += '<tr> <td class="classification_rank">Possible duplicate of: </td> <td> none </td> </tr>';
+			//~ synonymTable.innerHTML += '<tr> <td class="classification_rank">Possible duplicate of: </td> <td> none </td> </tr>';
 		}else{
 			synonymTable.innerHTML += '<tr> <td class="classification_rank">Possible duplicate of: </td> <td class="genus name-link"> ' + details.possibleDuplicate + '</td> </tr>';
 		}
 		
-		detailsTable.innerHTML += '<tr><td>Details:</td></tr>';
+		detailsTable.innerHTML += '<tr class="details_header"><td>Details:</td></tr>';
+		
 		detailsTable.appendChild(synonymTable);
 		
 		// possible duplicate of (link genus) (none if none)
@@ -1193,7 +1429,7 @@ function fillDetailsDivider(taxon) {
 		var detailsCanvas = document.createElement('canvas');
 		
 		detailsCanvas.width = detailsImageSize.x;
-		detailsCanvas.height = timelineHeight * 10 + detailsImageSize.x / 2;
+		detailsCanvas.height = timelineHeight * 10 + detailsImageSize.x / 2 + detailsImageSize.x * worldMapSizeRatio;
 		
 		var detailsCTX = detailsCanvas.getContext('2d');
 		// draw a canvas with the width of the image and with the geological eras written on the respective colours, and a transparent grey mark for when the current genus lived
@@ -1263,29 +1499,55 @@ function fillDetailsDivider(taxon) {
 		detailsCTX.fillStyle = colours.text;
 		detailsCTX.font = textSize + "pt Georgia";
 		
-		// level 1 : line to start time
-		detailsCTX.beginPath();
-		detailsCTX.moveTo(taxonTimePositions[0], timelineHeight * 2);
-		detailsCTX.lineTo(taxonTimePositions[0], timelineHeight * 4);
-		detailsCTX.stroke();
-		
-		detailsCTX.fillText(
-			details.earliest + ' mya',
-			taxonTimePositions[0] - textSize * 7,
-			timelineHeight * 2 + textSize * 1.5
-		);
-		
-		// level 2 : line to end time
-		detailsCTX.beginPath();
-		detailsCTX.moveTo(taxonTimePositions[1], timelineHeight * 1);
-		detailsCTX.lineTo(taxonTimePositions[1], timelineHeight * 4);
-		detailsCTX.stroke();
-		
-		detailsCTX.fillText(
-			details.latest + ' mya',
-			taxonTimePositions[1] - textSize * 7,
-			timelineHeight + textSize * 1.5
-		);
+		if(details.latest < 201.3) { // if it survided past the end of the triassic
+			// level 1 : line to start time
+			detailsCTX.beginPath();
+			detailsCTX.moveTo(taxonTimePositions[0], timelineHeight * 2);
+			detailsCTX.lineTo(taxonTimePositions[0], timelineHeight * 4);
+			detailsCTX.stroke();
+			
+			detailsCTX.fillText(
+				details.earliest + ' mya',
+				taxonTimePositions[0] - textSize * 7,
+				timelineHeight * 2 + textSize * 1.5
+			);
+			
+			// level 2 : line to end time
+			detailsCTX.beginPath();
+			detailsCTX.moveTo(taxonTimePositions[1], timelineHeight * 1);
+			detailsCTX.lineTo(taxonTimePositions[1], timelineHeight * 4);
+			detailsCTX.stroke();
+			
+			detailsCTX.fillText(
+				details.latest + ' mya',
+				taxonTimePositions[1] - textSize * 7,
+				timelineHeight + textSize * 1.5
+			);
+		}else{ // if extinct before the end of the triassic
+			// level 1 : line to start time
+			detailsCTX.beginPath();
+			detailsCTX.moveTo(taxonTimePositions[0], timelineHeight * 1);
+			detailsCTX.lineTo(taxonTimePositions[0], timelineHeight * 4);
+			detailsCTX.stroke();
+			
+			detailsCTX.fillText(
+				details.earliest + ' mya',
+				taxonTimePositions[0] + textSize * 1,
+				timelineHeight + textSize * 1.5
+			);
+			
+			// level 2 : line to end time
+			detailsCTX.beginPath();
+			detailsCTX.moveTo(taxonTimePositions[1], timelineHeight * 2);
+			detailsCTX.lineTo(taxonTimePositions[1], timelineHeight * 4);
+			detailsCTX.stroke();
+			
+			detailsCTX.fillText(
+				details.latest + ' mya',
+				taxonTimePositions[1] + textSize * 1,
+				timelineHeight * 2 + textSize * 1.5
+			);
+		}
 		
 		// draw a canvas for the discovery time
 		
@@ -1371,11 +1633,11 @@ function fillDetailsDivider(taxon) {
 		detailsCTX.fillText('Size comparison:', textSize / 2, timelineHeight * 7 + textSize * 1.5);
 		
 		detailsCTX.fillStyle = colours.background;
-		detailsCTX.fillRect(
+		detailsCTX.fillRect( // background for the size comparison
 			0,
 			timelineHeight * 8,
 			detailsCanvas.width,
-			detailsCanvas.height
+			detailsImageSize.x / 2
 		);
 		
 		var pixelsPerMetre;
@@ -1392,7 +1654,7 @@ function fillDetailsDivider(taxon) {
 			
 			var imageStartPosition = new P(
 				0,
-				detailsCanvas.height - mainImageSize.y * pixelsPerMetre
+				( timelineHeight * 7 + textSize * 1.5 + detailsImageSize.x / 2 )  - mainImageSize.y * pixelsPerMetre
 			);
 			
 			//~ console.log(image);
@@ -1441,7 +1703,7 @@ function fillDetailsDivider(taxon) {
 			
 			var humanImageStartPosition = new P(
 				detailsCanvas.width - personImageSize.x * pixelsPerMetre,
-				detailsCanvas.height - personImageSize.y * pixelsPerMetre
+				( timelineHeight * 7 + textSize * 1.5 + detailsImageSize.x / 2 )  - personImageSize.y * pixelsPerMetre
 			);
 			
 			var humanImageOnCanvasSize = new P(
@@ -1460,6 +1722,50 @@ function fillDetailsDivider(taxon) {
 		}catch(e){
 			console.log(e);
 		}
+		
+		detailsCTX.font = "bold " + textSize + "pt Georgia";
+		
+		var countries = genera[taxon].countries;
+		var wordEnding = countries.length == 1 ? 'y' : 'ies'; // singular or plural
+		
+		detailsCTX.fillText('Countr' + wordEnding + ' discovered in: (Alaska is listed separately to the rest of the USA)', textSize / 2, timelineHeight * 8 + textSize * 1.5 + detailsImageSize.x / 2);
+		
+		detailsCTX.drawImage( // the world map image
+			worldMapImage,
+			0,
+			timelineHeight * 9 + detailsImageSize.x / 2,
+			detailsImageSize.x,
+			detailsImageSize.x * worldMapSizeRatio,
+		);
+		
+		var countriesString = '';
+		
+		for(var i = 0; i < countries.length; i++) {
+			
+			var country = countries[i];
+			
+			if(i == 0) { // connectors
+				
+			}else if(i == countries.length - 1) {
+				countriesString += ' and ';
+			}else{
+				countriesString += ', ';
+			} // connectors
+			
+			countriesString += country;
+			
+			detailsCTX.drawImage( // the world map image
+				countryImages[country],
+				0,
+				timelineHeight * 9 + detailsImageSize.x / 2,
+				detailsImageSize.x,
+				detailsImageSize.x * worldMapSizeRatio,
+			);
+		}
+		
+		detailsCTX.font = textSize + "pt Georgia";
+		
+		detailsCTX.fillText(countriesString, textSize / 2, timelineHeight * 9 + textSize * 1.5 + detailsImageSize.x / 2 + detailsImageSize.x * worldMapSizeRatio);
 		
 		detailsTable.appendChild(detailsCanvas);
 	}

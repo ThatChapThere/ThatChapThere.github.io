@@ -1151,6 +1151,14 @@ function addSpineToKeyFrame(dinosaur, keyFrame, spineName) {
 	}
 }
 
+function Controller(left, right, up, down, flip) { // this is for keyboard input
+	this.right = right;
+	this.left = left;
+	this.up = up;
+	this.down = down;
+	this.flip = flip;
+}
+
 //********************FUNCTIONS FOR DAMAGE******************************
 
 function DamagePoint(position, damage) {
@@ -1162,9 +1170,11 @@ var damageRange = 1; // 1000 cm
 
 //****************************DINOSAUR**********************************
 
-function Dinosaur(position, skeleton, details) {
+function Dinosaur(position, skeleton, details, controller) {
 	
 	//*******************VARIABLE SETUP FROM INPUT**********************
+	
+	this.controller = controller;
 	
 	this.skeleton = skeleton; // save skeleton details
 	
@@ -1472,7 +1482,7 @@ function Dinosaur(position, skeleton, details) {
 		if(this.keyFrames.isFinished()) { // when the last keyframe has finished in motion
 			if(!this.isAlive){ //************DEAD DINOSAUR**************
 				this.keyFrames.addNewFrame(this.death);
-			}else if(keyCodes[39]){ //***********************************RIGHT
+			}else if(keyCodes[this.controller.right]){ //***********************************RIGHT
 				//~ console.log('animation');
 				this.keyFrames.addNewFrame(this.walking.steps[this.walking.currentStep]);
 				
@@ -1484,7 +1494,7 @@ function Dinosaur(position, skeleton, details) {
 				
 				this.canJump = false; // cannot jump after walking
 				
-			}else if(keyCodes[37]){ //******************************LEFT
+			}else if(keyCodes[this.controller.left]){ //******************************LEFT
 				
 				this.keyFrames.addNewFrame(this.walking.steps[this.walking.currentStep]);
 				
@@ -1496,17 +1506,17 @@ function Dinosaur(position, skeleton, details) {
 				
 				this.canJump = false; // cannot jump after walking
 				
-			}else if(keyCodes[40]){ //******************************DOWN
+			}else if(keyCodes[this.controller.down]){ //******************************DOWN
 				
 				this.keyFrames.addNewFrame(this.crouching);
 				
 				this.canJump = true; // can jump after crouching
 				
-			}else if(keyCodes[38]){ //*****************************SPACE
+			}else if(keyCodes[this.controller.up]){ //*****************************UP
 				
 				this.keyFrames.addNewFrame(this.roar);
 				
-			}else if(keyCodes[32]){ //*****************************SPACE
+			}else if(keyCodes[this.controller.flip]){ //*****************************SPACE
 				
 				if(gameTimer > this.lastFlipTime + this.flipDelay) { // so it can only flip once per second
 					this.flipped = ! this.flipped;
@@ -1702,7 +1712,8 @@ var tyrannosaurus = new Dinosaur(
 		new Position(0, 0),
 		[],
 		new Sail([])
-	)
+	),
+	new Controller(65, 68, 87, 83, 69),
 );
 
 //*
@@ -1748,7 +1759,8 @@ var deinonychus = new Dinosaur(
 		new Position(3, -6),
 		[],
 		new Sail([])
-	)
+	),
+	new Controller(7, 9, 8, 0, 2),
 );
 
 //*/
@@ -1794,13 +1806,14 @@ var argentinosaurus = new Dinosaur(
 		3,
 		new Position(0, 0),
 		[new Feature(new Spike(0, 6, 0.5, DEG * 250, 1), 'neck6', '#512222')],
-		new Sail([])
-	)
+		new Sail([]),
+	),
+	new Controller(37, 39, 38, 40, 32),
 );
 
 var dinosaurs = [
 	tyrannosaurus,
-	deinonychus,
+	//~ deinonychus,
 	argentinosaurus
 ];
 
