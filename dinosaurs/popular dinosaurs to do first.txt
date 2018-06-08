@@ -1,0 +1,67 @@
+Atrociraptor
+Austroraptor
+Avimimus
+Barosaurus
+	Baryonyx
+Brachiosaurus
+Camarasaurus
+	Carcharodontosaurus
+	Carnotaurus
+Caudipteryx
+Centrosaurus
+	Ceratosaurus
+Cetiosaurus
+	Chasmosaurus
+Chilesaurus
+Coelophysis
+	Compsognathus
+	Corythosaurus
+Dakotaraptor
+Darwinsaurus
+Datonglong
+	Deinocheirus
+	Deinonychus
+	Dilophosaurus
+	Diplodocus
+Dracorex
+Dromaeosaurus
+Dromiceiomimus
+	Eocursor
+Eoraptor
+	Gallimimus
+	Giganotosaurus
+Giraffatitan
+Hadrosaurus
+	Iguanodon
+	Irritator
+Janenschia
+	Kentrosaurus
+	Lambeosaurus
+Leptoceratops
+Leaellynasaura
+Majungasaurus
+	Megalosaurus
+	Megaraptor
+Monoclonius
+	Ornitholestes
+Ornithomimus
+	Oviraptor
+	Pachycephalosaurus
+Rebbachisaurus
+Saltasaurus
+	Spinosaurus
+	Stegosaurus
+Styracosaurus
+Tarbosaurus
+Therizinosaurus
+Torosaurus
+Torvosaurus
+Troodon
+	Triceratops
+	Tyrannosaurus
+	Utahraptor
+	Velociraptor
+Vulcanodon
+Xenotarsosaurus
+Yangchuanosaurus
+Zizhongosaurus

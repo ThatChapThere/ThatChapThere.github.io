@@ -1,0 +1,171 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>Econ Sim</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="generator" content="Geany 1.30.1" />
+</head>
+
+<body>
+	<canvas></canvas>
+	<script>
+//**********************************************************************
+
+var cnv = document.getElementsByTagName('canvas')[0];
+var ctx = cnv.getContext('2d');
+
+function Vector(x, y) {
+	this.x = x;
+	this.y = y;
+}
+
+var canvasSize = new Vector(1280, 720);
+
+cnv.width = canvasSize.x;
+cnv.height = canvasSize.y;
+
+ctx.fillStyle = '#ffffff';
+
+ctx.fillRect(0, 0, canvasSize.x, canvasSize.y);
+
+//this function takes in a two numbers and then chooses a random number but that is more likely to be in the middle of the two
+function randomInbetween(a, b) {
+	var multiplier = Math.random(); // between 0 and 1
+	multiplier = Math.pow(multiplier, 2); // between 0 and 1, but more likely to be close to zero
+	var negate = Math.random() < 0.5; // random between true or false
+	if(negate) { // negate if neccesary. Now between -1 and 1
+		multiplier *= -1;
+	}
+	multiplier /= 2; // now between -0.5 and 0.5
+	multiplier += 0.5; // now between 0 and 1
+	
+	var gap = a - b;
+	var addon = gap * multiplier;
+	
+	return(b + addon);
+}
+
+var barDrawSize = new Vector(15, 150);
+
+function barValue() { // from 0 - 100 
+	this.value = randomInbetween(0, 100);
+	this.previousValue = this.value;
+	
+	this.change = function(n) {
+		this.previousValue = this.value;
+		
+		this.value += randomInbetween(0-n, n);
+		
+		if(this.value < 0) {
+			this.value = 0;
+		}
+		
+		if(this.value > 100) {
+			this.value = 100;
+		}
+	}
+	
+	this.previousSuccess = -Infinity;
+	
+	this.enterSuccess = function(success) { // revert back to past value if success is less than last time
+		if(success < this.previousSuccess) {
+			this.value = this.previousValue;
+		}
+		this.previousSuccess = success;
+	}
+	
+	this.draw = function(x, y) {
+		ctx.fillStyle = '#ff0000';
+		
+		ctx.fillRect(x, y, barDrawSize.x, barDrawSize.y);
+		
+		ctx.fillStyle = '#0000ff';
+		
+		ctx.fillRect(x, y, barDrawSize.x, barDrawSize.y * (this.value / 100));
+		
+		ctx.fillStyle = '#000000';
+		
+		ctx.fillText(Math.round(100 - this.value) + '%', x + barDrawSize.x, y + barDrawSize.y * (this.value / 100));
+	}
+}
+
+// have an optimum level bar which changes slightly over time
+
+var optimalBarValue = new barValue();
+
+var managerBarValue = new barValue();
+
+var workerBarValues = [];
+var workers = 1;
+
+for(var i = 0; i < workers; i++) {
+	workerBarValues.push(new barValue);
+}
+
+var differences = [];
+
+var updateInterval = 1;
+
+var iteration = 0;
+function draw() {
+	iteration ++;
+	
+	ctx.fillStyle = '#ffffff';
+	ctx.fillRect(0, 0, canvasSize.x, canvasSize.y);
+	
+	var difference = Math.abs(managerBarValue.value - optimalBarValue.value);
+	
+	var averageValue = 0;
+	
+	for(var i = 0; i < workers; i++) {
+		
+		workerBarValues[i].change(3);
+		
+		averageValue += workerBarValues[i].value;
+		
+		workerBarValues[i].draw(800 - (i*100), 500);
+		
+	}
+	
+	averageValue /= workers;
+	
+	var difference = Math.abs(averageValue - optimalBarValue.value);
+	
+	managerBarValue.value = averageValue;
+	managerBarValue.draw(900, 400);
+	
+	differences.push(difference);
+	
+	var averageDifference = 0;
+	ctx.beginPath();
+	ctx.moveTo(10, differences[0] + 10);
+	for(var i = 1; i < differences.length; i++) {
+		ctx.lineTo(i + 10, (differences[i] * 10) + 10);
+		averageDifference += differences[i];
+	}
+	averageDifference /= differences.length;
+	ctx.fillText(averageDifference, 100, 100);
+	ctx.stroke();
+	
+	for(var i = 0; i < workers; i++) {
+		if(iteration%updateInterval == 0) {
+			workerBarValues[i].enterSuccess(0 - difference);
+		}
+	}
+	
+	optimalBarValue.draw(1000, 500);
+	optimalBarValue.change(3);
+	
+}
+
+setInterval(draw, 500);
+
+//have character bars that respond to incentives
+
+//**********************************************************************	
+	</script>
+</body>
+
+</html>

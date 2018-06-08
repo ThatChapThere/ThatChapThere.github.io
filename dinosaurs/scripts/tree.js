@@ -7,10 +7,13 @@ RULES:
 * species listed as though genus is common ancestor, even though this is not neccesarily always the case
 **********************************************************************/
 
-//~ console.log('logging');
+var url = window.location.href;
 
-var ctx = document.getElementsByTagName('canvas')[0].getContext('2d'); // get context to draw
+var isMainPage = url.substring(url.length - 9, url.length) == 'tree.html';
 
+if(isMainPage) { // if it is actually the tree displayer html document
+	var ctx = document.getElementsByTagName('canvas')[0].getContext('2d'); // get context to draw
+}
 //~ ctx.imageSmoothingQuality = "high";
 
 function P(x,y) {
@@ -31,8 +34,9 @@ var canvasSize = new P(
 	window.innerWidth / 2.5
 ); //cartesian for the size of the canvas
 
-document.getElementById('side_divider').style.height = canvasSize.y + 'px';
-
+if(isMainPage) { 	
+	document.getElementById('side_divider').style.height = canvasSize.y + 'px';
+}
 //~ console.log(document.getElementById('side_divider').style.height);
 
 var detailsImageSize = new P(
@@ -88,42 +92,52 @@ function fastClickTimeUp() {
 	isFastClick = false;
 }
 
-ctx.canvas.onmousemove = function (event) {
-	mousePosition.x = event.clientX - getOffset(true);
-	mousePosition.y = event.clientY - getOffset(false); // set up mouse position variable
-	
-	if(mouseIsDown) {
-		translation.x = (mousePosition.x - dragStart.x) / translation.zoom + dragStartTranslation.x;
-		translation.y = (mousePosition.y - dragStart.y) / translation.zoom + dragStartTranslation.y; // drag canvas by correct amount
-		drawTree();
+if (isMainPage) {
+	ctx.canvas.onmousemove = function (event) {
+		mousePosition.x = event.clientX - getOffset(true);
+		mousePosition.y = event.clientY - getOffset(false); // set up mouse position variable
+		
+		if(mouseIsDown) {
+			translation.x = (mousePosition.x - dragStart.x) / translation.zoom + dragStartTranslation.x;
+			translation.y = (mousePosition.y - dragStart.y) / translation.zoom + dragStartTranslation.y; // drag canvas by correct amount
+			drawTree();
+		}
 	}
-}
-
-ctx.canvas.onmousedown = function() { // when mouse is pressed
-	dragStart.x = mousePosition.x;
-	dragStart.y = mousePosition.y; // set up where the drag started on the screen
 	
-	dragStartTranslation.x = translation.x;
-	dragStartTranslation.y = translation.y; // the translation at the start of the drag
+	ctx.canvas.onmousedown = function() { // when mouse is pressed
+		dragStart.x = mousePosition.x;
+		dragStart.y = mousePosition.y; // set up where the drag started on the screen
+		
+		dragStartTranslation.x = translation.x;
+		dragStartTranslation.y = translation.y; // the translation at the start of the drag
+		
+		mouseIsDown = true;
+	}
 	
-	mouseIsDown = true;
-}
-
-ctx.canvas.onmouseup = function() {
-	mouseIsDown = false;
+	ctx.canvas.onmouseup = function() {
+		mouseIsDown = false;
+		
+		drawTree();
+		
+		//~ console.log('about to fill details divider for: ' +  getPositionTaxonName(mousePosition) );
+		
+		fillDetailsDivider( getPositionTaxonName(mousePosition) );
+		
+		return false;
+	}
 	
-	drawTree();
-	
-	//~ console.log('about to fill details divider for: ' +  getPositionTaxonName(mousePosition) );
-	
-	fillDetailsDivider( getPositionTaxonName(mousePosition) );
-	
-	return false;
 }
 
 // earliest, latest, discovery, length, synonyms, possibleDuplicate, countries, describedBy, isDubious, notes
 
-function Genus (earliest, latest, discovery, length, synonyms, possibleDuplicate, countries, describedBy, isDubious, notes) { //this is for the database, not the tree
+function Copyright(name, siteURL, licence, licenceURL) {
+	this.name = name;
+	this.siteURL = siteURL;
+	this.licence = licence;
+	this.licenceURL = licenceURL;
+}
+
+function Genus (earliest, latest, discovery, length, synonyms, possibleDuplicate, countries, describedBy, isDubious, notes, attribution) { //this is for the database, not the tree
 	this.earliest = earliest; //mya
 	this.latest = latest; //mya
 	this.discovery = discovery; //A.D
@@ -134,6 +148,8 @@ function Genus (earliest, latest, discovery, length, synonyms, possibleDuplicate
 	this.describedBy = describedBy;
 	this.isDubious = isDubious;
 	this.notes = notes;
+	this.attribution = attribution;
+	
 	this.image = document.createElement("img");
 }
 
@@ -168,10 +184,10 @@ var genera = { //genera database
 	'Acheroraptor' :            new Genus(66,    66,    2013, 3,    [], '', ['USA'],          'Evans et al.',           false, ''),
 	'Achillesaurus' :           new Genus(86.3,  83.6,  2007, 1.5,  [], 'Alvarezsaurus', 
 	                                                                        ['Argentina'],    'Martinelli & Vera',      true,  ''),
-	'Achillobator' :            new Genus(98,    83,    1999, 5.5,  [], '', ['Mongolia'],     'Perle, Norell, & Clark', false, ''),
+	'Achillobator' :            new Genus(98,    83,    1999, 5.5,  [], '', ['Mongolia'],     'Perle, Norell & Clark', false, ''),
 	'Acristavus' :              new Genus(81,    76,    2011, 5.5,  [], '', ['USA'],          'Gates et al.',           false, ''),
 	'Acrocanthosaurus' :        new Genus(125,   100,   1950, 11.5, ['Acracanthus'], 
-	                                                                    '', ['USA'],          'Stovall & Langston',     false, ''),
+	                                                                    '', ['USA'],          'Stovall & Langston',     false, '', new Copyright('ThatChapThere', 'http://thatchapthere.com', 'Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)', 'https://creativecommons.org/licenses/by-sa/4.0/')),
 	'Acrotholus' :              new Genus(86.3,  83.6,  2013, 1.8,  [], '', ['Canada'],       'Evans et al.',           false, ''),
 	'Adamantisaurus' :          new Genus(93,    70,    2006, 13,   [], '', ['Brazil'],       'Santucci & Bertini',     false, ''),
 	'Adasaurus' :               new Genus(71,    69,    1983, 1.8,  [], '', ['Mongolia'],     'Barsbold',               false, ''),
@@ -186,7 +202,7 @@ var genera = { //genera database
 	'Afromimus' :               new Genus(140,   100,   2017, 2,    [], '', ['Niger'],        'Sereno',                 false, 'Actaully a possible Ceratosaur.'),
 	'Afrovenator' :             new Genus(167,   161,   1994, 8,    [], '', ['Niger'],        'Sereno',                 false, ''),
 	'Agathaumas' :              new Genus(66,    66,    1872, 9,    [], 'Triceratops', 
-	                                                                        ['USA'],          'Cope',                   true,  ''),
+	                                                                        ['USA'],          'Cope',                   true,  '', new Copyright('Charles R. Knight', 'http://www.charlesrknight.com/index.htm', 'Public Domain (CC0)', 'https://creativecommons.org/share-your-work/public-domain/')),
 	'Agilisaurus' :             new Genus(171.6, 161.2, 1990, 2,    [], '', ['China'],        'Peng',                   false, ''),
 	'Agnosphitys' :             new Genus(205.6, 201.6, 2002, 3,    [], '', ['England'],      'Fraser et al.',          false, 'Possible non-dinosaur dinosauriform silesaurid.'),
 	'Agrosaurus' :              new Genus(205.6, 201.6, 1891, 3,    [], 'Thecodontosaurus', 
@@ -196,7 +212,7 @@ var genera = { //genera database
 	'Ahshislepelta' :           new Genus(76,    72,    2011, 4,    [], '', ['USA'],          'Burns & Sullivan',       false, ''),
 	'Ajancingenia' :            new Genus(85,    66,    1981, 1.4,  [], 'Heyuannia', 
 	                                                                        ['Mongolia'],     'Barsbold',               true,  ''),
-	'Ajkaceratops' :            new Genus(86,    83,    2010, 1,    [], '', ['Hungary'],      'Ősi et al',              false, ''),
+	'Ajkaceratops' :            new Genus(86,    83,    2010, 1,    [], '', ['Hungary'],      'Ősi et al.',              false, ''),
 	'Alamosaurus' :             new Genus(67,    66,    1922, 34,   [], '', ['USA'],          'Gilmore',                false, ''),
 	'Alaskacephale' :           new Genus(72,    71,    2005, 4.5,  [], 'Pachycephalosaurus', 
 	                                                                        ['Alaska'],       'Sullivan',               false, ''),
@@ -214,8 +230,7 @@ var genera = { //genera database
 	'Algoasaurus' :             new Genus(145,   136,   1904, 9,    [], '', ['South Africa'], 'Bloom',                  false, ''),
 	'Alioramus' :               new Genus(71,    66,    1976, 6,    [], '', ['Mongolia'],     'Kurzanov',               false, ''),
 	'Allosaurus' :              new Genus(156,   145,   1877, 12, ['Creosaurus', 'Labrosaurus', 'Antrodemus'], 
-	                                                                    '', ['USA'],          'Marsh',                  false, 
-	                                                                    'Despite its popularity, Allosaurus has been considered potentially dubious because of its incomplete holotype.'),
+	                                                                    '', ['USA'],          'Marsh',                  false, 'Despite its popularity, Allosaurus has been considered potentially dubious because of its incomplete holotype.'),
 	'Almas' :                   new Genus(75,    71,    2017, 0.8,  [], '', ['Mongolia'],     'Pei et al.',             false, ''),
 	'Alnashetri' :              new Genus(99,    94,    2012, 0.8,  [], '', ['Argentina'],    'Makovicky, Apesteguía & Gianechini', 
 	                                                                                                                    false, ''),
@@ -249,7 +264,7 @@ var genera = { //genera database
 	'Anchisaurus' :             new Genus(189,   175,   1885, 2.4,  ['Megadactylus', 'Amphisaurus', 'Ammosaurus', 'Yaleosaurus'], 
 	                                                                    '', ['USA'],          'Marsh',                  false, ''),
 	'Andesaurus' :              new Genus(99,    94,    1991, 16,   [], '', ['Argentina'],    'Calvo & Bonaparte',      false, ''),
-	'Andhrasaurus' :            new Genus(201.3, 182.7, 2014, 3,    [], '', ['India'],        'Ulansky',                true,  ''),
+	'Andhrasaurus' :            new Genus(201.3, 182.7, 2014, 3,    [], '', ['India'],        'Ulansky',                true,  '', new Copyright('ThatChapThere', 'http://thatchapthere.com', 'Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)', 'https://creativecommons.org/licenses/by-sa/4.0/')),
 	'Angolatitan' :             new Genus(94,    89,    2011, 12,   [], '', ['Angola'],       'Mateus et al.',          false, ''),
 	'Angulomastacator' :        new Genus(75.7,  78.1,  2009, 8,    [], '', ['USA'],          'Wagner & Lehman,',       false, 
 		'The left maxilla (the main tooth-bearing bone of the upper jaw) is curved down approximately 45° at its anterior end, with the tooth row bent to fit, unlike any other hadrosaur.'),
@@ -258,7 +273,7 @@ var genera = { //genera database
 	'Animantarx' :              new Genus(102,   99,    1999, 3,    [], '', ['USA'],          'Carpenter et al.',       false, ''),
 	'Ankylosaurus' :            new Genus(67,    66,    1908, 9,    [], '', ['USA'],          'Brown',                  false, ''),
 	'Anodontosaurus' :          new Genus(73,    67,    1929, 5,    [], '', ['Canada'],       'Sternberg',              false, ''),
-	'Anomalipes' :              new Genus(100.5, 93.9,  2018, 2.2,  [], '', ['China'],        'Yu et al.',              false, ''),
+	'Anomalipes' :              new Genus(100.5, 93.9,  2018, 2.2,  [], '', ['China'],        'Yu et al.',              false, '', new Copyright('ThatChapThere', 'http://thatchapthere.com', 'Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)', 'https://creativecommons.org/licenses/by-sa/4.0/')),
 	'Anoplosaurus' :            new Genus(115,   100,   1879, 3.5,  [], '', ['England'],      'Seeley',                 false, ''),
 	'Anserimimus' :             new Genus(71,    68,    1988, 3,    [], '', ['Mongolia'],     'Barsbold',               false, ''),
 	'Antarctopelta' :           new Genus(75,    71,    2006, 4,    [], '', ['Antarctica'],   'Salgado & Gasparini',    false, ''),
@@ -295,6 +310,1070 @@ var genera = { //genera database
 	                                                                    '', ['USA'],          'Leidy',                  false, ''),
 	'Astrophocaudia' :          new Genus(112,   99,    2012, 10,   [], '', ['USA'],          'D’Emic',                 false, ''),
 	'Asylosaurus' :             new Genus(209,   201,   1936, 2,    [], '', ['England'],      'Galton',                 false, ''),
+	
+	'Atacamatitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Atlantosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Atlasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Atlascopcosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Atrociraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Atsinganosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Aublysodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Aucasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Augustynolophus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Auroraceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Aurornis' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Australodocus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Australovenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Austrocheirus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Austroposeidon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Austroraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Austrosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Avaceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Aviatyrannis' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Avimimus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Avipes' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bactrosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bagaceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bagaraatan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bahariasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bainoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Balaur' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Balochisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bambiraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Banji' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Baotianmansaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Barapasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Barilium' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Barosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Barrosasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Barsboldia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Baryonyx' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Batyrosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Baurutitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bayannurosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Beibeilong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Beipiaognathus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Beipiaosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Beishanlong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bellusaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Berberosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Betasuchus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bicentenaria' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bienosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bihariosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bissektipelta' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bistahieversor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Blasisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Blikanasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bolong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bonapartenykus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bonapartesaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bonatitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bonitasaura' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Borealopelta' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Borealosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Boreonykus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Borogovia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bothriospondylus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Brachiosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Brachyceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Brachylophosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Brachypodosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Brachytrachelopan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bjradycneme' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Brasilotitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bravoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Breviceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Brohisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Brontomerus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Brontosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bruhathkayosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Buitreraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Burianosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Buriolestes' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Byronosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Caenagnathasia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Caenagnathus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Caihong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Calamosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Calamospondylus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Callovosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Camarasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Camarillasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Camelotia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Camposaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Camptosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Campylodoniscus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Canardia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Carcharodontosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Cardiodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Carnotaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Caseosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Cathartesaura' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Cathetosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Caudipteryx' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Cedarosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Cedarpelta' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Cedrorestes' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Centrosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Cerasinops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ceratonykus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ceratosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Cetiosauriscus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Cetiosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Changchunsaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Changyuraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chaoyangsaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Charonosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chasmosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chebsaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chenanisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chialingosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chiayusaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chilantaisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chilesaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chindesaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chingkankousaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chinshakiangosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chirostenotes' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Choconsaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chondrosteosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chromogisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chuandongocoelurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chuanjiesaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chuanqilong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chubutisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chungkingosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Chuxiongosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Cionodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Citipati' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Claorhynchus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Claosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Clasmodosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Coahuilaceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Coelophysis' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Coeluroides' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Coelurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Colepiocephale' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Coloradisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Comahuesaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Compsognathus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Compsosuchus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Concavenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Conchoraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Condorraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Coronosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Corythoraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Corythosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Craspedodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Craterosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Crichtonpelta' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Crichtonsaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Cristatusaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Cruxicheiros' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Cryolophosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Cryptosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Cumnoria' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Daanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dacentrurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Daemonosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dahalokely' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dakotadon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dakotaraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Daliansaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dandakosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Darwinsaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dashanpusaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Daspletosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Datanglong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Datousaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Daxiatitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Deinocheirus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Deinodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Deinonychus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Delapparentia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Deltadromeus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Demandasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Denversaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Diabloceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Diamantinasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Diclonius' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dicraeosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Didanodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dilong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dilophosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Diluvicursor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dinheirosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dinodocus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Diplodocus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Diplotomodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dolichosuchus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dongbeititan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dongyangopelta' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dongyangosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Draconyx' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dracopelta' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dracoraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dracorex' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dracovenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dreadnoughtus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Drinker' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dromaeosauroides' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dromaeosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dromiceiomimus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Drusilasaura' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dryosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dryptosauroides' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dryptosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dubreuillosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Duriatitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Duriavenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dyoplosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dysalotosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dysganus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dyslocosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Dystrophaeus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Echinodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Edmontonia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Edmontosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Efraasia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Einiosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ekrixinatosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Elaltitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Elaphrosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Elmisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Elopteryx' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Elrhazosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Emausaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Embasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Enigmosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eoabelisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eocarcharia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eocursor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eodromaeus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eolambia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eomamenchisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eoplophysis' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eoraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eosinopteryx' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eotrachodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eotriceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eotyrannus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eousdryosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Epachthosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Epanterias' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Epichirostenotes' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Epidexipteryx' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Equijubus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Erectopus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Erketu' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Erliansaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Erlikosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eshanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eucamerotus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eucercosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eucnemesaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Euhelopus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Euoplocephalus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Euronychodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Europasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Europatitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Europelta' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Euskelosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Eustreptospondylus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Fabrosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Falcarius' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Fendusaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ferganasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ferganastegos' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ferganocephale' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Foraminacephale' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Fosterovenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Fruitadens' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Fukuiraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Fukuisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Fukuititan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Fukuivenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Fulengia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Fulgurotherium' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Fusuisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Futalognkosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Galeamopus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gallimimus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Galvesaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gannansaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ganzhousaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gargoyleosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Garudimimus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gasosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gasparinisaura' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gastonia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Geminiraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Genusaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Genyodectes' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Geranosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gideonmantellia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Giganotosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gigantoraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gigantosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gigantspinosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gilmoreosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Giraffatitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Glacialisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Glishades' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Glyptodontopelta' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gobiceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gobisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gobititan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gobivenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gojirasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gondwanatitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gongbusaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gongpoquansaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gongxianosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gorgosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Goyocephale' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Graciliceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Graciliraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gravitholus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gryphoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gryponyx' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gryposaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gspsaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Guaibasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Gualicho' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Guanlong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hadrosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Haestasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hagryphus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Halszkaraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Halticosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hanssuesia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Haplocanthosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Haplocheirus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Harpymimus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Haya' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Heishansaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Helioceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Heptasteornis' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Herrerasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hesperonychus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hesperosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Heterodontosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hexing' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hexinlusaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Heyuannia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hierosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hippodraco' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Histriasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Homalocephale' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hoplitosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Horshamosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Huabeisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hualianceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Huanansaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Huanghetitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Huangshanlong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Huaxiagnathus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Huayangosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hudiesaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Huehuecanauhtlus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hulsanpes' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hungarosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Huxleysaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hylaeosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hypacrosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hypselosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hypselospinus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hypsibema' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hypsilophodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Hypsirhophus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ichthyovenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ignavusaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Iguanacolossus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Iguanodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Iliosuchus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ilokelesia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Incisivosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Indosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Indosuchus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Inosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Irritator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Isaberrysaura' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Isanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ischioceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ischyrosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Isisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Itemirus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Iuticosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jainosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jaklapallisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Janenschia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jaxartosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jeholosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jeyawati' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jianchangosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jiangjunosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jiangshanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jiangxisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jianianhualong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jinfengopteryx' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jingshanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jintasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jinyunpelta' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jinzhousaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jiutaisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jobaria' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Jubbulpuria' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Judiceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Juratyrant' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Juravenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kaatedocus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kaijiangosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kakuru' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kangnasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Karongasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Katepensaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kayentavenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kazaklambia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kelmayisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kentrosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kerberosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Khaan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Khetranisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kileskus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kinnareemimus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Klamelisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kol' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Koparion' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Koreaceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Koreanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Koshisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kosmoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kotasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Koutalisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kritosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kryptops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Krzyzanowskisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kukufeldia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kulceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kulindadromeus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kunbarrasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kundurosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kunmingosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Kuszholia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Labocania' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Laevisuchus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Laiyangosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lamaceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lambeosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lametasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lamplughsaura' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lanzhousaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Laosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lapampasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Laplatasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lapparentosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Laquintasaura' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Latenivenatrix' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Latirhinus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Leaellynasaura' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Leinkupal' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Leonerasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lepidus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Leptoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Leptorhynchos' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Leshansaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lesothosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lessemsaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Levnesovia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lexovisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Leyesaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Liaoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Liaoningosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Liaoningvenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ligabueino' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ligabuesaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Liliensternus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Limaysaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Limusaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Linhenykus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Linheraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Linhevenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lirainosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Liubangosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lohuecotitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Loncosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lophorhothon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lophostropheus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Loricatosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Loricosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Losillasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lourinhanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lourinhasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Luanchuanraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lucianovenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lufengosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lukousaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Luoyanggia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lurdusaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lusitanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lusotitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lycorhinus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Lythronax' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Machairasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Machairoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Macrogryphosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Macrurosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Magnapaulia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Magnamanus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Magnirostris' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Magnosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Magyarosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mahakala' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Maiasaura' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Majungasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Malarguesaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Malawisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Maleevus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mamenchisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Manidens' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mandschurosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mansourasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mantellisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mantellodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mapusaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Marisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Marmarospondylus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Marshosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Martharaptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Masiakasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Massospondylus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Matheronodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Maxakalisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Medusaceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Megalosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Megaraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mei' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Melanorosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mendozasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mercuriceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Meroktenos' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Metriacanthosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Microceratus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Microcoelus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Microhadrosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Micropachycephalosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Microraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Microvenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mierasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Minmi' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Minotaurasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Miragaia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mirischia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Moabosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mochlodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mojoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mongolosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Monkonosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Monoclonius' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Monolophosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mononykus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Montanoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Morelladon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Morinosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Morrosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mosaiceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Murusraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mussaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Muttaburrasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Muyelensaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Mymoorapelta' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Naashoibitosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nambalia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nankangia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nanningosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nanotyrannus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nanshiungosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nanuqsaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nanyangosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Narambuenatitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nasutoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nebulasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nedcolbertia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nedoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Neimongosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nemegtomaia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nemegtosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Neosodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Neovenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Neuquenraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Neuquensaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nicksaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nigersaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ningyuansaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Niobrarasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nipponosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Noasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nodocephalosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nodosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nomingia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nopcsaspondylus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Normanniasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nothronychus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Notoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Notocolossus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Notohypsilophodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nqwebasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nuthetes' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Nyasasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ohmdenosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ojoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ojoraptorsaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Olorotitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Omeisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Onychosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Oohkotokia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Opisthocoelicaudia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Oplosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Orkoraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ornithodesmus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ornitholestes' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ornithomimoides' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ornithomimus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ornithopsis' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Orodromeus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Orthogoniosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Orthomerus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Oryctodromeus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Osmakasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ostafrikasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ostromia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Othnielia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Othnielosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Otogosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ouranosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Overosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Oviraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Owenodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Oxalaia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ozraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pachycephalosaurus' : new Genus(72.1   , 66    , 1931    , 4.5 ,   ['Tylosteus'], '', ['USA'],             'Gilmore',                       
+																								false, 'Tylosteus was actually a senior synonym, but was rejected due to its disuse. Tylosteus may actually be a senior synonym of Dracorex, but thay may itself be a juvenile Pachycephalosaurus',
+																								new Copyright('ThatChapThere', 'http://thatchapthere.com', 'Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)', 'https://creativecommons.org/licenses/by-sa/4.0/')),
+	'Pachyrhinosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pachyspondylus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pachysuchus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Padillasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pakisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Palaeopteryx' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Palaeoscincus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Paludititan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pampadromaeus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pamparaptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Panamericansaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pandoravenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Panguraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Panoplosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Panphagia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pantydraco' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Paralititan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Paranthodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pararhabdodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Parasaurolophus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Parksosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Paronychodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Parvicursor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Patagonykus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Patagosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Patagotitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pawpawsaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pectinodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pedopenna' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pegomastax' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Peishansaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pelecanimimus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pellegrinisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Peloroplites' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pelorosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Penelopognathus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pentaceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Petrobrasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Phaedrolosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Philovenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Phuwiangosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Phyllodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Piatnitzkysaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pinacosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pisanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pitekunsaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Piveteausaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Planicoxa' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Plateosauravus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Plateosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Platyceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Platypelta' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Plesiohadros' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pleurocoelus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pneumatoraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Podokesaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Poekilopleuron' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Polacanthus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Polyodontosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Polyonax' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Powellvenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pradhania' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Prenocephale' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Prenoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Priconodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Priodontognathus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Proa' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Probactrosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Probrachylophosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Proceratosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Procompsognathus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Prodeinodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Propanoplosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Proplanicoxa' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Prosaurolophus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Protarchaeopteryx' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Protoavis' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Protoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Protognathosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Protohadros' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Psittacosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pteropelyx' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pterospondylus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Puertasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pukyongosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pulanesaura' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pycnonemosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Pyroraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Qantassaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Qianzhousaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Qiaowanlong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Qijianglong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Qinlingosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Qingxiusaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Qiupalong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Quaesitosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Quetecsaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Quilmesaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rahiolisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rahonavis' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rajasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rapator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rapetosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Raptorex' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ratchasimasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rativates' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rayososaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rebbachisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Regaliceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Regnosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rhabdodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rhadinosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rhinorex' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rhoetosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Riabininohadros' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Richardoestesia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rinchenia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rinconsaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Riojasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rocasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rubeosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ruehleia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rugocaudia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rugops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Rukwatitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ruyangosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sahaliyania' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Saichania' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Saldamosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Saltasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Saltopus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sanjuansaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sanpasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Santanaraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Saraikimasoom' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sarahsaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sarcolestes' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sarcosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sarmientosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Saturnalia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Saurolophus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sauroniops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sauropelta' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Saurophaganax' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sauroplites' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sauroposeidon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Saurornithoides' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Saurornitholestes' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Savannasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Scansoriopteryx' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Scelidosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Scipionyx' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sciurumimus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Scolosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Scutellosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Secernosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sefapanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Segisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Segnosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Seitaad' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sellacoxa' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Serendipaceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Serikornis' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Shamosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Shanag' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Shantungosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Shanxia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Shanyangosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Shaochilong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Shenzhousaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Shidaisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Shingopana' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Shixinggia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Shuangbaisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Shuangmiaosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Shunosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Shuvuuia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Siamodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Siamosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Siamotyrannus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Siats' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sibirotitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sigilmassasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Siluosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Silvisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Similicaudipteryx' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sinocalliopteryx' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sinoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sinocoelurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sinopeltosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sinornithoides' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sinornithomimus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sinornithosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sinosauropteryx' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sinosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sinotyrannus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sinovenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sinraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sinusonasus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sirindhorna' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Skorpiovenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sonidosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sonorasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Soriatitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sphaerotholus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Spiclypeus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Spinophorosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Spinops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Spinosaurus' : new Genus(112   , 93.5    , 1915    , 15 ,   [], '', ['Egypt'],             'Stromer',                       false, '', new Copyright('ThatChapThere', 'http://thatchapthere.com', 'Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)', 'https://creativecommons.org/licenses/by-sa/4.0/')),
+	'Spinostropheus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Staurikosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Stegoceras' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Stegopelta' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Stegosaurides' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Stegosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Stenonychosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Stenopelix' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Stephanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Stokesosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Streptospondylus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Struthiomimus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Struthiosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Stygimoloch' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Styracosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Suchomimus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Suchosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Sulaimanisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Supersaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Suuwassea' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Suzhousaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Szechuanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tachiraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Talarurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Talenkauen' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Talos' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tambatitanis' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tangvayosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tanius' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tanycolagreus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tanystrosuchus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Taohelong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tapuiasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tarascosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tarbosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tarchia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tastavinsaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tatankacephalus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tatankaceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tataouinea' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tatisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Taurovenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Taveirosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tawa' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tazoudasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Technosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tehuelchesaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Teihivenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Teinurosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Telmatosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tendaguria' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tengrisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tenontosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Teratophoneus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tethyshadros' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Texacephale' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Texasetes' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Teyuwasu' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Thecocoelurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Thecodontosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Thecospondylus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Theiophytalia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Therizinosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Therosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Thescelosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Thespesius' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tianchisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tianyulong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tianyuraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tianzhenosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tichosteus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tienshanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Timimus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Timurlengia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Titanoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Titanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tochisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tonganosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tongtianlong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tornieria' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Torosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Torvosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tototlmimus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Trachodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tratayenia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Traukutitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Triceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Trigonosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Trimucrodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Trinisaura' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Triunfosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Troodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tsaagan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tsagantegia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tsintaosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tugulusaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tuojiangosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Turanoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Turiasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tylocephale' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tyrannosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Tyrannotitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Uberabatitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Udanoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ugrunaaluk' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ultrasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Unaysaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Unenlagia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Unescoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Unquillosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Urbacodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Utahceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Utahraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Uteodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Vagaceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Vahiny' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Valdoraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Valdosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Variraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Velafrons' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Velocipes' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Velociraptor' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Velocisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Venenosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Veterupristisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Viavenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Vitakridrinda' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Vitakrisaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Volkheimeria' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Vouivria' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Vulcanodon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Wakinosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Walgettosuchus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Wannanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Wellnhoferia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Wendiceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Wiehenvenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Willinakaqe' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Wintonotitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Wuerhosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Wulagasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Wulatelong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Wyleyia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Xenoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Xenoposeidon' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Xenotarsosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Xianshanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Xiaosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Xiaotingia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Xingxiulong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Xinjiangovenator' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Xinjiangtitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Xiongguanlong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Xixianykus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Xixiasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Xixiposaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Xuanhanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Xuanhuaceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Xuwulong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yamaceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yandusaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yangchuanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yaverlandia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yehuecauhceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yi' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yimenosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yingshanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yinlong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yixianosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yongjinglong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yuanmousaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yueosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yulong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yunganglong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yunmenglong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yunnanosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yurgovuchia' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Yutyrannus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zalmoxes' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zanabazar' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zapalasaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zapsalis' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zaraapelta' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zby' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zephyrosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zhanghenglong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zhejiangosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zhenyuanlong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zhongornis' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zhongjianosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zhongyuansaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zhuchengceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zhuchengtitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zhuchengtyrannus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Ziapelta' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zigongosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zizhongosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zuniceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zuolong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zuoyunlong' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zupaysaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Zuul' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
 }
 
 var countryImages = {};
@@ -326,6 +1405,21 @@ var discoveryTimeRange = [1800, 1900, 2000, 2050];
 var tree = { // basic tree
 	'@Dinosauria' : '@Dinosauria',
 		'@Saurischia' : '@Dinosauria',
+			'@Herrerasauridae' : '@Saurischia',
+				'-Herrerasauridae' : '@Herrerasauridae',
+					'Caseosaurus' : '-Herrerasauridae',
+						'crosbyensis' : 'Caseosaurus',
+				'#Staurikosaurus1' : '@Herrerasauridae',
+					'Staurikosaurus' : '#Staurikosaurus1',
+						 'pricei' : 'Staurikosaurus',
+					'#Herrerasaurus1' : '#Staurikosaurus1',
+						'Herrerasaurus' : '#Herrerasaurus1',
+							 'ischigualastensis' : 'Herrerasaurus',
+						'#Chindesaurus1' : '#Herrerasaurus1',
+							'Chindesaurus' : '#Chindesaurus1',
+								'bryansmalli' : 'Chindesaurus',
+							'Sanjuansaurus' : '#Chindesaurus1',	
+								'gordilloi' : 'Sanjuansaurus',
 			'@Sauropodomorpha' : '@Saurischia',
 				'-Sauropodomorpha' : '@Sauropodomorpha',
 					'Asylosaurus' : '-Sauropodomorpha',
@@ -527,6 +1621,8 @@ var tree = { // basic tree
 															'Acrotholus' : '#Acrotholus1',
 																'audeti' : 'Acrotholus',
 															'@Pachycephalosaurini' : '#Acrotholus1',
+																'Pachycephalosaurus' : '@Pachycephalosaurini',
+																	'wyomingenesis' : 'Pachycephalosaurus',
 																'Alaskacephale' : '@Pachycephalosaurini',
 																	'gangloffi' : 'Alaskacephale',
 											'@Ceratopsia' : '@Marginocephalia',
@@ -637,6 +1733,11 @@ var tree = { // basic tree
 							'@Orionides' : '@Tetanurae',
 								'@Megalosauroidea' : '@Orionides',
 									'@Megalosauria' : '@Megalosauroidea',
+										'@Spinosauridae' : '@Megalosauria',
+											'@Spinosaurinae' : '@Spinosauridae',
+												'Spinosaurus' : '@Spinosaurinae',
+													'aegyptiacus' : 'Spinosaurus',
+													'maroccanus?' : 'Spinosaurus',
 										'@Megalosauridae' : '@Megalosauria',
 											'@Afrovenatorinae' : '@Megalosauridae',
 												'Afrovenator' : '@Afrovenatorinae',
@@ -761,7 +1862,6 @@ var tree = { // basic tree
 																							'Achillobator' : '@Dromaeosaurinae',
 																								 'giganticus' : 'Achillobator',
 																				'@Troodontidae' : '@Deinonychosauria',
-																				
 																					'-Troodontidae' : '@Troodontidae',
 																						'Albertavenator' : '-Troodontidae',
 																							'curriei' : 'Albertavenator',
@@ -776,13 +1876,14 @@ var tree = { // basic tree
 
 var treeHeight = canvasSize.y - 100; // height for the tree
 
-ctx.canvas.width = canvasSize.x;
-ctx.canvas.height = canvasSize.y; // set the canvas to the size just specified
-
-ctx.fillStyle = '#fff';//fill style white
-
-ctx.fillRect(0, 0, canvasSize.x, canvasSize.y);//draw background
-
+if(isMainPage) {
+	ctx.canvas.width = canvasSize.x;
+	ctx.canvas.height = canvasSize.y; // set the canvas to the size just specified
+	
+	ctx.fillStyle = '#fff';//fill style white
+	
+	ctx.fillRect(0, 0, canvasSize.x, canvasSize.y);//draw background
+}
 var treeWithDetails = {};//tree with metadata added
 
 treeWithDetails['@Dinosauria'] = new Node('@Dinosauria', 0, canvasSize.y / 2, [], canvasSize.y / 2.5); // preset the root node to avoid errors
@@ -1256,40 +2357,42 @@ var searchInputBar = document.getElementById('search_input');
 
 var searchResultsDivider = document.getElementById('results_divider');
 
-searchInputBar.onkeyup = function() {
-	var results = getSearchResults(searchInputBar.value);
-	
-	searchResultsDivider.innerHTML = '';
-	
-	for(var i = 0; i < results.length; i++) {
-		var result = results[i];
+if(isMainPage) {
+	searchInputBar.onkeyup = function() {
+		var results = getSearchResults(searchInputBar.value);
 		
-		searchResultsDivider.innerHTML += '\
-			<table class="result_table" id="search_result_' + result.taxon + '"><tbody><tr>\
-				<td>\
-					<img class="result_image" src="' + result.imageSRC + '">\
-				</td>\
-				<td  style="width: 100%">\
-					' + result.text + '\
-				</td>\
-			</tr></tbody></table>';
-	}
-	
-	for(var i = 0; i < results.length; i++) {
-		var result = results[i];
+		searchResultsDivider.innerHTML = '';
 		
-		console.log(document.getElementById('search_result_' + result.taxon));
-		console.log(result.taxon);
+		for(var i = 0; i < results.length; i++) {
+			var result = results[i];
+			
+			searchResultsDivider.innerHTML += '\
+				<table class="result_table" id="search_result_' + result.taxon + '"><tbody><tr>\
+					<td>\
+						<img class="result_image" src="' + result.imageSRC + '">\
+					</td>\
+					<td  style="width: 100%">\
+						' + result.text + '\
+					</td>\
+				</tr></tbody></table>';
+		}
 		
-		document.getElementById('search_result_' + result.taxon).addEventListener("click", function(){
-				console.log(this.id.substring(14));
-				fillDetailsDivider(this.id.substring(14));
-				
-				searchResultsDivider.innerHTML = '';
-			}
-		);
-	}
-};
+		for(var i = 0; i < results.length; i++) {
+			var result = results[i];
+			
+			console.log(document.getElementById('search_result_' + result.taxon));
+			console.log(result.taxon);
+			
+			document.getElementById('search_result_' + result.taxon).addEventListener("click", function(){
+					console.log(this.id.substring(14));
+					fillDetailsDivider(this.id.substring(14));
+					
+					searchResultsDivider.innerHTML = '';
+				}
+			);
+		}
+	};
+}
 
 function fillDetailsDivider(taxon) {
 	if(taxon == '') { // do nothing if empty taxon
@@ -1346,15 +2449,53 @@ function fillDetailsDivider(taxon) {
 	var image = document.createElement('img');
 	if(isGenus) {
 		image.src = 'images/' + taxon + '.jpg';
+		
+		// add a copyright notice
+		var copyright = document.createElement('span');
+		var attribution = genera[taxon].attribution;
+		if(attribution) {
+			// name, siteURL, licence, licenceURL
+			copyright.innerHTML = '<br/>Image credit: &copy;<a href="' +
+				attribution.siteURL +
+				'">' +
+				attribution.name +
+				'</a> under <a href="' +
+				attribution.licenceURL +
+				'">' +
+				attribution.licence +
+				'</a><br/><br/>';
+		}
+		copyright.style.fontSize = '5px';
+		
 		imageBox.appendChild(image);
+		imageBox.appendChild(copyright);
 	}else{
 		var representativeGenus = getRepresentativeGenus(taxon);
 		image.src = 'images/' + representativeGenus + '.jpg';
+		
+		// add a copyright notice
+		var copyright = document.createElement('span');
+		var attribution = genera[representativeGenus].attribution;
+		if(attribution) {
+			// name, siteURL, licence, licenceURL
+			copyright.innerHTML = '<br/>Image credit: &copy;<a href="' +
+				attribution.siteURL +
+				'">' +
+				attribution.name +
+				'</a> under <a href="' +
+				attribution.licenceURL +
+				'">' +
+				attribution.licence +
+				'</a><br/><br/>';
+		}
+		copyright.style.fontSize = '5px';
+		
 		//specify representative genus
 		var genusSpecifier = document.createElement('div');
 		genusSpecifier.innerHTML = '<span class="genus name-link">' + representativeGenus + '</span>, a member of ' + taxon.substring(1, taxon.length); // remove @ or #
 		
 		imageBox.appendChild(image);
+		imageBox.appendChild(copyright);
 		imageBox.appendChild(genusSpecifier);
 	}
 	image.width = detailsImageSize.x;
@@ -1723,12 +2864,8 @@ function fillDetailsDivider(taxon) {
 			console.log(e);
 		}
 		
-		detailsCTX.font = "bold " + textSize + "pt Georgia";
-		
 		var countries = genera[taxon].countries;
 		var wordEnding = countries.length == 1 ? 'y' : 'ies'; // singular or plural
-		
-		detailsCTX.fillText('Countr' + wordEnding + ' discovered in: (Alaska is listed separately to the rest of the USA)', textSize / 2, timelineHeight * 8 + textSize * 1.5 + detailsImageSize.x / 2);
 		
 		detailsCTX.drawImage( // the world map image
 			worldMapImage,
@@ -1765,7 +2902,9 @@ function fillDetailsDivider(taxon) {
 		
 		detailsCTX.font = textSize + "pt Georgia";
 		
-		detailsCTX.fillText(countriesString, textSize / 2, timelineHeight * 9 + textSize * 1.5 + detailsImageSize.x / 2 + detailsImageSize.x * worldMapSizeRatio);
+		detailsCTX.fillText('Countr' + wordEnding + ' discovered in: ' + countriesString, textSize / 2, timelineHeight * 8 + textSize * 1.5 + detailsImageSize.x / 2);
+		
+		detailsCTX.fillText('Alaska is displayed separately from the rest of the USA.', textSize / 2, timelineHeight * 9 + textSize * 1.5 + detailsImageSize.x / 2 + detailsImageSize.x * worldMapSizeRatio);
 		
 		detailsTable.appendChild(detailsCanvas);
 	}
@@ -1807,32 +2946,61 @@ function fillDetailsDivider(taxon) {
 	drawTree();
 }
 
-fillDetailsDivider('@Dinosauria');
-
-drawTree();
-setTimeout(drawTree, 50); // so images are loaded
-
-ctx.canvas.onmousewheel = function(e) {
-	//~ console.log(e.wheelDelta);
-	
-	var mousePositionOnTree = new P(
-		translation.x + (mousePosition.x / translation.zoom),
-		translation.y + (mousePosition.y / translation.zoom)
-	);
-	
-	translation.zoom *= 1 + e.wheelDelta / 1000;
-	
-	var newMousePositionOnTree = new P(
-		translation.x + (mousePosition.x / translation.zoom),
-		translation.y + (mousePosition.y / translation.zoom)
-	);
-	
-	translation.x += newMousePositionOnTree.x - mousePositionOnTree.x;
-	translation.y += newMousePositionOnTree.y - mousePositionOnTree.y;
-	
-	//~ console.log(mousePositionOnTree.x - newMousePositionOnTree.x);
+if(isMainPage) {
+	fillDetailsDivider('@Dinosauria');
 	
 	drawTree();
+	setTimeout(drawTree, 50); // so images are loaded
+	
+	ctx.canvas.onmousewheel = function(e) {
+		//~ console.log(e.wheelDelta);
+		
+		var mousePositionOnTree = new P(
+			translation.x + (mousePosition.x / translation.zoom),
+			translation.y + (mousePosition.y / translation.zoom)
+		);
+		
+		translation.zoom *= 1 + e.wheelDelta / 1000;
+		
+		var newMousePositionOnTree = new P(
+			translation.x + (mousePosition.x / translation.zoom),
+			translation.y + (mousePosition.y / translation.zoom)
+		);
+		
+		translation.x += newMousePositionOnTree.x - mousePositionOnTree.x;
+		translation.y += newMousePositionOnTree.y - mousePositionOnTree.y;
+		
+		//~ console.log(mousePositionOnTree.x - newMousePositionOnTree.x);
+		
+		drawTree();
+	}
+}
+
+function doReferenceList() {
+	var listElement = document.getElementById('reference_list');
+	var fullHTMLstring = '';
+	for(var i in genera) {
+		//*
+		var HTMLstring = '';
+		HTMLstring += i + ':';
+		HTMLstring += tree[i] ? '<span class="positive"> classified,</span> ' : '<span class="negative"> unclassified,</span> ';
+		HTMLstring += genera[i].describedBy ? '<span class="positive"> details filled in,</span> ' : '<span class="negative"> details not filled in,</span> ';
+		HTMLstring += genera[i].attribution ? '<span class="positive"> image drawn.</span> ' : '<span class="negative"> image not drawn.</span> ';
+		HTMLstring += '<br/>';
+		fullHTMLstring += HTMLstring;
+		// */
+		
+		/*
+		if(genera[i].describedBy) {
+			fullHTMLstring += i + ' ';
+		}
+		//*/
+	}
+	listElement.innerHTML = fullHTMLstring;
+}
+
+if(!isMainPage) { // if the reference page
+	setTimeout(doReferenceList,10);
 }
 
 //**********************************************************************

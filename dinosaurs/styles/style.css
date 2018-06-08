@@ -116,6 +116,7 @@ button#zoom_out_button{
 	margin: 0;
 	padding-top: 10px;
 	padding-bottom: 100px;
+	text-align: center;
 }
 
 .home_link{
@@ -146,4 +147,46 @@ button#zoom_out_button{
 /*
 	font-size: 20px;
 */
+}
+
+.image_contribution_guideline_paragraph{
+	margin-left: 24px;
+}
+
+.image_contribution_guideline_title{
+	margin-left: 4px;
+}
+
+.image_contribution_guideline_image{
+	height: 200px;
+}
+
+.mini_image{
+	width: 16px;
+	height: 9px;
+}
+
+.positive{
+	color: green;
+}
+
+.negative{
+	color: red;
+}
+
+.code{
+	background-color: white;
+	border-style: solid;
+	border-width: 1px;
+	border-color: black;
+	display: inline-block;
+	margin: 8px;
+}
+
+.credits_box{
+	border-style: solid;
+	border-width: 1px;
+	border-color: black;
+	margin: 8px;
+	padding: 8px;
 }

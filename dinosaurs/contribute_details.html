@@ -1,0 +1,248 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>Get Involved - Details</title>
+	<LINK type="image/png" href="alt_images/icon.png" rel="icon"></LINK>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="generator" content="Geany 1.30.1" />
+	<LINK href="styles/style.css" rel="stylesheet" ></LINK>
+</head>
+
+<body>
+	
+	<h1 class="home_title">
+		Contribute Details
+	</h1>
+	
+	<p class="image_contribution_guideline_paragraph">
+		The <a href="tree.html">project</a> needs details filling in for every dinosaur. All help is
+		gratefully recieved. You can fill out whichever genera you like that
+		are not listed as "described" on the 
+		<a href="reference.html">reference</a>.
+		Preferrably do alphabetically consecutive dinosaurs, but you can do a
+		<a href="https://en.wikipedia.org/wiki/Taxon">taxon</a> you like instead if you prefer. Simply type out based on
+		the following instructions, and then send directly in an email
+		or in an attatched .js or .txt file to <a href="mailto:ThatChapThere@outlook.com">
+			ThatChapThere@outlook.com</a>.
+		If you have any more questions go to
+		the <a href="faq.html">FAQ page</a>.
+		The following are the
+		details you need to fill in:
+	</p>
+	
+	<h3 class="image_contribution_guideline_title">
+		Name
+	</h3>
+	
+	<p class="image_contribution_guideline_paragraph">
+		Write the name of the dinosaur (beginning with a capital letter) within single quotes, followed by a colon and "new Genus(".
+	</p>
+	
+	<pre class="code">
+	
+	<span class="negative">'Alaskacephale' : new Genus(</span>72, 71, 2005, 4.5, [], 'Pachycephalosaurus', ['Alaska'], 'Sullivan', false, ''),	
+	
+</pre>
+	
+	
+	<h3 class="image_contribution_guideline_title">
+		Time lived
+	</h3>
+	
+	<p class="image_contribution_guideline_paragraph">
+		Write the <i>earliest possible time appeared</i> and <i>latest possible
+		time extict</i> in mya (millions of years ago), both followed by commas. One good place to find
+		these details is
+		<a href="http://www.dinochecker.com/dinosaurs/ACROTHOLUS">
+			dinochecker.com</a>
+		or
+		<a href="https://en.wikipedia.org/wiki/Main_Page">
+			Wikipedia</a>.
+		If Wikipedia does not have specific dates it will either
+		mention a specific age e.g.
+		<a href="https://en.wikipedia.org/wiki/Maastrichtian">
+			the Maastrichtian</a> (and the
+		relevant dates should be mentioned on the specific age's Wikipedia page)
+		or mention the dig site where the fossils were found (and the
+		relevant dates should be mentioned on the dig site's Wikipedia page). Failing this, just go
+		for the dates of a larger time period such as
+		<a href="https://en.wikipedia.org/wiki/Middle_Jurassic">
+			the middle Jurassic</a> that you know for certain the genus did not exist outside of.
+	</p>
+	
+	<pre class="code">
+	
+	'Alaskacephale' : new Genus(<span class="negative">72, 71,</span> 2005, 4.5, [], 'Pachycephalosaurus', ['Alaska'], 'Sullivan', false, ''),	
+	
+</pre>
+	
+	<h3 class="image_contribution_guideline_title">
+		Year described
+	</h3>
+	
+	<p class="image_contribution_guideline_paragraph">
+		Write the year officially <i>described</i> not <i>discovered</i>, followed by a comma.
+	</p>
+	
+	<pre class="code">
+	
+	'Alaskacephale' : new Genus(72, 71, <span class="negative">2005,</span> 4.5, [], 'Pachycephalosaurus', ['Alaska'], 'Sullivan', false, ''),	
+	
+</pre>
+	
+	<h3 class="image_contribution_guideline_title">
+		Length
+	</h3>
+	
+	<p class="image_contribution_guideline_paragraph">
+		Write the length in metres. Again, 
+		<a href="http://www.dinochecker.com/dinosaurs/ACROTHOLUS">
+			dinochecker.com</a>
+		and
+		<a href="https://en.wikipedia.org/wiki/Main_Page">
+			Wikipedia</a>
+		are good for this. If you can't find a length anywhere on the
+		internet, find a paper listing bone lengths and scale it based
+		on the bone lengths of its nearest relative. Failing that just
+		make an educated guess based on the fossil sizes. Again, add a comma.
+	</p>
+	
+	<pre class="code">
+	
+	'Alaskacephale' : new Genus(72, 71, 2005, <span class="negative">4.5,</span> [], 'Pachycephalosaurus', ['Alaska'], 'Sullivan', false, ''),	
+	
+</pre>
+
+	<h3 class="image_contribution_guideline_title">
+		Junior Synonyms
+	</h3>
+	
+	<p class="image_contribution_guideline_paragraph">
+		<a href="https://en.wikipedia.org/wiki/Main_Page">
+			Wikipedia</a>
+		should have these. Put each synonym in single quotes and put
+		commas between them. Encase these within square brackets "[" and
+		"]" and end with a comma. If there are no synonyms just use
+		empty square brackets "[]".
+	</p>
+	
+	<pre class="code">
+	
+	'Alaskacephale' : new Genus(72, 71, 2005, 4.5, <span class="negative">[],</span> 'Pachycephalosaurus', ['Alaska'], 'Sullivan', false, ''),	
+	
+	'Allosaurus' : new Genus(156, 145, 1877, 12, <span class="negative">['Creosaurus', 'Labrosaurus', 'Antrodemus'],</span> '', ['USA'], 'Marsh', false, 'Despite its popularity, Allosaurus has been considered potentially dubious because of its incomplete holotype.'),	
+
+</pre>
+	
+	<h3 class="image_contribution_guideline_title">
+		Possible senior synonym
+	</h3>
+	
+	<p class="image_contribution_guideline_paragraph">
+		<a href="https://en.wikipedia.org/wiki/Main_Page">
+			Wikipedia</a>
+		should have these too. Use single quotes and follow
+		with a single comma. If the genus is definitely unique, just use
+		empty quotes " ' ' "
+	</p>
+	
+	<pre class="code">
+	
+	'Alaskacephale' : new Genus(72, 71, 2005, 4.5, [], <span class="negative">'Pachycephalosaurus',</span> ['Alaska'], 'Sullivan', false, ''),	
+	
+	'Allosaurus' : new Genus(156, 145, 1877, 12, ['Creosaurus', 'Labrosaurus', 'Antrodemus'], <span class="negative">'',</span> ['USA'], 'Marsh', false, 'Despite its popularity, Allosaurus has been considered potentially dubious because of its incomplete holotype.'),	
+
+</pre>
+	
+	<h3 class="image_contribution_guideline_title">
+		Countries discovered in
+	</h3>
+	
+	<p class="image_contribution_guideline_paragraph">
+		<a href="https://en.wikipedia.org/wiki/Main_Page">
+			Wikipedia</a>
+		should have these also. Put each country in single quotes and 
+		put commas between them. Encase these with square brackets "[" 
+		and "]" and end with a comma. Also important to remember is that
+		Alaska and the USA (listed "USA") are considered separate 
+		countries for the sake of the map.
+	</p>
+	
+	<pre class="code">
+	
+	'Alaskacephale' : new Genus(72, 71, 2005, 4.5, [], 'Pachycephalosaurus', <span class="negative">['Alaska'],</span> 'Sullivan', false, ''),	
+	
+	'Asiaceratops' : new Genus(100, 95, 1989, 1, [], '', <span class="negative">['Uzbekistan', 'China', 'Mongolia'],</span> 'Lev Nesov, L.F. Kaznyshkina &amp; Gennadiy Olegovich Cherepanov', true,  ''),	
+	
+</pre>
+	
+	<h3 class="image_contribution_guideline_title">
+		Desciber(s)
+	</h3>
+	
+	<p class="image_contribution_guideline_paragraph">
+		<a href="https://en.wikipedia.org/wiki/Main_Page">
+			Wikipedia</a>
+		should have these as well. Put inside single quotes and end with
+		a comma. always use "&amp;", not "and". Use commas and spaces if
+		there are three or more describers. Always put a period at the
+		end of "et al.".
+	</p>
+	
+	<pre class="code">
+	
+	'Alaskacephale' : new Genus(72, 71, 2005, 4.5, [], 'Pachycephalosaurus', ['Alaska'], <span class="negative">'Sullivan',</span> false, ''),	
+	
+	'Asiaceratops' : new Genus(100, 95, 1989, 1, [], '', ['Uzbekistan', 'China', 'Mongolia'], <span class="negative">'Lev Nesov, L.F. Kaznyshkina &amp; Gennadiy Olegovich Cherepanov',</span> true,  ''),	
+	
+	'Aorun' : new Genus(164, 161, 2013, 1, [], '', ['China'], <span class="negative">'Choiniere et al.',</span> false, ''),
+	
+</pre>
+	
+	<h3 class="image_contribution_guideline_title">
+		Filler "false" value
+	</h3>
+	
+	<p class="image_contribution_guideline_paragraph">
+		Type false <b><i>without</i></b> quotes and end with a comma. (This is
+		a currently meaningless filler value, I apologise for my bad
+		coding.)
+	</p>
+	
+	<pre class="code">
+	
+	'Alaskacephale' : new Genus(72, 71, 2005, 4.5, [], 'Pachycephalosaurus', ['Alaska'], 'Sullivan', <span class="negative">false,</span> ''),	
+	
+</pre>
+
+	<h3 class="image_contribution_guideline_title">
+		Notes
+	</h3>
+	
+	<p class="image_contribution_guideline_paragraph">
+		Put any notes you have about the dinosaur in single quotes (or leave empty single quotes). Then finally end the line with a closing parenthesis and a comma "),".
+	</p>
+	
+	<pre class="code">
+	
+	'Alaskacephale' : new Genus(72, 71, 2005, 4.5, [], 'Pachycephalosaurus', ['Alaska'], 'Sullivan', false, <span class="negative">''),</span>	
+	
+	'Allosaurus' : new Genus(156, 145, 1877, 12, ['Creosaurus', 'Labrosaurus', 'Antrodemus'], '', ['USA'], 'Marsh', false, <span class="negative">'Despite its popularity, Allosaurus has been considered potentially dubious because of its incomplete holotype.'),</span>	
+
+</pre>
+
+	<hr/>
+	
+	<p style="text-align:center;" >
+		
+		<a href="../dinosaurs">Dinosaur homepage</a>
+		|
+		<a href="faq.html">FAQs</a>
+		<br/>
+		&copy;<a href="../">ThatChapThere</a> 2018
+	</p>
+</body>
+
+</html>
