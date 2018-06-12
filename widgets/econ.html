@@ -10,25 +10,37 @@
 
 <body>
 	<canvas></canvas>
+	
+	<br/>
+	Number of decision makers:
+	<input value="10" id="Workers"/>
+	Generations between each information update:
+	<input value="10" id="Interval"/>
+	Update time (Milliseconds):
+	<input value="10" id="Update"/>
+	
+	<button id="restart">Enter</button>
+	
 	<script>
 //**********************************************************************
 
-var cnv = document.getElementsByTagName('canvas')[0];
-var ctx = cnv.getContext('2d');
+var cnv = document.getElementsByTagName('canvas')[0]; // the canvas
+var ctx = cnv.getContext('2d'); // its context
 
-function Vector(x, y) {
+function Vector(x, y) { // for a point with coordinates
 	this.x = x;
 	this.y = y;
 }
 
-var canvasSize = new Vector(1280, 720);
+var canvasSize = new Vector(1280, 720); // the size of the canvas
 
 cnv.width = canvasSize.x;
 cnv.height = canvasSize.y;
+// set up the canvas to be said size
 
 ctx.fillStyle = '#ffffff';
-
 ctx.fillRect(0, 0, canvasSize.x, canvasSize.y);
+// fill in a white rectangle
 
 //this function takes in a two numbers and then chooses a random number but that is more likely to be in the middle of the two
 function randomInbetween(a, b) {
@@ -48,6 +60,7 @@ function randomInbetween(a, b) {
 }
 
 var barDrawSize = new Vector(15, 150);
+// the size for the bars themselves
 
 function barValue() { // from 0 - 100 
 	this.value = randomInbetween(0, 100);
@@ -92,30 +105,58 @@ function barValue() { // from 0 - 100
 }
 
 // have an optimum level bar which changes slightly over time
+var optimalBarValue;
 
-var optimalBarValue = new barValue();
+// The average value which will dictate success
+var managerBarValue;
 
-var managerBarValue = new barValue();
+// An array of values for the worker's choices
+var workerBarValues;
+var workers;
 
-var workerBarValues = [];
-var workers = 1;
+// An array for drawing a graph
+var differences;
 
-for(var i = 0; i < workers; i++) {
-	workerBarValues.push(new barValue);
+// How many generations before the information is passed onto the worker(s)
+var updateInterval;
+
+// which iteration we are on now
+var iteration;
+
+// How often the graph updates in milliseconds between each iteration
+var incrementTime;
+
+function start(_workers, _updateInterval, _incrementTime) {
+	optimalBarValue = new barValue(); // randomise
+	
+	managerBarValue = new barValue(); // randomise
+	
+	workerBarValues = []; // empty array so far
+	workers = _workers;
+	
+	for(var i = 0; i < workers; i++) {
+		workerBarValues.push(new barValue); // fill with randomised numbers
+	}
+	
+	differences = []; // reset the graph
+	
+	updateInterval = _updateInterval;
+	
+	iteration = 0; // reset the graph
+	
+	incrementTime = _incrementTime;
 }
 
-var differences = [];
+start(1, 1, 50);
 
-var updateInterval = 1;
-
-var iteration = 0;
 function draw() {
-	iteration ++;
+	iteration ++; // next iteration for graph purposes
 	
 	ctx.fillStyle = '#ffffff';
 	ctx.fillRect(0, 0, canvasSize.x, canvasSize.y);
+	// white background
 	
-	var difference = Math.abs(managerBarValue.value - optimalBarValue.value);
+	var difference = Math.abs(managerBarValue.value - optimalBarValue.value); // this is how far we are from the ideal
 	
 	var averageValue = 0;
 	
@@ -130,6 +171,7 @@ function draw() {
 	}
 	
 	averageValue /= workers;
+	// the aggregate choice of all of the workers
 	
 	var difference = Math.abs(averageValue - optimalBarValue.value);
 	
@@ -142,11 +184,21 @@ function draw() {
 	ctx.beginPath();
 	ctx.moveTo(10, differences[0] + 10);
 	for(var i = 1; i < differences.length; i++) {
-		ctx.lineTo(i + 10, (differences[i] * 10) + 10);
+		ctx.lineTo(i + 10, (differences[i] * 3.5) + 10);
 		averageDifference += differences[i];
 	}
 	averageDifference /= differences.length;
-	ctx.fillText(averageDifference, 100, 100);
+	ctx.fillText('Mean difference so far: ' + averageDifference, 100, 700);
+	ctx.stroke();
+	
+	ctx.beginPath();
+	ctx.moveTo(0, 9);
+	ctx.lineTo(1280, 9);
+	ctx.stroke();
+	
+	ctx.beginPath();
+	ctx.moveTo(0, 351);
+	ctx.lineTo(1280, 351);
 	ctx.stroke();
 	
 	for(var i = 0; i < workers; i++) {
@@ -158,9 +210,22 @@ function draw() {
 	optimalBarValue.draw(1000, 500);
 	optimalBarValue.change(3);
 	
+	setTimeout(draw, incrementTime);
 }
 
-setInterval(draw, 500);
+draw();
+
+function get(str) {
+	return(document.getElementById(str).value);
+}
+
+document.getElementById('restart').onclick = function() {
+	start(
+		get('Workers'),
+		get('Interval'),
+		get('Update'),
+	);
+}
 
 //have character bars that respond to incentives
 
