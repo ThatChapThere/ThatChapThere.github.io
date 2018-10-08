@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>|</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="generator" content="Geany 1.30.1" />
+</head>
+
+<body>
+	<canvas></canvas>
+	<script>
+// get context to draw
+var ctx = document.getElementsByTagName('canvas')[0].getContext('2d');
+
+function P(x,y) {
+	this.x=x;
+	this.y=y;
+} // Cartesian point
+
+var canvasSize = new P(
+	1000,
+	1000
+); //cartesian for the size of the canvas
+
+ctx.canvas.width = canvasSize.x;
+ctx.canvas.height = canvasSize.y; // set the canvas to the size just specified
+
+// the height ratio for equalateral triangles
+var heightRatio = Math.sqrt(3) / 2;
+
+function drawGradient(colour, l1, l2) {
+	var grd=ctx.createLinearGradient(
+		l1.x, l1.y,
+		l2.x, l2.y
+	);
+	
+	grd.addColorStop(0, colour);
+	grd.addColorStop(1, colour + '00');
+	ctx.fillStyle=grd;
+	
+	ctx.beginPath();
+	
+	ctx.moveTo(0, 0);
+	ctx.lineTo(canvasSize.x, 0);
+	ctx.lineTo(canvasSize.x / 2, canvasSize.x * heightRatio);
+	ctx.closePath();
+	
+	ctx.fill();
+}
+
+
+ctx.fillStyle = '#878787';
+
+ctx.beginPath();
+
+ctx.moveTo(0, 0);
+ctx.lineTo(canvasSize.x, 0);
+ctx.lineTo(canvasSize.x / 2, canvasSize.x * heightRatio);
+ctx.closePath();
+
+ctx.fill();
+
+drawGradient(
+	'#0087DC',
+	new P(canvasSize.x, 0),
+	new P(canvasSize.x / 4, canvasSize.x * heightRatio / 2)
+);
+
+drawGradient(
+	'#CC0000',
+	new P(0, 0),
+	new P(canvasSize.x * 0.75, canvasSize.x * heightRatio / 2)
+);
+
+drawGradient(
+	'#F0DC82',
+	new P(canvasSize.x / 2, canvasSize.x * heightRatio),
+	new P(canvasSize.x / 2, 0)
+);
+
+	</script>
+</body>
+
+</html>

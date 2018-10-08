@@ -1,0 +1,748 @@
+﻿<!DOCTYPE html>
+<HTML>
+	<HEAD>
+		<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+		<LINK rel="icon" type="image/png" href="../images/icons/webBird.png"></LINK>
+		<STYLE type="text/css">
+BODY{
+	color:#000000;
+	background-color:#440;
+}
+BUTTON{
+	border-radius:1000px;
+	color:#008800;
+	background-color:#FF003B;
+	border-color:#0000C0;
+	border-width:4px;
+}
+H1{
+	text-align:center;
+}
+		</STYLE>
+		<TITLE>
+			web bird 2
+		</TITLE>
+	</HEAD>
+	<BODY>
+		<H1>
+			WeBBird 2
+		</H1>
+		<CANVAS id='cnv' width=700 height=700></CANVAS>
+		<SCRIPT type="text/javascript" language="javascript">
+// get a context
+var ctx=document.getElementById('cnv').getContext('2d');
+
+// get the acorn image
+var acorn = document.createElement("img");
+
+// set the source for the acron image
+acorn.src='../images/acorn.png';
+
+// this is essentially the iteration time in ms for the original game, to make translation easier
+const normativeDelay = 100;
+
+// store the keyboard pressed and the mouse position
+var mouse = {
+	x : 0,
+	y : 0,
+	down : false,
+	justPressed : false,
+};
+var keys = [];
+// add a false value for every key
+for(var i = 0; i < 200; i++) {
+	keys.push(false);
+}
+
+// the amount of acorns the player has
+var acorns=0;
+// the number of balloons popped this game
+var popCounter=0;
+
+// get the html offset in pixels
+function getOffset(left) {//true=left, false=top
+	var offset=0;
+	if(left){
+		var element=ctx.canvas;
+		while(element != document.body){
+			offset+=element.offsetLeft;
+			element=element.offsetParent;
+		}
+		offset+=element.offsetLeft;
+	}else{
+		var element=ctx.canvas;
+		while(element != document.body){
+			offset+=element.offsetTop;
+			element=element.offsetParent;
+		}
+		offset+=element.offsetTop;
+	}
+	return(offset);
+}
+
+// draw a filled circle
+function fillCircle(x,y,r) {
+	ctx.beginPath();
+	
+	ctx.arc(x,y,r,0,Math.PI*2,false);
+	
+	ctx.fill();
+	ctx.closePath();
+}
+
+// displays an array (for debugging only)
+function dispArray(array_) {
+	var out='[';
+	
+	for(var i = 0; i < array_.length; i++){
+		out+=array_[i];
+		out+=',';
+	}
+	
+	out=out.substring(0,out.length-1)+']';
+	
+	return(out);
+}
+
+function drawBalloon(x,y,color) {
+	
+	ctx.fillStyle=color;
+	
+	ctx.beginPath();
+	ctx.arc(x,y,40,0,Math.PI*2,false);
+	ctx.fill();
+	
+	ctx.beginPath();
+	ctx.moveTo(x,y+35);
+	ctx.lineTo(x+20,y+55);
+	ctx.lineTo(x-20,y+55);
+	ctx.fill();
+	
+	ctx.beginPath();
+	ctx.arc(x+10,y-10,7,0,Math.PI*2,false);
+	ctx.fillStyle='#CCC';
+	ctx.fill();
+	
+	ctx.closePath();
+}
+
+function drawPoppingBalloon(x,y,color) {
+	ctx.fillStyle=color;
+	
+	ctx.beginPath();
+	ctx.moveTo(x,y);
+	
+	ctx.lineTo(x-40,y+10);
+	ctx.lineTo(x-40,y-10);
+	ctx.lineTo(x,y);
+	ctx.lineTo(x+40,y+10);
+	ctx.lineTo(x+40,y-10);
+	ctx.lineTo(x,y);
+	ctx.lineTo(x+10,y+40);
+	ctx.lineTo(x-10,y+40);
+	ctx.lineTo(x,y);
+	ctx.lineTo(x+10,y-40);
+	ctx.lineTo(x-10,y-40);
+	ctx.closePath();
+	
+	ctx.fill();
+}
+
+var vibrantColours=[
+	'#FF0000',//red
+	'#00FF00',//green
+	'#0000FF',//blue
+	'#FFFF00',//yellow
+	'#FF00FF',//magenta
+	'#00FFFF',//cyan
+	'#000000',//black
+	'#880088',//purple
+	'#000044',//navy
+	'#FFCC00',//gold
+	'#CCCCFF',//silver
+];
+
+var popping=[];
+var popped=[];
+var popTimer=[];
+var balloonXs=[];
+var balloonYs=[];
+
+var lives=0;
+var spiderSpeed=1;
+
+for(var i = 0; i<vibrantColours.length;i++){
+	
+	balloonXs.push(Math.random()*-2000);
+	balloonYs.push(Math.random()*445);
+	
+	popping.push(false);
+	popped.push(false);
+	
+	popTimer.push(0);
+	
+	lives+=2;
+}
+
+var playing=false;
+var comboCache=[];
+
+function newGame() {
+	
+	comboCache=[];
+	
+	popping=[];
+	popped=[];
+	popTimer=[];
+	balloonXs=[];
+	balloonYs=[];
+	
+	lives=0;
+	balloonsLeft=0;
+	
+	for(var i = 0; i<vibrantColours.length;i++){
+		balloonXs.push(Math.random()*-2000);
+		balloonYs.push(Math.random()*445);
+		popping.push(false);
+		popped.push(false);
+		popTimer.push(0);
+		lives+=2;
+	}
+	
+	bird={
+		x:350,
+		y:500,
+		yv:0,
+		xv:0,
+		maxSpeed:bird.maxSpeed,
+	};
+	
+	webStretch=0;
+	playing=true;
+};
+
+ctx.fillStyle='#888';
+ctx.fillRect(0,0,700,700);
+ctx.fillStyle='#000';
+ctx.font='50px lithograph';
+
+ctx.fillText('MENU:',0,50);
+ctx.fillText('UPGRADES',300,165);
+ctx.fillText('PLAY',300,275);
+ctx.fillText('HELP',300,415);
+ctx.fillText('MONEY:          x 0',50,650);
+
+ctx.drawImage(acorn,260,570,100,100);
+
+function strokeHexagon(x,y,width,color) {
+	
+	ctx.beginPath();
+	ctx.strokeStyle=color;
+	
+	ctx.moveTo(x,y);
+	ctx.lineTo(x+(width/2),y+(width/4));
+	ctx.lineTo(x+(width/2),y+(width*0.75));
+	ctx.lineTo(x,y+width);
+	ctx.lineTo(x-(width/2),y+(width*0.75));
+	ctx.lineTo(x-(width/2),y+(width/4));
+	ctx.closePath();
+	
+	ctx.stroke();
+	
+};
+
+function drawWeb(x,y,stretch){
+	ctx.beginPath();
+	ctx.strokeStyle='#666';
+	
+	ctx.moveTo(x,y);
+	ctx.lineTo(x,y+100+stretch);
+	ctx.lineTo(x+100,y+50);
+	ctx.lineTo(x,y+100+stretch);
+	ctx.lineTo(x+100,y+150);
+	ctx.lineTo(x,y+100+stretch);
+	ctx.lineTo(x,y+200);
+	ctx.lineTo(x,y+100+stretch);
+	ctx.lineTo(x-100,y+150);
+	ctx.lineTo(x,y+100+stretch);
+	ctx.lineTo(x-100,y+50);
+	ctx.lineTo(x,y+100+stretch);
+	ctx.stroke();
+	
+	for(var i = 200; i > 10; i-=35){
+		strokeHexagon(
+			bird.x,
+			y + ((200-i)/2) + ((1-(i/200)) * stretch),
+			i,
+			'#666'
+		);
+	}
+}
+
+function drawBird(x,y) {
+	
+	ctx.fillStyle='#FFCC00';
+	ctx.beginPath();
+	
+	ctx.moveTo(x,y);
+	ctx.lineTo(x+10,y+30);
+	ctx.lineTo(x-10,y+30);
+	ctx.closePath();
+	
+	ctx.fill();
+	
+	ctx.fillStyle='#444400';
+	
+	fillCircle(x,y+100,50);
+	fillCircle(x,y+50,30);
+	
+	ctx.fillStyle='#FFFFFF';
+	
+	fillCircle(x-10,y+40,6);
+	fillCircle(x+10,y+40,6);
+	
+	ctx.fillStyle='#000000';
+	
+	fillCircle(x-10,y+40,3);
+	fillCircle(x+10,y+40,3);
+};
+
+function drawSpider(x,y,stretch) {
+	
+	ctx.fillStyle='#000';
+	ctx.lineWidth=4;
+	ctx.strokeStyle='#000';
+	
+	fillCircle(x,y,50);
+	
+	ctx.beginPath();
+	
+	ctx.moveTo(x,y);
+	ctx.lineTo(x-110,y-40);
+	ctx.lineTo(x,y-100+stretch);
+	
+	ctx.moveTo(x,y);
+	ctx.lineTo(x-40,y-40);
+	ctx.lineTo(x,y-100+stretch);
+	
+	ctx.moveTo(x,y);
+	ctx.lineTo(x+40,y-40);
+	ctx.lineTo(x,y-100+stretch);
+	
+	ctx.moveTo(x,y);
+	ctx.lineTo(x+110,y-40);
+	ctx.lineTo(x,y-100+stretch);
+	
+	ctx.stroke();
+	
+	ctx.lineWidth=1;
+	ctx.fillStyle='#844';
+	
+	fillCircle(x+20,y-20,10);
+	fillCircle(x-20,y-20,10);
+};
+
+var bird = {
+	x:350,
+	y:500,
+	yv:0,
+	xv:0,
+	maxSpeed:10,
+};
+
+var webStretch = 0;
+
+// this to keep everything at the same speed even with varied framerates
+var lastMoment = Date.now();
+var currentMoment;
+var timeGap;
+
+function draw() {
+	
+	currentMoment = Date.now();
+	timeGap = currentMoment - lastMoment;
+	lastMoment = currentMoment;
+	
+	// this to set increments relative to the usual
+	incrementMultiplier = timeGap / normativeDelay;
+	
+	
+	// if we are still in the menu stage
+	if(!playing){
+		
+		// set the font
+		ctx.font='50px lithograph';
+		
+		// draw the background
+		ctx.fillStyle='#888';
+		ctx.fillRect(0,0,700,700);
+		
+		// draw in the menu
+		ctx.fillStyle='#000';
+		ctx.fillText('MENU:',0,50);
+		ctx.fillText('MONEY:          x '+acorns,50,650);
+		ctx.drawImage(acorn,300,570,100,100);
+		
+		/*
+		Draw each menu item:
+		
+			Default      : black
+			On hover     : bright colour
+			When pressed : dark colour
+		*/
+		
+		if(mouse.y > 125 && mouse.y < 170){
+			if(mouse.down){
+				ctx.fillStyle = '#800';
+			}else{
+				ctx.fillStyle = '#f00';
+			}
+		}else{
+			ctx.fillStyle = '#000';
+		}
+		ctx.fillText('UPGRADES',300,165);
+		
+		if(mouse.y > 235 && mouse.y < 280){
+			if(mouse.down){
+				ctx.fillStyle = '#080';
+			}else{
+				ctx.fillStyle = '#0f0';
+			}
+		}else{
+			ctx.fillStyle = '#000';
+		}
+		ctx.fillText('PLAY',300,275);
+		
+		if(mouse.y > 375 && mouse.y < 420){
+			if(mouse.down){
+				ctx.fillStyle = '#008';
+			}else{
+				ctx.fillStyle = '#00f';
+			}
+		}else{
+			ctx.fillStyle = '#000';
+		}
+		ctx.fillText('HELP',300,415);
+		
+		if(mouse.justPressed) {
+			// clicks count only once
+			mouse.justPressed = false;
+			
+			// if the upgrades button is pressed
+			if(mouse.y > 115 && mouse.y < 165){
+				
+				// boolean on user request
+				var speedUp = confirm(
+					'Upgrade web strength?\nCurrent level : ' +
+					(bird.maxSpeed / 10) +
+					'\nCost : 75 acorns'
+				);
+				
+				if(speedUp){
+					
+					// if it can be afforded
+					if(acorns >= 75){
+						
+						acorns -= 75;
+						bird.maxSpeed += 10;
+						alert('Transaction complete.');
+						
+					}else{
+						
+						alert(
+							'Sorry, you don\'t have enough acorns to \
+peform this upgrade.');
+						
+					}
+				}
+				
+				// boolean on user request
+				var spiderSpeedUp = confirm(
+					'Upgrade sam\'s speed?\nCurrent level : ' +
+					spiderSpeed +
+					'\nCost : 50 acorns'
+				);
+				
+				if(spiderSpeedUp){
+					
+					// if it can be afforded
+					if(acorns >= 50){
+						
+						acorns-=50;
+						spiderSpeed++;
+						alert('Transaction complete.');
+						
+					}else{
+						
+						alert(
+							'Sorry, you don\'t have enough acorns to peform\
+ this upgrade.');
+						
+					}
+				}
+				
+			}
+			
+			// if the play button is pressed
+			if(mouse.y > 225 && mouse.y < 275){
+				newGame();
+			}
+			
+			// if the help button is pressed
+			if(mouse.y > 375 && mouse.y < 425){
+				alert(
+					'Kevin the kiwi had always wanted to fly.\nBut \
+kiwis, of course, are flightless birds,\nand so he could not.\nBut, \
+still Kevin wanted to fly.\nOne day he had an idea.\nHe would get Sam \
+the spider to help him\nby pinging his web.\nAll the other kiwis \
+thought he was silly.\nUntil one day some nearby humans\nhad a party.\
+\nKevin knew what to do.\nNow however, Kevin had eaten tons of food\
+\nand Sam couldn\'t see past him.\nYour job is to help sam know \
+where to go,\nto save the animals from being suffocated by balloons.\
+\n\n  CONTROLS:  \nRight and left arrows   :   Move right and \
+left\nSpace   :   Fire Kevin\n\n  NOTE:\nYou must wait for Sam to \
+stretch his web before you can fire\nKevin.'
+				);
+				
+			}
+		}
+	}
+	else{ // if the game is in play
+		
+		// funtions for key presses
+		
+		// left
+		if( keys[37] ) {
+			if(bird.x > 50 && bird.y === 500){
+				bird.x-=10 * incrementMultiplier;
+			}
+		}
+		
+		// right
+		if( keys[39] ) {
+			if(bird.x < 650 && bird.y === 500){
+				bird.x+=10 * incrementMultiplier;
+			}
+		}
+		
+		// space
+		if( keys[32] ) {
+			if(bird.y === 500 && webStretch >= 50){
+				webStretch = 0;
+				bird.yv = - bird.maxSpeed;
+			}
+		}
+		
+		// stretch the web
+		if(bird.y === 500 && webStretch < 50){
+			webStretch += spiderSpeed * incrementMultiplier;
+		}
+		
+		ctx.fillStyle='#0000CC';
+		ctx.fillRect(0,0,1000,1000);
+		
+		ctx.fillStyle='#00CC00';
+		ctx.fillRect(0,500,1000,1000);
+		
+		for(var i = 0; i < vibrantColours.length; i++){
+			if(!popped[i]){
+				if(popping[i]){
+					
+					drawPoppingBalloon(
+						balloonXs[i],
+						balloonYs[i],
+						vibrantColours[i]
+					);
+					
+					popTimer[i]+=1;
+				}else{
+					balloonXs[i] += 10 * incrementMultiplier;
+					
+					drawBalloon(
+						balloonXs[i],
+						balloonYs[i],
+						vibrantColours[i]
+					);
+				}
+			}
+			if(popTimer[i] > 7){
+				popped[i]=true;
+			}
+			if(balloonXs[i] > 740){
+				balloonXs[i]=-1000;
+				balloonYs[i]=Math.random()*445;
+				lives--;
+			}
+		}
+		
+		bird.x += bird.xv * incrementMultiplier;
+		bird.y += bird.yv * incrementMultiplier;
+		
+		drawSpider(bird.x,700,webStretch);
+		drawWeb(bird.x,500,webStretch);
+		drawBird(bird.x,bird.y+webStretch);
+		
+		if(bird.y < 0){
+			bird.yv= bird.maxSpeed;
+		}
+		
+		if(bird.y > 500){
+			bird.yv=0;
+			bird.y=500;
+			if(popCounter > 1){
+				comboCache.push(popCounter);
+			}
+			popCounter=0;
+		}
+		
+		for(var i=0;i<vibrantColours.length;i++){
+			var distanceFromBeak = {x:0, y:0};
+			
+			distanceFromBeak.x = bird.x - balloonXs[i];
+			distanceFromBeak.y = bird.y - balloonYs[i];
+			
+			// good ol' Pythagoras
+			var radialDistanceFromBeak = Math.sqrt(
+				Math.pow(distanceFromBeak.x, 2)
+				+
+				Math.pow(distanceFromBeak.y, 2)
+			);
+			
+			if(
+				radialDistanceFromBeak < 40
+				&&
+				(!(popping[i] || popped[i]))
+			){
+				popping[i]=true;
+				popCounter+=1;
+			}
+		}
+		  
+		balloonsLeft=popped.length;
+		
+		for(var i = 0; i<popped.length;i++){
+			if(popped[i]){balloonsLeft--;}
+		}
+		
+		if(lives <= 0){
+			alert('Game Over!');
+			
+			var comboString='';
+			var comboScore=0;
+			
+			for(var i in comboCache){
+				comboString += 
+					comboCache[i] +
+					' Combo : +' +
+					Math.pow(2,comboCache[i]) +
+					'\n';
+					
+				comboScore+=Math.pow(2,comboCache[i])
+			}
+			
+			playing = false;
+			
+			alert(
+				'Score:\nBalloons got × ' +
+				(vibrantColours.length-balloonsLeft) +
+				' : +' +
+				(vibrantColours.length-balloonsLeft) +
+				'\n' +
+				comboString +
+				'Total : ' +
+				((vibrantColours.length-balloonsLeft) +
+				comboScore)
+			);
+			
+			acorns+= (vibrantColours.length-balloonsLeft) + comboScore;
+		}
+		
+		if(balloonsLeft == 0){
+			alert('You Won!');
+			playing = false;
+			var comboString='';
+			var comboScore=0;
+			for(var i in comboCache){
+				comboString +=
+					comboCache[i] +
+					' Combo : +' +
+					Math.pow(2,comboCache[i]) +
+					'\n';
+				comboScore+=Math.pow(2,comboCache[i])
+			}
+			alert(
+				'Score:\nLives remaining bonus : +' +
+				lives +
+				'\nBalloons got × ' +
+				vibrantColours.length +
+				' : +' +
+				vibrantColours.length +
+				'\nAll got : + 10\n' +
+				comboString +
+				'Total : ' +
+				(vibrantColours.length + 10 + comboScore + lives)
+			);
+			
+			acorns += vibrantColours.length + 10 + comboScore+lives;
+		}
+		
+		var offset = {
+			x:25,
+			y:35,
+		}
+		ctx.font='15px DejaVu Serif';
+		ctx.fillText('Balloons got this flight: '+popCounter,offset.x,offset.y);
+		ctx.fillText('Balloons left to pop: '+balloonsLeft,offset.x,offset.y + 40);
+		ctx.font='25px DejaVu Serif';
+		ctx.fillText('\u2665: '+lives,offset.x,offset.y + 25);
+		ctx.fillStyle = '#f00';
+		ctx.fillText('\u2665',offset.x,offset.y + 25);
+	}
+	
+	setTimeout(draw, 0);
+};
+
+draw();
+
+onkeydown = function(event) {
+	keys[event.keyCode] = true;
+};
+
+onkeyup = function(event) {
+	keys[event.keyCode] = false;
+}
+
+ctx.canvas.onmousemove=function(event) {
+	
+	// pixels from the top left of the canvas
+	mouse.y = event.clientY - getOffset(false);
+	mouse.x = event.clientX - getOffset(true);
+	
+};
+
+ctx.canvas.onmousedown=function(event) {
+	
+	mouse.down = true;
+	
+};
+
+ctx.canvas.onmouseup=function(event) {
+	
+	mouse.down = false;
+	mouse.justPressed = true;
+	
+}
+
+ctx.canvas.onmouseout=function(event) {
+	
+	mouse.down = false;
+	mouse.justPressed = false;
+	mouse.x = 0;
+	mouse.y = 0;
+	
+}
+
+
+	</SCRIPT>
+	</BODY>
+</HTML>

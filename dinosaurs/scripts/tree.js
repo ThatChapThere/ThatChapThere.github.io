@@ -2891,13 +2891,15 @@ function fillDetailsDivider(taxon) {
 			
 			countriesString += country;
 			
-			detailsCTX.drawImage( // the world map image
-				countryImages[country],
-				0,
-				timelineHeight * 9 + detailsImageSize.x / 2,
-				detailsImageSize.x,
-				detailsImageSize.x * worldMapSizeRatio,
-			);
+			try{
+				detailsCTX.drawImage( // the world map image
+					countryImages[country],
+					0,
+					timelineHeight * 9 + detailsImageSize.x / 2,
+					detailsImageSize.x,
+					detailsImageSize.x * worldMapSizeRatio,
+				);
+			}catch(e) {};
 		}
 		
 		detailsCTX.font = textSize + "pt Georgia";

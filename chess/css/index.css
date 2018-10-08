@@ -1,0 +1,17 @@
+
+body{
+	background-color:#DDDDDD;
+	color:#000;
+	font-family:"courier";
+}
+H1{
+	color:#008800;
+	text-align:center;
+}
+H2{
+	color:#808000;
+	text-align:left;
+}
+#copyright{
+	text-align: center;
+}

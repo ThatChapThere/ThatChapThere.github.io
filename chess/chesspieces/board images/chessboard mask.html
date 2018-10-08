@@ -1,0 +1,20 @@
+﻿<html><head>
+<LINK type="image/png" href="../images/icons/chessimg.png" rel="icon"></LINK>
+<title>board</title>
+<canvas id="board" width=1000 height=1000></canvas>
+<SCRIPT>
+var pen=board.getContext('2d');
+var boardSize = 1000
+var squareSize = boardSize / 8;
+pen.fillStyle = '#000';
+pen.fillRect(0,0,boardSize,boardSize);
+pen.fillStyle = '#fff';
+for(var i = 1; i <= 8; i++){
+	for(var j = 1; j <= 8; j++){
+		if(j % 2 === i % 2){
+			pen.fillRect((i * squareSize) - squareSize,(j * squareSize) - squareSize,squareSize,squareSize);
+		}
+	}
+}
+
+</SCRIPT>
