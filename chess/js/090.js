@@ -965,9 +965,9 @@ function getSubsequentPositions(position, notation) {
 		if(position . gotSubsequentPositions) {
 			return(position . subsequentPositions.length);
 		}
+		
+		position . gotSubsequentPositions = true;
 	}
-	
-	position . gotSubsequentPositions = true;
 	
 	// loop through all of the squares
 	for(var i = 0; i < 64; i++) {
@@ -1237,13 +1237,6 @@ function getBestMove(position) {
 		
 		return(position);
 		
-		if(isCheck(position, coloursToMove.WHITE)) {
-			return(-200);
-		}else if(isCheck(position, coloursToMove.BLACK)){
-			return(200);
-		}else{
-			return(0); // stalemate
-		}
 	}
 	
 	// minimax, so check colour
@@ -1575,40 +1568,47 @@ ctx.canvas.onmousedown = function() {
 }
 
 ctx.canvas.onmouseup = function() {
-	var move = [mouse.holdingSquare, mouse.boardSquare];
-	
-	if(isMoveLegal(currentPosition, move)) {
+	if(
+		(currentPosition.whiteToMove ? sides.white.type : sides.black.type)
+		==
+		levelTypes.HUMAN
+	) {
+			
+		var move = [mouse.holdingSquare, mouse.boardSquare];
 		
-		if(
-			currentPosition.piecePositions[move[0]] . toUpperCase()
-			==
-			'P'
-		) {
+		if(isMoveLegal(currentPosition, move)) {
+			
 			if(
-				move[1] < 8
-				||
-				move[1] > 55
-			){
-				if(currentPosition.whiteToMove) {
-					move.push(mouse.promotionType);
-				}else{
-					move.push(mouse.promotionType.toLowerCase());
+				currentPosition.piecePositions[move[0]] . toUpperCase()
+				==
+				'P'
+			) {
+				if(
+					move[1] < 8
+					||
+					move[1] > 55
+				){
+					if(currentPosition.whiteToMove) {
+						move.push(mouse.promotionType);
+					}else{
+						move.push(mouse.promotionType.toLowerCase());
+					}
 				}
 			}
+			
+			addMoveNotation(getNotationForMove(currentPosition, move));
+			var newPosition = generateNewPositionFromMove(
+				currentPosition,
+				move
+			);
+			
+			currentPosition = newPosition;
+			
+			gameFENs.push(getFEN(currentPosition, true));
+			
+			initialisingClock = true;
+			
 		}
-		
-		addMoveNotation(getNotationForMove(currentPosition, move));
-		var newPosition = generateNewPositionFromMove(
-			currentPosition,
-			move
-		);
-		
-		currentPosition = newPosition;
-		
-		gameFENs.push(getFEN(currentPosition, true));
-		
-		initialisingClock = true;
-		
 	}
 	mouse.holdingPiece = false;
 }
@@ -1748,6 +1748,33 @@ function draw() {
 
 //********************ENGINE FUNCTIONS AND VARABLES*********************
 
+function openingPosition() {
+	
+}
+
+var openingBook = {
+	'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -' : ['e4', 'd4', 'c4', 'Nf3'],
+		'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e' : ['e5', 'd5', 'c5','c6','e6','Nf6','g6'],
+			'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e' : ['Nf3', 'Bc4', 'Nc3'],
+				'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -' : ['Nf6','Nc6'],
+				'rnbqkbnr/pppp1ppp/8/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq -' : ['Nf6'],
+				'rnbqkbnr/pppp1ppp/8/4p3/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq -' : ['Nf6', 'Nc6'],
+			'rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d' : ['exd5'],
+				'rnbqkbnr/ppp1pppp/8/3P4/8/8/PPPP1PPP/RNBQKBNR b KQkq -' : ['Qxd5'],
+					'rnb1kbnr/ppp1pppp/8/3q4/8/8/PPPP1PPP/RNBQKBNR w KQkq -' : ['Nc3'],
+						'rnb1kbnr/ppp1pppp/8/3q4/8/2N5/PPPP1PPP/R1BQKBNR b KQkq -' : ['Qa5'],
+			'rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c' : ['d4', 'Nf3'],
+				'rnbqkbnr/pp1ppppp/8/2p5/3PP3/8/PPP2PPP/RNBQKBNR b KQkq d' : ['cxd4'],
+				'rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -' : ['Nc6'],
+					'r1bqkbnr/pp1ppppp/2n5/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq -' : ['d4'],
+						'r1bqkbnr/pp1ppppp/2n5/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq d' : ['cxd4'],
+							'r1bqkbnr/pp1ppppp/2n5/8/3pP3/5N2/PPP2PPP/RNBQKB1R w KQkq -' : ['Nxd4'],
+								'r1bqkbnr/pp1ppppp/2n5/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq -' : ['Nxd4'],
+		'rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d' : ['d5', 'f5', 'Nf6', 'g6'],
+		'rnbqkbnr/pppppppp/8/8/2P5/8/PP1PPPPP/RNBQKBNR b KQkq c' : ['c5', 'e5', 'f5', 'Nf6'],
+		'rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQKB1R b KQkq -' : ['d5'],
+};
+
 // this is the proportion of the remaining time that engine will use
 var timeProportion = 0.05;
 
@@ -1786,6 +1813,7 @@ function searchFirstUnsearchedNodeAtDepth(position, depth) {
 	if(depth == 1) {
 		if(!position.gotSubsequentPositions) {
 			getSubsequentPositions(position);
+			
 			return(false);
 		}else{
 			return(true);
@@ -1821,7 +1849,13 @@ function searchFirstUnsearchedNode(position, depthLimit) {
 	) {
 		depthSoFar ++;
 	}
-	if(searchFirstUnsearchedNodeAtDepth(position, depthLimit)) {
+	
+	console.log(depthSoFar);
+	
+	if(depthSoFar > depthLimit) {
+		
+		console.log(getSubsequentPositionsForDepth(position, depthLimit));
+		
 		return(true);
 	}else{
 		return(false);
@@ -1842,6 +1876,26 @@ function executeMoveFromIndex(position, index) {
 			currentPosition.subsequentPositions[index];
 			
 		gameFENs.push(getFEN(currentPosition, true));
+	}
+	
+	initialisingClock = true;
+}
+
+// this plays a move when a algebraic move is passed e.g. 'e4'
+function executeMoveFromNotation(position, notation) {
+	getSubsequentPositions(currentPosition, true);
+	getSubsequentPositions(currentPosition, false);
+	
+	for(var i = 0; i < currentPosition.subsequentPositions.length; i++) {
+		if(currentPosition.subsequentPositionsNotation[i] == notation) {
+			
+			addMoveNotation(notation);
+			
+			//~ console.log(currentPosition.subsequentPositions[i]);
+			currentPosition = currentPosition.subsequentPositions[i];
+			
+			gameFENs.push(getFEN(currentPosition, true));
+		}
 	}
 	
 	initialisingClock = true;
@@ -1973,6 +2027,20 @@ function Level(type, depth, book, name) {
 						);
 					
 					this.initialising = false;
+					
+					if(this.book) {
+						var opening = openingBook[getFEN(currentPosition, true)];
+						if(opening) {
+							var openingMove = opening[
+								Math.floor(
+									Math.random() * opening.length
+								)
+							];
+							executeMoveFromNotation(currentPosition, openingMove);
+							this.initialising = true;
+						}
+					}
+					
 				}else{
 					if(
 						searchFirstUnsearchedNode(
@@ -2233,7 +2301,7 @@ function engineLoop() {
 		return(0);
 	}
 	
-	
+	// display clock times
 	if(flipped) {
 		clockElements.bottom.textContent = 
 			getClockTimeInHMS(clock.black.time);
@@ -2243,12 +2311,16 @@ function engineLoop() {
 			getClockTimeInHMS(clock.white.time);
 		clockElements.top.textContent = getClockTimeInHMS(clock.black.time);
 	}
+	
+	// calculate clock times
 	if(currentPosition.whiteToMove) {
 		if(initialisingClock) {
 			if(currentPosition.moveNumber > 2){
 				clock.black.getAndSetTime();
 			}
-			clock.white.initialiseTime();
+			if(currentPosition.moveNumber > 1){
+				clock.white.initialiseTime();
+			}
 			initialisingClock = false;
 		}else if(currentPosition.moveNumber > 1){
 			clock.white.getAndSetTime();
@@ -2268,6 +2340,7 @@ function engineLoop() {
 		
 		sides.black.loop();
 	}
+	
 	setTimeout('engineLoop()', 0);
 }
 
@@ -2371,7 +2444,7 @@ for(var i in timeControls) {
 		'time_control_select_' + timeControls[i].name
 	);
 	
-	console.log(element);
+	//~ console.log(element);
 	
 	element.onclick = function() {
 		// length of "level_select_top_"
