@@ -86,6 +86,10 @@ var mouseIsDown = false; // if the mouse is held down
 var humanImage = document.createElement('img');
 humanImage.src = 'alt_images/human.png';
 
+function getImageForTaxon(i) {
+	return(i < 'Tanystrosuchus' ? 'images/' + i + '.jpg' : 'images2/' + i + '.jpg');
+}
+
 var mobileZoomRatio = 2;
 
 function fastClickTimeUp() {
@@ -380,7 +384,7 @@ var genera = { //genera database
 	'Brachylophosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
 	'Brachypodosaurus' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
 	'Brachytrachelopan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
-	'Bjradycneme' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
+	'Bradycneme' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
 	'Brasilotitan' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
 	'Bravoceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
 	'Breviceratops' : new Genus(0   , 0    , 0    , 0 ,   [], '', [''],             '',                       false, ''),
@@ -2153,7 +2157,7 @@ function drawTree() {
 					
 					if( !isSpaceTaken(takenImagePositions, position, imageOnCanvasSize)) { // test for image overlap
 						try{
-							genera[i].image.src = 'images/' + i + '.jpg';
+							genera[i].image.src = getImageForTaxon(i);
 							ctx.drawImage(
 								genera[i].image,
 								position.x + textMaximumLength + canvasSize.y / 4,
@@ -2450,7 +2454,7 @@ function fillDetailsDivider(taxon) {
 	var imageBox = document.createElement('div');
 	var image = document.createElement('img');
 	if(isGenus) {
-		image.src = 'images/' + taxon + '.jpg';
+		image.src = getImageForTaxon(taxon);
 		
 		// add a copyright notice
 		var copyright = document.createElement('span');
@@ -2473,7 +2477,7 @@ function fillDetailsDivider(taxon) {
 		imageBox.appendChild(copyright);
 	}else{
 		var representativeGenus = getRepresentativeGenus(taxon);
-		image.src = 'images/' + representativeGenus + '.jpg';
+		image.src = getImageForTaxon(representativeGenus);
 		
 		// add a copyright notice
 		var copyright = document.createElement('span');
@@ -2793,7 +2797,7 @@ function fillDetailsDivider(taxon) {
 		
 		try{ // draw dinosaur
 			var image = document.createElement('img');
-			image.src = 'images/' + taxon + '.jpg';
+			image.src = getImageForTaxon(taxon);
 			
 			var imageStartPosition = new P(
 				0,
@@ -2990,6 +2994,7 @@ function doReferenceList() {
 		HTMLstring += tree[i] ? '<span class="positive"> classified,</span> ' : '<span class="negative"> unclassified,</span> ';
 		HTMLstring += genera[i].describedBy ? '<span class="positive"> details filled in,</span> ' : '<span class="negative"> details not filled in,</span> ';
 		HTMLstring += genera[i].attribution ? '<span class="positive"> image drawn.</span> ' : '<span class="negative"> image not drawn.</span> ';
+		HTMLstring += '<img src="' + getImageForTaxon(i) + '" width="32" height="18"/>';
 		HTMLstring += '<br/>';
 		fullHTMLstring += HTMLstring;
 		// */
