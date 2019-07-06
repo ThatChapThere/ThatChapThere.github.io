@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 	<head>
 		<LINK type="image/png" href="images/icons/flobgrp.png" rel="icon"></LINK>
@@ -26,97 +26,51 @@ INPUT{
 	</head>
 	<body style="background-color: #9999ff">
 		<button id="X">flobit</button>
-		<div style="DISPLAY: none" id=flobbed class=infoBlock>it is now flobbed</div>
+		<div style="DISPLAY: none" id="flobbed" class="infoBlock">it is now flobbed</div>
 		<P align="center">
-			<B>
-				<INPUT TYPE="text" id="searching"></INPUT>
-			</B>
+			<INPUT TYPE="text" id="searching"></INPUT>
 			<BUTTON id="search">flob this</BUTTON>
 		</P>
 		<P>
-			<div id=searched class=infoBlock></div>
+			<div id="searched" class="infoBlock"></div>
 		</P>
-		<P id=resultList>
+		<P id="result_list">
 		</P>
 		<P id="passwordThing"></P>
 		<P id="time"></P>
 		<canvas id="clock" width=400 height=400></canvas>
 		<P NAME="Grimbsby Flob Time">GFT (Grimsby Flob Time)</P>
 		<SCRIPT type="text/javascript">
-var hrefs=[
-	"widgets/charTester.html",
-	"games/dino.html",
-	"jokes/doNotClick.html",
-	"games/footy.html",
-	"games/",
-	"widgets/isometric.html",
-	"widgets/keytester.html",
-	"games/life.html",
-	"widgets/orbital.html",
-	"widgets/pi.html",
-	"widgets/plotter.html",
-	"games/space.html",
-	"games/space2.html",
-	"games/weBBirds.html",
-	"chess/",
-	"games/markov.html",
-	"jokes/wattsapp.html",
-	"widgets/fidget%20spinner.html",
-	"games/Politics.html",
-	"dinosaurs/",
-	"dinosaurs/tree.html",
-	"dinosaurs/simulation.html",
-	""
-];
-var names=[
-	"Unicode Character Reference",
-	"Dinosaur Strategy Game",
-	"Preferably, Ignore This Link.",
-	"2Difa",
-	"Flobgames Homepage",
-	"Isometric Paper To Print",
-	"Key Code Tester for Developers",
-	"The game Of Life (John Conway's Cellular Automaton)",
-	"Atomic and Molecular Orbital Simulator",
-	"Pi Calculator (Slow Algorithm)",
-	"Graph Plotter",
-	"Solar System Simulator",
-	"Probe Launcher Game",
-	"WeBBirds",
-	"KnightCobra Chess Game",
-	"Markov Chain Generator",
-	"WattsApp Official Website",
-	"Fidget Spinner Simulation",
-	"Political Party Game",
-	"Dinosaur Project",
-	"Dinosaur Phylegenetic Project",
-	"Dinosaur Battle Simulator",
-	""
-];
-var keywords=[
-	[/ unicode /i, / char/i, / UTF-/, / tool/i],
-	[/ dino/i, / prehistor/i, / ancient /i,/ old /i,/ fossil/i],
-	[/ flop /i,/ \? /, / blob /i, / plop /i],
-	[/ foot/i,/ game/i, / sport/i ],
-	[/ game/i, / play/i, / sport/i],
-	[/ iso/i,/ math/i,/ edu/i],
-	[/ key/i, /code /i, / develop/i, / tool/i],
-	[/ game/i, / play/i, / life /i,/ John /i,/ Conway /i,/ cellular /i,/ automat/i,/ math/i],
-	[/ chem/i,/ orbit/i,/ mol/i,/scien/i],
-	[/ pi /i,/ π /,/ math/i,/ algorithm/i],
-	[/ math/i,/ tool/i,/ graph /i,/ plot/i,/ curve/i],
-	[/ spac/i,/ astro/i,/ cosmo/i,/ star /i,/ sun /i,/ moon /i,/ planet/i,/ comet /i,/ asteroid /i,/ sol/i,/ lun/i,/scien/i],
-	[/ spac/i,/ astro/i,/ cosmo/i,/ star /i,/ sun /i,/ moon /i,/ planet/i,/ comet /i,/ asteroid /i,/ sol/i,/ lun/i,/ gam/i,/ play /i,/ scien/i],
-	[/ web /i,/ bird/i, / gam/i, / play /i],
-	[/ game /i,/ board /i,/ chess /i,/ knight/i, /cobra /i],
-	[/ marko/i, / chain /i,/ math/i,/ gen/i,/ word/i,/ ling/i,/ lang/i],
-	[/ watt/i,/ power/i,/app/i,/ whats/i,/ james /i,/ jim/i],
-	[/ fidget/i, / spin/i, / sim/i],
-	[/ politic/i, / gam/i, / sim/i, / fun /i,/ party/i],
-	[/ dino/i, / gam/i, / sim/i, / fun /i, / evo/i, / project/i],
-	[/ dino/i, / sim/i, / fun /i, / evo/i, / project/i],
-	[/ dino/i, / gam/i, / sim/i, / fun /i, / battl/i, / fight/i],
-	[]
+
+function Item(name, url, keywords) {
+	this.name = name;
+	this.url = url;
+	this.keywords = keywords;
+}
+
+var database = [
+	new Item('Unicode Character Reference', 'widgets/charTester.html', [/ unicode /i,/ char/i,/ UTF-/,/ tool/i]),
+	new Item('Dinosaur Strategy Game', 'games/dino.html', [/ dino/i,/ prehistor/i,/ ancient /i,/ old /i,/ fossil/i, / gam/i]),
+	new Item('Preferably, Ignore This Link.', 'jokes/doNotClick.html', [/ flop /i,/ \? /,/ blob /i,/ plop /i]),
+	new Item('2Difa', 'games/footy.html', [/ foot/i,/ game/i,/ sport/i]),
+	new Item('Flobgames Homepage', 'games/', [/ game/i,/ play/i,/ sport/i]),
+	new Item('Isometric Paper To Print', 'widgets/isometric.html', [/ iso/i,/ math/i,/ edu/i]),
+	new Item('Key Code Tester for Developers', 'widgets/keytester.html', [/ key/i,/code /i,/ develop/i,/ tool/i]),
+	new Item('The game Of Life (John Conway\'s Cellular Automaton)', 'games/life.html', [/ game/i,/ play/i,/ life /i,/ John /i,/ Conway /i,/ cellular /i,/ automat/i,/ math/i]),
+	new Item('Atomic and Molecular Orbital Simulator', 'widgets/orbital.html', [/ chem/i,/ orbit/i,/ mol/i,/scien/i]),
+	new Item('Pi Calculator (Slow Algorithm)', 'widgets/pi.html', [/ pi /i,/ π /,/ math/i,/ algorithm/i]),
+	new Item('Graph Plotter', 'widgets/plotter.html', [/ math/i,/ tool/i,/ graph /i,/ plot/i,/ curve/i]),
+	new Item('Solar System Simulator', 'games/space.html', [/ spac/i,/ astro/i,/ cosmo/i,/ star /i,/ sun /i,/ moon /i,/ planet/i,/ comet /i,/ asteroid /i,/ sol/i,/ lun/i,/scien/i]),
+	new Item('Probe Launcher Game', 'games/space2.html', [/ spac/i,/ astro/i,/ cosmo/i,/ star /i,/ sun /i,/ moon /i,/ planet/i,/ comet /i,/ asteroid /i,/ sol/i,/ lun/i,/ gam/i,/ play /i,/ scien/i]),
+	new Item('WeBBirds', 'games/weBBirds.html', [/ web /i,/ bird/i,/ gam/i,/ play /i]),
+	new Item('KnightCobra Chess Game', 'chess/', [/ game /i,/ board /i,/ chess /i,/ knight/i,/cobra /i]),
+	new Item('Markov Chain Generator', 'games/markov.html', [/ marko/i,/ chain /i,/ math/i,/ gen/i,/ word/i,/ ling/i,/ lang/i]),
+	new Item('WattsApp Official Website', 'jokes/wattsapp.html', [/ watt/i,/ power/i,/app/i,/ whats/i,/ james /i,/ jim/i]),
+	new Item('Fidget Spinner Simulation', 'widgets/fidget%20spinner.html', [/ fidget/i,/ spin/i,/ sim/i]),
+	new Item('Political Party Game', 'games/Politics.html', [/ politic/i,/ gam/i,/ sim/i,/ fun /i,/ party/i]),
+	new Item('Dinosaur Project', 'dinosaurs/', [/ dino/i,/ gam/i,/ sim/i,/ fun /i,/ evo/i,/ project/i]),
+	new Item('Dinosaur Phylegenetic Project', 'dinosaurs/tree.html', [/ dino/i,/ sim/i,/ fun /i,/ evo/i,/ project/i]),
+	new Item('Dinosaur Battle Simulator', 'dinosaurs/simulation.html', [/ dino/i,/ gam/i,/ sim/i,/ fun /i,/ battl/i,/ fight/i])
 ];
 
 X.onclick=function(){
@@ -129,34 +83,45 @@ searching.onkeyup=function(event) {
 	}
 };
 
+var resultList = document.getElementById('result_list');
+
 search.onclick=function(){
-	resultList.textContent='';
-	var results=[];
-	var results_hrefs=[];
-	var links=[];
-	var Ps=[];
-	searched.style="DISPLAY: all";
-	for(var i = 0; i < keywords.length; i++){
-		for(var j = 0; j < keywords[i].length;j++){
-			var word = keywords[i][j];
-			var queiry = searching.value;
-			if( word.test(' '+queiry+' ') ){
-				results.push(names[i]);
-				results_hrefs.push(hrefs[i]);
-                if(i<keywords.length-1){i++;}
+	resultList.innerHTML=''; // clear any previous results
+	
+	var results = []; // create an array for result names
+	var results_hrefs = []; // create an array for result urls
+	var htmlString = ''; // create a variable in which to generate a html result list
+	
+	searched.style="DISPLAY: all"; // make the number of results visible
+	
+	for(var i = 0; i < database.length; i++){
+		var result = false;
+		for(var j = 0; j < database[i].keywords.length && !result; j++){ // loop through every keyword for every page
+			var word = database[i].keywords[j]; // store the keyword regExp in a variable
+			var queiry = searching.value; // store the user's search in a variable
+			
+			if(word.test(' ' + queiry + ' ')){ // see if they match
+				results.push(database[i].name); // add the name to the results array
+				results_hrefs.push(database[i].url); // add the url to the result urls array
+				
+				result = true; // skip to next page
 			}
 		};
 	};
-	for(var k = 0;k < results.length;k++){
-		links.push(document.createElement("a"));
-		links[k].href = results_hrefs[k];
-		links[k].textContent = results[k];
-		Ps.push(document.createElement("p"));
-		resultList.appendChild(Ps[k]);
-		resultList.appendChild(links[k]);
+	
+	for(var i = 0; i < results.length; i++){ // add links in html for each result
+		htmlString += '<a href="';
+		htmlString += results_hrefs[i];
+		htmlString += '">';
+		htmlString += results[i];
+		htmlString += '</a><br/>';
 	};
-	searched.textContent = results.length + " Result(s) found for " + searching.value +".";
+	
+	resultList.innerHTML = htmlString;
+	
+	searched.textContent = results.length + ' result' + (results.length == 1 ? '' : 's')  + ' found for ' + searching.value + ':';
 };
+
 var clock=document.getElementById('clock');
 
 function clockDisp(seconds, minutes, hours) {
@@ -194,7 +159,7 @@ function clockDisp(seconds, minutes, hours) {
 	for(var a = 0.2; a <= 12; a += 0.2){
 		if( (Math.round(a*10) / 10) % 1 == 0){
 			pen.fillStyle='#ffff00';
-			pen.fillText(Math.round(a),200+(r*Math.sin((a*30*Math.PI)/180)),200-(r*Math.cos((a*30*Math.PI)/180)));
+			pen.fillText(Math.round(a),195+(r*Math.sin((a*30*Math.PI)/180)),204-(r*Math.cos((a*30*Math.PI)/180)));
 		}else{
 			pen.fillStyle='#00ffff';
 			pen.fillRect(195+(r*Math.sin((a*30*Math.PI)/180)),195-(r*Math.cos((a*30*Math.PI)/180)),10,10);
@@ -204,14 +169,15 @@ function clockDisp(seconds, minutes, hours) {
 
 function time() {
 	var time=new Date();
-	clockDisp(time.getUTCSeconds(),time.getUTCMinutes()+(time.getUTCSeconds()/60),time.getUTCHours()+(time.getUTCMinutes()/60)+(time.getUTCHours()/3600));
-	setTimeout("time()",1000);
+	clockDisp(time.getUTCSeconds() + time.getUTCMilliseconds()/1000,time.getUTCMinutes()+(time.getUTCSeconds()/60),time.getUTCHours()+(time.getUTCMinutes()/60)+(time.getUTCHours()/3600));
 };
 
-time();
+setInterval(time,0);
 
 		</SCRIPT>
 		<EMBED src="sounds/tune.mp3" width="0" height="0" id="sound"></EMBED>
-		<a href="index.html">Back home</a>
+		<hr/>
+		&copy;<a href="index.html">ThatChapThere</a> <span id="year"></span> 
+		<script type="text/javascript" src="js/getYear.js"></script>
 	</body>
 </html>
