@@ -87,17 +87,17 @@ var humanImage = document.createElement('img');
 humanImage.src = 'alt_images/human.png';
 
 var genusImageURLs = {
-	'Acrocanthosaurus' : 'images/Acrocanthosaurus.jpg',
-	'Agathaumas' : 'images/Agathaumas.jpg',
-	'Alcovasaurus' : 'images/Alcovasaurus.jpg',
-	'Andhrasaurus' : 'images/andhrasaurus.jpg',
-	'Anomalipes' : 'images/Anomalipes.jpg',
-	'Carnotaurus' : 'images/Carnotaurus.jpg',
-	'Herrerasaurus' : 'images/Herrerasaurus.jpg',
-	'Ornitholestes' : 'images/Ornitholestes.jpg',
-	'Pachycephalosaurus' : 'images/Pachycephalosaurus.jpg',
-	'Riojasaurus' : 'images/Riojasaurus.jpg',
-	'Spinosaurus' : 'images/Spinosaurus.jpg',
+	'Acrocanthosaurus' : 'https://imgur.com/P5E8alt.jpg',
+	'Agathaumas' : 'https://imgur.com/Dhzl62l.jpg',
+	'Alcovasaurus' : 'https://imgur.com/0xPwUek.jpg',
+	'Andhrasaurus' : 'https://imgur.com/Vh6cbis.jpg',
+	'Anomalipes' : 'https://imgur.com/4bVLLYl.jpg',
+	'Carnotaurus' : 'https://imgur.com/bZjchKA.jpg',
+	'Herrerasaurus' : 'https://imgur.com/EzHj2g0.jpg',
+	'Ornitholestes' : 'https://imgur.com/OrVMXAF.jpg',
+	'Pachycephalosaurus' : 'https://imgur.com/vOkorDY.jpg',
+	'Riojasaurus' : 'https://imgur.com/tePUCrj.jpg',
+	'Spinosaurus' : 'https://imgur.com/6oXy0aR.jpg',
 }
 
 function getImageForTaxon(i) {
