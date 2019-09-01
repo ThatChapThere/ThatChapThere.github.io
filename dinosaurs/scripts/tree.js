@@ -86,7 +86,7 @@ var mouseIsDown = false; // if the mouse is held down
 var humanImage = document.createElement('img');
 humanImage.src = 'alt_images/human.png';
 
-//*
+/*
 var genusImageURLs = {
 	'Acrocanthosaurus' : 'images/Acrocanthosaurus.jpg',
 	'Agathaumas' : 'images/Agathaumas.jpg',
