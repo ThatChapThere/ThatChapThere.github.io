@@ -127,12 +127,12 @@ var genusImageURLs = {
 	'Pachycephalosaurus' : 'https://imgur.com/vOkorDY.jpg',
 	'Riojasaurus' : 'https://imgur.com/tePUCrj.jpg',
 	'Spinosaurus' : 'https://imgur.com/6oXy0aR.jpg',
-	'Carcharodontosaurus' : 'https://imgur.com/G0lYSDF',
-	'Deinonychus' : 'https://imgur.com/WzeK5gr',
-	'Jeholornis' : 'https://imgur.com/V8KV621',
-	'Tornieria' : 'https://imgur.com/fTvMBeH',
-	'Tyrannosaurus' : 'https://imgur.com/IOVZ15w',
-	'Veterupristisaurus' : 'https://imgur.com/63UqF2V',
+	'Carcharodontosaurus' : 'https://imgur.com/G0lYSDF.jpg',
+	'Deinonychus' : 'https://imgur.com/WzeK5gr.jpg',
+	'Jeholornis' : 'https://imgur.com/V8KV621.jpg',
+	'Tornieria' : 'https://imgur.com/fTvMBeH.jpg',
+	'Tyrannosaurus' : 'https://imgur.com/IOVZ15w.jpg',
+	'Veterupristisaurus' : 'https://imgur.com/63UqF2V.jpg',
 }
 //*/
 
