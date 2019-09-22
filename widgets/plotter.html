@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <HTML>
 	<HEAD>
 		<meta http-equiv="content-type" content="text/html;charset=utf-8" />
@@ -8,7 +8,7 @@ BODY{
 	color:#FFFF88;
 	background-color:#444444;
 }
-#IN{
+.IN{
 	width:100%;
 }
 		</STYLE>
@@ -21,37 +21,84 @@ BODY{
 		<H1>
 			Graph Plotter
 		</H1>
-		<CANVAS width=400 height=400 onload="ctx = this.getContext('2d');ctx.fillStyle='#FFF';ctx.fillRect(0,0,400,400);ctx.beginPath();ctx.moveTo(0,200);ctx.lineTo(400,200);ctx.moveTo(200,0);ctx.lineTo(200,400);ctx.stroke();"></CANVAS>
+		<CANVAS width=400 height=400 ></CANVAS>
 		<BR/>
-		<I>f</I>(x):
-		<INPUT id='IN'/>
+		Zoom:
+		<INPUT id='ZOOM' style="IN" value="1"/>
+		<BR/>
+		<I>f<sub>1</sub></I>(x):
+		<INPUT id='IN1' style="IN"/>
+		<BR/>
+		<I>f<sub>2</sub></I>(x):
+		<INPUT id='IN2' style="IN"/>
+		<BR/>
+		<I>f<sub>3</sub></I>(x):
+		<INPUT id='IN3' style="IN"/>
 		<SCRIPT type="text/javascript" language="javascript">
-document.getElementsByTagName('CANVAS')[0].onload();
+var ctx = document.getElementsByTagName('canvas')[0].getContext('2d');
+ctx.fillStyle='#FFF';
+ctx.fillRect(0,0,400,400);
+ctx.beginPath();
+ctx.moveTo(0,200);
+ctx.lineTo(400,200);
+ctx.moveTo(200,0);
+ctx.lineTo(200,400);
+ctx.stroke(); // get context and draw graph cross
+
 function getRealXY(x,y) {
 	var X = (x*2)+200;
 	var Y = ((0-y)*2)+200;
 	return({x:X, y:Y});
-}
-IN.onkeyup = function() {
+} // convert coordinates to have a centre a 0, 0
+
+// the colours of different parts of the graph
+var strokeStyles = ['red', 'green', 'blue']; 
+var inputs = [];
+var zoom = document.getElementById('ZOOM');
+
+for(var i = 1; i<=3; i++) {
+	inputs[i-1] = document.getElementById('IN' + i);
+} // store the three input bars in an array
+
+zoom.onkeyup = function() { // 
 	ctx.strokeStyle='#000';
 	ctx.fillStyle='#FFF';
-	ctx.fillRect(0,0,400,400);
+	ctx.fillRect(0,0,400,400); // draw background
 	ctx.beginPath();
 	ctx.moveTo(0,200);
 	ctx.lineTo(400,200);
 	ctx.moveTo(200,0);
 	ctx.lineTo(200,400);
-	ctx.stroke();
-	ctx.strokeStyle='#F00';
-	ctx.beginPath();
-	for(x = -100; x <= 100; x++){
-		eval('var ANS ='+IN.value+';');
-		var point=getRealXY(x,ANS);
-		console.log(point);
-		ctx.lineTo(point.x,point.y);
+	ctx.stroke(); // draw graph cross
+	
+	// loop through the input bars
+	for(var i = 0; i < inputs.length; i++) { 
+		if(inputs[i].value == ''){
+			continue;
+		} // if the input bar is empty, ignore it
+		
+		// choose the colour for the graph
+		ctx.strokeStyle = strokeStyles[i];
+		ctx.beginPath();
+		var x;
+		var z = zoom.value;
+		var ANS;
+		
+		for(j = -100; j <= 100; j++){ // loop through x coordinates
+			x = j / z; // zoom according to user specification
+			eval('ANS =' + inputs[i].value + ';'); // store the y value
+			
+			// draw a line to the next point
+			var point = getRealXY(j, ANS);
+			ctx.lineTo(point.x,point.y); 
+		}
+		ctx.stroke();
 	}
-	ctx.stroke();
 }
+
+for(var i = 0; i < inputs.length; i++) {
+	inputs[i].onkeyup = zoom.onkeyup;
+} // redraw the graph every time a key is pressed in any input bar
 		</SCRIPT>
 	</BODY>
 </HTML> 
