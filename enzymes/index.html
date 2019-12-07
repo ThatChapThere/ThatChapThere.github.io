@@ -1,0 +1,531 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>Substrate Concentration Simulation</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="generator" content="Geany 1.30.1" />
+</head>
+
+<body style="margin:0px">
+	<canvas width="1280" height="720"></canvas>
+	<table><tbody>
+		<tr>
+			<td>Concentration Interval:</td>
+			<td><input type="range" id="conc_slider"/></td>
+			<td id="conc_slider_disp">10</td>
+		</tr>
+		<tr>
+			<td>Concentration Maximum:</td>
+			<td><input type="range" id="max_slider"/></td>
+			<td id="max_slider_disp">500</td>
+		</tr>
+		<tr>
+			<td>Time Delay:</td>
+			<td><input type="range" id="delay_slider"/></td>
+			<td id="delay_slider_disp">3</td>
+		</tr>
+	</tbody></table>
+	<button id="begin">Begin New Simulation</button>
+</body>
+<script>
+var ctx = document.getElementsByTagName('canvas')[0].getContext('2d');
+var simulationWidth = 650;
+var simulationHeight = 650;
+var inactiveEnzymeColour = '#B21597';
+var inactiveEnzymeRadius = 7;
+var activeEnzymeColour = '#7F7DC1';
+var activeEnzymeRadius = 8;
+var substrateColour = '#E5D105';
+var substrateRadius = 5;
+var productColour = '#3DE505';
+var productRadius = 4;
+var maxVelocity = 2;
+var enzymes = 100;
+var substrates = 100;
+var startSubstrates = substrates;
+var reactionTime = 200;
+var outsideMargin = 20;
+var collisionDistance = 5;
+var timer = 0;
+var timeInterval = 10;
+var reactionsOccured = 0;
+var substrateInterval = 100;
+var testTime = 1;
+testTime *= 1000;
+var maxSubstrate = 2400;
+var concentrations = [0];
+var rates = [0];
+var nodes = [];
+var loadingBar1Colour = '#BAB036';
+var loadingBar2Colour = '#FF9600';
+var loadingBarHeight = 20;
+
+var graphWidth = 500;
+var graphHeight = 500;
+var graphStartX = simulationWidth + 50;
+var graphStartY = 50;
+var graphConcentrationScale = graphWidth / maxSubstrate;
+var graphRateScale = 4;
+var graphCrossSize = 3;
+var graphAxisColour = 'black';
+var graphLineColour = 'black';
+var graphCrossColour = 'black';
+var graphProvisionalCrossColour = 'red';
+var graphAxisWidth = 2;
+var graphLineWidth = 1;
+var graphAxisArrowSize = 6;
+var graphSquareColour = '#9E9E9E';
+var graphSquareSize = 0.62;
+var graphSquareConcentrationAmount = 100;
+var graphSquareRateAmount = 5;
+
+var avaliableConcentrationValues = [10, 25, 50, 100, 250, 500];
+var availableMaxConcentrationValues = [500, 1000, 2500];
+var availableTimeDelays = [1, 3, 10, 60];
+var concentrationIntervalSlider = document.getElementById("conc_slider");
+concentrationIntervalSlider.min = 0;
+concentrationIntervalSlider.max = avaliableConcentrationValues.length - 1;
+var concentrationIntervalSliderDisplay = document.getElementById("conc_slider_disp");
+var concentrationMaximumSlider = document.getElementById("max_slider");
+concentrationMaximumSlider.min = 0;
+concentrationMaximumSlider.max = availableMaxConcentrationValues.length - 1;
+var concentrationMaximumSliderDisplay = document.getElementById("max_slider_disp");
+var delaySlider = document.getElementById("delay_slider");
+delaySlider.min = 0;
+delaySlider.max = availableTimeDelays.length - 1;
+var delaySliderDisplay = document.getElementById("delay_slider_disp");
+var beginButton = document.getElementById('begin');
+
+var mouseX;
+var mouseY;
+var gradientShowerColour = '#9E0009';
+var rateAxisLabel = 'Reaction Rate';
+var rateAxisLabelX = graphStartX;
+var rateAxisLabelY = graphStartY - 10;
+var concentrationAxisLabel = 'Concentration';
+var concentrationAxisLabelX = graphStartX + graphWidth - 150;
+var concentrationAxisLabelY = graphStartY + graphHeight + 20;
+var backgroundColour = '#FFFFFF';
+var saturation;
+ctx.font = '20px serif';
+var keyBackground = 'black';
+var keyHeight = 25;
+var keyWidth = 190;
+var keyMessages = [
+	{
+		'str' : 'Inactive Enzyme',
+		'colour' : inactiveEnzymeColour
+	},
+	{
+		'str' : 'Active Enzyme',
+		'colour' : activeEnzymeColour
+	},
+	{
+		'str' : 'Substrate',
+		'colour' : substrateColour
+	},
+	{
+		'str' : 'Product',
+		'colour' : productColour
+	}
+];
+var keyColour = '#000000E0';
+
+concentrationIntervalSlider.oninput = function() {
+	concentrationIntervalSliderDisplay.textContent = avaliableConcentrationValues[concentrationIntervalSlider.value];
+}
+
+concentrationMaximumSlider.oninput = function() {
+	concentrationMaximumSliderDisplay.textContent = availableMaxConcentrationValues[concentrationMaximumSlider.value];
+}
+
+delaySlider.oninput = function() {
+	delaySliderDisplay.textContent = availableTimeDelays[delaySlider.value];
+}
+
+concentrationIntervalSlider.oninput();
+concentrationMaximumSlider.oninput();
+delaySlider.oninput();
+
+beginButton.onclick = function() {
+	substrates = parseInt(concentrationIntervalSliderDisplay.textContent);
+	startSubstrates = substrates;
+	substrateInterval = substrates;
+	maxSubstrates = parseInt(concentrationMaximumSliderDisplay.textContent);
+	testTime = parseInt(delaySliderDisplay.textContent) * 1000;
+	startSimulation();
+	concentrations = [0];
+	rates = [0];
+}
+
+function background() {
+	ctx.fillStyle = backgroundColour;
+	ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+}
+
+function coverEdges() {
+	ctx.fillStyle = 'white';
+	ctx.fillRect(simulationWidth, 0, ctx.canvas.width, ctx.canvas.height);
+	ctx.fillRect(0, simulationHeight, ctx.canvas.width, ctx.canvas.height);
+}
+
+function sq(x) {return x*x};
+
+function testInteraction(node1, node2, radius) {
+	if(Math.sqrt( sq(node1.x - node2.x) + sq(node1.y - node2.y)) < radius) return true;
+	return false;
+}
+
+function testRepulsion(node1, node2) {
+	if(
+		node2.type == 'PRODUCT' 
+		&& node1.type == 'ENZYME_ACTIVE'
+		) return 0;
+	if(
+		node2.type == 'SUBSTRATE' 
+		&& node1.type == 'ENZYME_INACTIVE'
+		) return 0;
+	if(testInteraction(node1, node2, node1.radius + node2.radius) ){
+		node1.xv = (Math.random() * 0.5) * maxVelocity * Math.sign(node1.x - node2.x);
+		node1.yv = (Math.random() * 0.5) * maxVelocity * Math.sign(node1.y - node2.y);
+		node2.xv = (Math.random() * 0.5) * maxVelocity * Math.sign(node2.x - node1.x);;
+		node2.yv = (Math.random() * 0.5) * maxVelocity * Math.sign(node2.y - node1.y);;
+	}
+}
+
+function testCollision(node1, node2) {
+	if(testInteraction(node1, node2, node1.radius) ){
+		if(
+			node2.type == 'PRODUCT' 
+			&& node1.type == 'ENZYME_INACTIVE'
+		){
+			node1.xv = (Math.random() * 0.5) * maxVelocity * Math.sign(node1.x - node2.x);
+			node1.yv = (Math.random() * 0.5) * maxVelocity * Math.sign(node1.y - node2.y);
+			node2.xv = (Math.random() * 0.5) * maxVelocity * Math.sign(node2.x - node1.x);
+			node2.yv = (Math.random() * 0.5) * maxVelocity * Math.sign(node2.y - node1.y);
+		}
+		//~ if(
+			//~ node2.type == 'PRODUCT' 
+			//~ && node1.type == 'ENZYME_ACTIVE'
+		//~ ){
+			//~ node2.xv = node1.xv;
+			//~ node2.yv = node1.yv;
+			//~ return 0;
+		//~ }else 
+		if(
+			node2.type == 'PRODUCT' 
+			|| node1.type == 'ENZYME_ACTIVE'
+		) return 0;
+		node1.activeTimer = reactionTime;
+		node1.type = 'ENZYME_ACTIVE';
+		node1.setStyle();
+		node2.type = 'PRODUCT';
+		node2.xv = node1.xv;
+		node2.yv = node1.yv;
+		node2.setStyle();
+		
+		reactionsOccured ++;
+	}
+}
+
+function circle(x, y, colour, radius) {
+	ctx.beginPath();
+	ctx.fillStyle = colour;
+	ctx.arc(x, y, radius, 0, Math.PI * 2);
+	ctx.fill();
+	ctx.beginPath();
+}
+
+function drawLoadingBars() {
+	var progress1 = timer / testTime;
+	var substrateRange = maxSubstrate - startSubstrates;
+	var intervals = substrateRange / substrateInterval;
+	var progress2 = (substrates - startSubstrates) / substrateRange;
+	progress2 += progress1 / intervals;
+	progress2 = Math.min(progress2, 1);
+	
+	ctx.fillStyle = loadingBar1Colour;
+	ctx.fillRect(0, simulationHeight + loadingBarHeight, progress1 * simulationWidth, loadingBarHeight);
+	ctx.fillStyle = loadingBar2Colour;
+	ctx.fillRect(0, simulationHeight + loadingBarHeight * 2, progress2 * simulationWidth, loadingBarHeight);
+	ctx.fillStyle = 'black';
+	ctx.fillText('Progress', 0, simulationHeight + loadingBarHeight * 2.5 - 2);
+	//~ ctx.fillText('Overall Timer', 0, simulationHeight + loadingBarHeight * 3 - 2);
+}
+
+function drawCross(x, y) {
+	ctx.beginPath();
+	ctx.moveTo(x - graphCrossSize, y - graphCrossSize);
+	ctx.lineTo(x + graphCrossSize, y + graphCrossSize);
+	ctx.stroke();
+	ctx.beginPath();
+	ctx.moveTo(x - graphCrossSize, y + graphCrossSize);
+	ctx.lineTo(x + graphCrossSize, y - graphCrossSize);
+	ctx.stroke();
+}
+
+function drawGraph() {
+	// Grid
+	ctx.strokeStyle = graphSquareColour;
+	ctx.lineWidth = graphSquareSize;
+	var gap = graphSquareConcentrationAmount * graphConcentrationScale;
+	for(var i = gap; i < graphWidth; i += gap) {
+		ctx.beginPath();
+		ctx.moveTo(graphStartX + i, graphStartY);
+		ctx.lineTo(graphStartX + i, graphStartY + graphHeight);
+		ctx.stroke();
+	}
+	gap = graphSquareRateAmount * graphRateScale;
+	for(var i = gap; i < graphWidth; i += gap) {
+		ctx.beginPath();
+		ctx.moveTo(graphStartX, graphStartY + graphHeight - i);
+		ctx.lineTo(graphStartX + graphWidth, graphStartY + graphHeight - i);
+		ctx.stroke();
+	}
+	// Axes
+	ctx.strokeStyle = graphAxisColour;
+	ctx.lineWidth = graphAxisWidth;
+	ctx.beginPath();
+	ctx.moveTo(graphStartX - graphAxisArrowSize, graphStartY + graphAxisArrowSize);
+	ctx.lineTo(graphStartX, graphStartY);
+	ctx.lineTo(graphStartX + graphAxisArrowSize, graphStartY + graphAxisArrowSize);
+	ctx.lineTo(graphStartX, graphStartY);
+	ctx.lineTo(graphStartX, graphStartY + graphHeight);
+	ctx.lineTo(graphStartX + graphWidth, graphStartY + graphHeight);
+	ctx.lineTo(graphStartX + graphWidth - graphAxisArrowSize, graphStartY + graphHeight - graphAxisArrowSize);
+	ctx.lineTo(graphStartX + graphWidth, graphStartY + graphHeight);
+	ctx.lineTo(graphStartX + graphWidth - graphAxisArrowSize, graphStartY + graphHeight + graphAxisArrowSize);
+	ctx.stroke();
+	// Points
+	if(rates.length >=2) {
+		ctx.strokeStyle = graphLineColour;
+		ctx.lineWidth = graphLineWidth;
+		ctx.beginPath();
+		ctx.moveTo(
+			graphStartX + concentrations[0] * graphConcentrationScale,
+			graphStartY + graphHeight - rates[0] * graphRateScale
+		);
+		for(var i = 1; i < rates.length; i++) {
+			ctx.lineTo(
+				graphStartX + concentrations[i] * graphConcentrationScale,
+				graphStartY + graphHeight - rates[i] * graphRateScale
+			);
+		}
+		ctx.stroke();
+		ctx.beginPath();
+	}
+	// Crosses
+	ctx.strokeStyle = graphCrossColour;
+	if(rates.length >=2) {
+		for(var i = 1; i < rates.length; i++) {
+			drawCross(
+				graphStartX + concentrations[i] * graphConcentrationScale,
+				graphStartY + graphHeight - rates[i] * graphRateScale
+			);
+		}
+	}
+	// Provisional cross
+	ctx.strokeStyle = graphProvisionalCrossColour;
+	drawCross(
+		graphStartX + substrates * graphConcentrationScale,
+		graphStartY + graphHeight - graphRateScale * reactionsOccured * 1000 / timer
+	);
+	// Gradient
+	if(mouseX > graphStartX
+		&& mouseX < graphStartX + graphWidth
+		&& mouseY > graphStartY
+		&& mouseY < graphStartY + graphHeight
+	){
+		var position = mouseX - graphStartX;
+		var pixelsPerInterval = substrateInterval * graphConcentrationScale;
+		var index = Math.round(position / pixelsPerInterval);
+		index = Math.max(1, Math.min(index, rates.length - 2));
+		var x1 = graphStartX + concentrations[index - 1] * graphConcentrationScale;
+		var y1 = graphStartY + graphHeight - rates[index -1] * graphRateScale;
+		var x2 = graphStartX + concentrations[index + 1] * graphConcentrationScale;
+		var y2 = graphStartY + graphHeight - rates[index + 1] * graphRateScale;
+		var gradient = (y1 - y2) / (x1 - x2);
+		var constant = y1 - (x1 * gradient);
+		ctx.strokeStyle = gradientShowerColour;
+		ctx.beginPath();
+		ctx.moveTo(graphStartX, graphStartX * gradient + constant);
+		ctx.lineTo(graphStartX + graphWidth, (graphStartX + graphWidth) * gradient + constant);
+		ctx.stroke();
+		ctx.fillStyle = backgroundColour;
+		ctx.fillRect(graphStartX, 0, graphWidth, graphStartY);
+	}
+	// Labels
+	ctx.fillStyle = graphAxisColour;
+	ctx.fillText(rateAxisLabel, rateAxisLabelX, rateAxisLabelY);
+	ctx.fillText(concentrationAxisLabel, concentrationAxisLabelX, concentrationAxisLabelY);
+}
+
+function drawSaturationBar() {
+	ctx.fillStyle = inactiveEnzymeColour;
+	ctx.fillRect(0, simulationHeight, simulationWidth, loadingBarHeight);
+	ctx.fillStyle = activeEnzymeColour;
+	ctx.fillRect(0, simulationHeight, saturation * simulationWidth, loadingBarHeight);
+	ctx.fillStyle = 'black';
+	ctx.fillText('Saturation', 0, simulationHeight + loadingBarHeight - 2);
+}
+
+function drawKey() {
+	ctx.fillStyle = keyColour;
+	ctx.fillRect(0, 0, keyWidth, keyHeight * (keyMessages.length + 0.5) );
+	for(var i = 0; i < keyMessages.length; i++) {
+		ctx.fillStyle = keyMessages[i].colour;
+		ctx.fillText(keyMessages[i].str, 5, (i + 1) * keyHeight);
+	}
+}
+
+document.body.onmousemove = function(event) {
+	mouseX = event.clientX;
+	mouseY = event.clientY;
+}
+
+function Node(type) {
+	this.type = type;
+	
+	this.setStyle = function() {
+		switch(this.type) {
+			case 'ENZYME_INACTIVE':
+				this.colour = inactiveEnzymeColour;
+				this.radius = inactiveEnzymeRadius;
+				break;
+			case 'ENZYME_ACTIVE':
+				this.colour = '#7F7DC1';
+				this.radius = activeEnzymeRadius;
+				break;
+			case 'SUBSTRATE':
+				this.colour = substrateColour;
+				this.radius = substrateRadius;
+				break;
+			case 'PRODUCT':
+				this.colour = productColour;
+				this.radius = productRadius;
+				break;
+		}
+	}
+	this.setStyle();
+	
+	this.x = Math.random() * simulationWidth;
+	this.y = Math.random() * simulationHeight;
+	this.xv = (Math.random() - 0.5) * maxVelocity;
+	this.yv = (Math.random() - 0.5) * maxVelocity;
+	
+	this.activeTimer = 0;
+	
+	this.move = function() {
+		this.x += this.xv;
+		this.y += this.yv;
+		if(this.x < 0 - outsideMargin) {
+			this.xv = Math.abs(this.xv);
+		}
+		if(this.x > simulationWidth + outsideMargin) {
+			this.xv = - Math.abs(this.xv);
+		}
+		if(this.y < 0 - outsideMargin) {
+			this.yv = Math.abs(this.yv);
+		}
+		if(this.y > simulationHeight + outsideMargin) {
+			this.yv = - Math.abs(this.yv);
+		}
+		
+		if(
+			(
+				this.x < 0
+				|| this.x > simulationWidth
+				|| this.y < 0
+				|| this.y > simulationHeight
+			)
+			&& this.type == 'PRODUCT'
+		){
+			this.type = 'SUBSTRATE';
+			//~ this.x = Math.random() * simulationWidth;
+			//~ this.y = Math.random() * simulationHeight;
+			this.setStyle();
+		}
+		
+		if(this.activeTimer > 0) {
+			this.activeTimer --;
+		}else if(this.type == "ENZYME_ACTIVE"){
+			this.type = "ENZYME_INACTIVE";
+			this.setStyle();
+		}
+	}
+	
+	this.draw = function() {
+		circle(this.x, this.y, this.colour, this.radius);
+		//~ if(this.type == 'ENZYME_ACTIVE') {
+			//~ circle(this.x, this.y, '#7F7DC1', this.radius);
+		//~ }
+	}
+}
+
+function startSimulation() {
+	timer = 0;
+	reactionsOccured = 0;
+		
+	nodes = [];
+	for(var i = 0; i < enzymes; i++) {
+		nodes.push(new Node('ENZYME_INACTIVE'));
+	}
+	
+	for(var i = 0; i < substrates; i++) {
+		nodes.push(new Node('SUBSTRATE'));
+	}
+}
+
+startSimulation();
+
+function draw() {
+	background();
+	saturation = 0;
+	for(var i = 0; i < nodes.length; i++) {
+		nodes[i].draw();
+		if(nodes[i].type == 'ENZYME_ACTIVE') saturation++;
+		if(substrateInterval) {
+			nodes[i].move();
+			if(i < enzymes) {
+				//~ nodes[i].setStyle();
+				for(var j = enzymes; j < nodes.length; j++) {
+					testCollision(nodes[i], nodes[j]);
+				}
+				//~ if(nodes[i].colour == activeEnzymeColour) console.log('RADIUS');
+				//~ nodes[i].draw();
+			}
+			for(var j = i+1; j < nodes.length; j++) {
+				//~ if(i != j) testRepulsion(nodes[i], nodes[j]);
+			}
+		}
+	}
+	saturation /= enzymes;
+	
+	coverEdges();
+	drawSaturationBar();
+	drawGraph();
+	
+	if(substrateInterval) timer += timeInterval;
+	//~ console.log('time: ' + timer + '\nreactions:' + reactionsOccured + '\nrate: ' + (reactionsOccured * 1000 / timer).toFixed(2) );
+	
+	if(timer > testTime) {
+		concentrations.push(substrates);
+		rates.push(reactionsOccured * 1000 / timer);
+		substrates += substrateInterval;
+		if(substrates > maxSubstrate) {
+			substrateInterval = 0;
+			timer = 0;
+		}else{
+			startSimulation();
+		}
+	}
+	drawLoadingBars();
+	drawKey();
+}
+
+setInterval(draw, timeInterval);
+
+</script>
+</html>
