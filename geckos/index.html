@@ -3,7 +3,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 
 <head>
-	<title>untitled</title>
+	<title>Geckos!</title>
+	<link type="image/png" href="gecko1.png" rel="icon"></LINK>
 	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
 	<meta name="generator" content="Geany 1.30.1" />
 </head>
@@ -39,6 +40,10 @@ var backgroundColour = 'black';
 ctx.fillStyle = backgroundColour;
 document.body.style.backgroundColour = backgroundColour;
 var currentImage;
+var imagesLoaded = false;
+var imageLoadedCount = 0;
+var textColour = 'white';
+ctx.font = '20px serif';
 
 for(var i = 0; i < imageCount; i++) {
 	images.push(new Image(imageWidth, imageHeight));
@@ -52,7 +57,18 @@ function setImage() {
 setImage();
 
 function draw() {
+	ctx.fillStyle = backgroundColour;
 	ctx.fillRect(0, 0 , canvasWidth, canvasHeight);
+	if(!imagesLoaded) {
+		imageLoadedCount = 0;
+		for(var i = 0; i < images.length; i++) 
+			if(images[i].complete) 
+				imageLoadedCount++;
+		imagesLoaded = imageLoadedCount == images.length;
+		ctx.fillStyle = textColour;
+		ctx.fillText('Loading images ' + Math.round(imageLoadedCount * 100 / images.length) + '%' , 8,  30);
+	}
+	
 	imageX += imageXV;
 	imageY += imageYV;
 	
