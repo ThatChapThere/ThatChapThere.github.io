@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>untitled</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="generator" content="Geany 1.30.1" />
+</head>
+
+<body>
+	<canvas></canvas>
+</body>
+<script>
+var ctx = document.getElementsByTagName('canvas')[0].getContext('2d');
+
+var imageURLs = [];
+var imageCount = 5;
+var imageWidth = 1000;
+var imageHeight = 792;
+var imageScale = 5;
+imageWidth /= imageScale;
+imageHeight /= imageScale;
+var images = [];
+var imageName = 'gecko';
+var imageExtension = '.png';
+var canvasProportion = 0.9;
+var canvasWidth = canvasProportion * window.innerWidth;
+var canvasHeight = canvasProportion * window.innerHeight;
+ctx.canvas.width = canvasWidth;
+ctx.canvas.height = canvasHeight;
+var imageX = 0;
+var imageY = 0;
+var imageXV = 5;
+var imageYV = 3;
+var imageMaxX = canvasWidth - imageWidth;
+var imageMaxY = canvasHeight - imageHeight;
+var backgroundColour = 'black';
+ctx.fillStyle = backgroundColour;
+document.body.style.backgroundColour = backgroundColour;
+var currentImage;
+
+for(var i = 0; i < imageCount; i++) {
+	images.push(new Image(imageWidth, imageHeight));
+	images[i].src = imageName + (i + 1) + imageExtension;
+}
+
+function setImage() {
+	currentImage = images[Math.floor(Math.random() * 5)];
+}
+
+setImage();
+
+function draw() {
+	ctx.fillRect(0, 0 , canvasWidth, canvasHeight);
+	imageX += imageXV;
+	imageY += imageYV;
+	
+	if(imageX < 0) {
+		imageXV = Math.abs(imageXV);
+		setImage();
+	}
+	if(imageX > imageMaxX) {
+		imageXV = -Math.abs(imageXV);
+		setImage();
+	}
+	if(imageY < 0) {
+		imageYV = Math.abs(imageYV);
+		setImage();
+	}
+	if(imageY > imageMaxY) {
+		imageYV = -Math.abs(imageYV);
+		setImage();
+	}
+	ctx.drawImage(currentImage, imageX, imageY, imageWidth, imageHeight);
+}
+
+setInterval(draw, 0);
+
+</script>
+</html>
