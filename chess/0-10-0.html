@@ -1,0 +1,162 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<link type="image/png" href="../images/icons/chessimg.png" rel="icon"/>
+	<title>
+		KnightCobra 0.10.0
+	</title>
+	<link href="css/090.css" rel="stylesheet"/>
+</head>
+<body>
+
+	<div id="div_wrapper">
+		
+		<div id="div_header">
+			<table id="table_header">
+				<tr>
+					<td>
+						<img id="img_logo" src="../images/icons/knightcobra.png" />
+					</td>
+					<td>
+						<h1>
+							KnightCobra
+						</h1>
+						<p>v0.9.0 beta</p>
+					</td>
+				</tr>
+			</table>
+		</div>
+		
+		<div id="div_main">
+			<table>
+				
+				<tr>
+					<td class="time_control_select_td">
+						<span>
+							Time controls:
+						</span>
+						<span class="time_control_select" id="time_control_select_Bullet">
+							bullet 1+0
+						</span>
+						<span class="time_control_select" id="time_control_select_Blitz">
+							blitz 5+5
+						</span>
+						<span class="time_control_select time_control_selected" id="time_control_select_Rapid">
+							rapid 20+10
+						</span>
+						<span class="time_control_select" id="time_control_select_Classical">
+							classical 90+30
+						</span>
+					</td>
+				</tr>
+				<tr id="tr_player_top">
+					<td id="td_player_top_name" class="player_black_name player_name">
+						<span>
+							Levels: 
+						</span>
+						<span class="level_select" id="level_select_top_Level_1">
+							1
+						</span>
+						<span class="level_select" id="level_select_top_Level_2">
+							2
+						</span>
+						<span class="level_select" id="level_select_top_Level_3">
+							3
+						</span>
+						<span class="level_select" id="level_select_top_Level_4">
+							4
+						</span>
+						<span class="level_select" id="level_select_top_Level_5">
+							5
+						</span>
+						<span class="level_select" id="level_select_top_Level_6">
+							6
+						</span>
+						<span class="level_select" id="level_select_top_Level_7">
+							7
+						</span>
+						<span class="level_select" id="level_select_top_Level_8">
+							8
+						</span>
+						<span class="level_select level_selected" id="level_select_top_Human">
+							Human
+						</span>
+					</td>
+					<td id="td_player_top_clock">
+						<div class="clock" id="div_player_top_clock">
+							1:34:45
+						</div>
+					</td>
+				</tr>
+				
+				
+				<tr id="board_row">
+					<td id="board_tab">
+						<canvas id="board"></canvas>
+					</td>
+					<td id="td_notation">
+						<div class="div_notation">
+							<table class="table_notation">
+								<tbody id="tbody_notation">
+								</tbody>
+							</table>
+						</div>
+					</td>
+				</tr>
+				
+				
+				<tr id="tr_player_bottom">
+					<td id="td_player_bottom_name" class="player_white_name player_name">
+						<span>
+							Levels: 
+						</span>
+						<span class="level_select" id="level_select_bottom_Level_1">
+							1
+						</span>
+						<span class="level_select" id="level_select_bottom_Level_2">
+							2
+						</span>
+						<span class="level_select" id="level_select_bottom_Level_3">
+							3
+						</span>
+						<span class="level_select" id="level_select_bottom_Level_4">
+							4
+						</span>
+						<span class="level_select" id="level_select_bottom_Level_5">
+							5
+						</span>
+						<span class="level_select" id="level_select_bottom_Level_6">
+							6
+						</span>
+						<span class="level_select" id="level_select_bottom_Level_7">
+							7
+						</span>
+						<span class="level_select" id="level_select_bottom_Level_8">
+							8
+						</span>
+						<span class="level_select level_selected" id="level_select_bottom_Human">
+							Human
+						</span>
+					</td>
+					<td id="td_player_bottom_clock">
+						<div class="clock" id="div_player_bottom_clock">
+							1:30:34.5
+						</div>
+					</td>
+				</tr>
+				
+				
+			</table>
+		</div>
+		
+	</div>
+	
+	<div id="div_footer">
+		<hr/>
+		&copy;<a href="../">ThatChapThere</a> 2022
+	</div>
+	
+	<script type="text/javascript" src="js/0-10-0/main.js"></script>
+</body>
+</html>

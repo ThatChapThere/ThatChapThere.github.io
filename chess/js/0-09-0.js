@@ -3,6 +3,10 @@ var notationBody = document.getElementById('tbody_notation');
 
 //*********************COORDINATE <-> INDEX CONVERSION******************
 
+let nodeCounter = 0;
+let searchStartTime;
+let searchEndTime;
+
 // object for x y coords
 function CartesianPosition(x, y) {
 	this . x = x;
@@ -1110,7 +1114,7 @@ function getSubsequentPositions(position, notation) {
 function getSubsequentPositionsForDepth(position, depth) {
 	
 	if(depth == 1) {
-		return(getSubsequentPositions(position));
+		return(getSubsequentPositions(position) + 1);
 	}else{
 		getSubsequentPositions(position);
 		
@@ -1122,7 +1126,8 @@ function getSubsequentPositionsForDepth(position, depth) {
 			);
 		}
 		
-		return(n);
+		nodeCounter = n + 1;
+		return(n + 1);
 	}
 	
 }
@@ -1850,11 +1855,11 @@ function searchFirstUnsearchedNode(position, depthLimit) {
 		depthSoFar ++;
 	}
 	
-	console.log(depthSoFar);
+	console.log("Momentary depth: " + depthSoFar);
 	
 	if(depthSoFar > depthLimit) {
 		
-		console.log(getSubsequentPositionsForDepth(position, depthLimit));
+		console.log("New children: " + getSubsequentPositionsForDepth(position, depthLimit));
 		
 		return(true);
 	}else{
@@ -2012,6 +2017,9 @@ function Level(type, depth, book, name) {
 		case levelTypes.STANDARD:
 			this.loop = function() {
 				if(this.initialising) {
+					nodeCounter = 0;
+					searchStartTime = (new Date).getTime();
+
 					// delete knowledge of positions, so that we don't use
 					// the knowledge of higher levels
 					currentPosition.subsequentPositions = [];
@@ -2050,6 +2058,10 @@ function Level(type, depth, book, name) {
 						Date.now() > this.haltSearchTime
 					) {
 						var index = getBestMove(currentPosition);
+						searchEndTime = (new Date).getTime();
+						console.log((searchEndTime - searchStartTime) + "ms taken");
+						console.log(nodeCounter + "nodes");
+						console.log(Math.round(nodeCounter / (searchEndTime - searchStartTime)) + "kn/s");
 						executeMoveFromIndex(currentPosition, index);
 						this.initialising = true;
 					}
