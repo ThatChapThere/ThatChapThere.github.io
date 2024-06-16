@@ -232,8 +232,8 @@ for(let i = 1; i < drawnPathPoints.length; i++)
 }
 curve.points = drawPath.points;
 
-curve.rod = [Math.floor(curve.points.length - 1 - height), Math.floor(curve.points.length - 1 - height - width * 7/16)];
 curve.rodLength = width * 0.188;
+curve.rod = [Math.floor(curve.points.length - 1), Math.floor(curve.points.length - 1 - curve.rodLength)];
 
 function draw()
 {
