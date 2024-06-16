@@ -122,7 +122,9 @@ let getLegalMoves = (position) =>
 	return moves;
 }
 
+let positionList = [];
 let executeMove = (move) =>
 {
+	positionList.push(currentPosition);
 	currentPosition = JSON.parse(JSON.stringify(move.newPosition));
 }

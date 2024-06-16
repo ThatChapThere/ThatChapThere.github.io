@@ -2,13 +2,13 @@ let prepareForNewMove = () =>
 {
 	let moves = getLegalMoves(currentPosition);
 	moveButtonsDiv.innerHTML = '';
-	for(m in moves)
+	for(const m in moves)
 	{
 		let button = document.createElement('button');
 		button.textContent = moves[m].notation;
 		button.onclick = function()
 		{
-			for(m in moves)
+			for(const m in moves)
 			{
 				let move = moves[m];
 				if(move.notation == this.textContent)
@@ -21,6 +21,21 @@ let prepareForNewMove = () =>
 		moveButtonsDiv.appendChild(button);
 	}
 }
+
+let simplifyNotation = (notation) =>
+{
+	notation = notation.toLowerCase();
+	notation = notation.replace('x', '');
+	notation = notation.replace('o-o-o', 'oq'); // This line must go before the next one!!
+	notation = notation.replace('o-o', 'ok');
+	const numbers = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
+	
+	for(let n = 1; n <= 8; n++) {
+		notation = notation.replace((n).toString(), numbers[n-1]);
+	}
+	return notation;
+}
+
 
 let getMovesFromSquare = (r, f) =>
 {
@@ -118,5 +133,33 @@ window.onload = () =>
 	ctx = boardCanvas.getContext('2d');
 	prepareForNewMove();
 	setInterval(draw, 0);
-	setInterval(playRandomMove, 0);
+	//setInterval(playRandomMove, 0);
+	const moveInput = document.getElementById('move-input');
+	const moveList = document.getElementById('move-list');
+	moveInput.onkeyup = function(e) {
+		if(moveInput.value == '' && e.key == 'Escape') {
+			if(positionList.length == 0) return;
+			currentPosition = positionList.pop();
+			return;
+		}
+		let moves = getLegalMoves(currentPosition);
+		let selectedMoves = [];
+		for(m in moves) {
+			let move = moves[m];
+			if(simplifyNotation(move.notation).startsWith(moveInput.value)) {
+				selectedMoves.push(move);
+			}
+		}
+		moveList.textContent = '';
+		if(selectedMoves.length == 1) {
+			console.log(simplifyNotation(selectedMoves[0].notation));
+			executeMove(selectedMoves[0]);
+			moveInput.value = '';
+		}else{
+			for(const m in selectedMoves){
+				let move = selectedMoves[m];
+				moveList.textContent += move.notation + '  ';
+			}
+		}
+	}
 }

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<head></head>
+<body>
+    <canvas style="cursor: crosshair;"></canvas>
+    <br/>
+    <img src="path only centralised.png" style="display: none"/>
+    <script type="text/javascript" src="drawnpath.js"></script>
+    <script type="text/javascript">
+const width  = 600,
+      height = 600;
+const curveColour = '#499CEC',
+      curveWeight = 6;
+const rodColour = '#E6724B',
+      rodWeight = curveWeight;
+const backgroundColour = '#FBFAF8';
+const drawReference = true;
+
+const ctx = document.getElementsByTagName('canvas')[0].getContext('2d');
+ctx.canvas.width = width;
+ctx.canvas.height = height;
+ctx.lineCap = 'round';
+
+function distance(p1, p2)
+{
+    let dx = p1[0] - p2[0];
+    let dy = p1[1] - p2[1];
+    return Math.sqrt(dx*dx + dy*dy);
+}
+
+class Path {
+    constructor(colour, weight)
+    {
+        this.colour = colour;
+        this.weight = weight;
+        this.points = [];
+        this.rod = [0, 0];
+        this.rodLength = 0;
+        this.distanceThreshold = 2;
+        //this.distanceThreshold = Infinity;
+    }
+    draw()
+    {
+        ctx.strokeStyle = this.colour;
+        ctx.lineWidth = this.weight;
+        ctx.beginPath();
+        for(let i = 0; i < this.points.length; i++)
+        {
+            let point = this.points[i];
+            (ctx[i?'lineTo':'moveTo'])(point[0], point[1]);
+        }
+        ctx.stroke();
+    }
+    drawRod()
+    {
+        let rodPath = new Path(rodColour, rodWeight);
+        rodPath.points = [
+            this.points[this.rod[0]],
+            this.points[this.rod[1]]
+        ];
+        ctx.strokestyle = rodColour;
+        rodPath.draw();
+    }
+    moveRodTowardMouse()
+    {
+        let thisEnd = 0;
+        let otherEnd = 1;
+        if(distance(mouse, this.points[this.rod[0]]) > distance(mouse, this.points[this.rod[1]]))
+        {
+            thisEnd = 1;
+            otherEnd = 0;
+        }
+        // Save current values
+        let oldThisEnd = this.rod[thisEnd];
+        let oldOtherEnd = this.rod[otherEnd];
+        // Move end close to mouse
+        while(
+            this.rod[thisEnd] > 0 &&
+            distance(mouse, this.points[this.rod[thisEnd]]) > distance(mouse, this.points[this.rod[thisEnd] - 1])
+        ){
+            this.rod[thisEnd]--;
+            // Move other end
+            while(
+                this.rod[otherEnd] > 0 &&
+                Math.abs(distance(this.points[this.rod[thisEnd]], this.points[this.rod[otherEnd]])-this.rodLength) > Math.abs(distance(this.points[this.rod[thisEnd]], this.points[this.rod[otherEnd] - 1])-this.rodLength)
+            ){
+                this.rod[otherEnd]--;
+            }
+            while(
+                this.rod[otherEnd] < this.points.length - 1 &&
+                Math.abs(distance(this.points[this.rod[thisEnd]], this.points[this.rod[otherEnd]])-this.rodLength) > Math.abs(distance(this.points[this.rod[thisEnd]], this.points[this.rod[otherEnd] + 1])-this.rodLength)
+            ){
+                this.rod[otherEnd]++;
+            }
+            // Don't allow cheating
+            if(Math.abs(distance(this.points[this.rod[thisEnd]], this.points[this.rod[otherEnd]])-this.rodLength) > this.distanceThreshold)
+            {
+                this.rod[thisEnd]  = oldThisEnd;
+                this.rod[otherEnd] = oldOtherEnd;
+                break;
+            }
+        }
+        while(
+            this.rod[thisEnd] < this.points.length - 1 &&
+            distance(mouse, this.points[this.rod[thisEnd]]) > distance(mouse, this.points[this.rod[thisEnd] + 1])
+        ){
+            this.rod[thisEnd]++;
+            // Move other end
+            while(
+                this.rod[otherEnd] > 0 &&
+                Math.abs(distance(this.points[this.rod[thisEnd]], this.points[this.rod[otherEnd]])-this.rodLength) > Math.abs(distance(this.points[this.rod[thisEnd]], this.points[this.rod[otherEnd] - 1])-this.rodLength)
+            ){
+                this.rod[otherEnd]--;
+            }
+            while(
+                this.rod[otherEnd] < this.points.length - 1 &&
+                Math.abs(distance(this.points[this.rod[thisEnd]], this.points[this.rod[otherEnd]])-this.rodLength) > Math.abs(distance(this.points[this.rod[thisEnd]], this.points[this.rod[otherEnd] + 1])-this.rodLength)
+            ){
+                this.rod[otherEnd]++;
+            }
+            // Don't allow cheating
+            if(Math.abs(distance(this.points[this.rod[thisEnd]], this.points[this.rod[otherEnd]])-this.rodLength) > this.distanceThreshold)
+            {
+                this.rod[thisEnd]  = oldThisEnd;
+                this.rod[otherEnd] = oldOtherEnd;
+                break;
+            }
+        }
+    }
+}
+
+let curve = new Path(curveColour, curveWeight);
+curve.points = [];
+curve.points[0] = [width * 1/4, -height];
+let pathPlan = [
+    ['down', 1],
+    ['down', 3/4],
+    ['right', 1/4],
+    ['up', 1/8],
+    ['right', 1/4],
+    ['up', 1/4],
+    ['left', 1/4],
+    ['up', 1/8],
+    ['left', 1/8],
+    ['down', 3/4],
+    ['down', 1],
+];
+
+for(let i = 0; i < pathPlan.length; i++)
+{
+    let plan = pathPlan[i];
+    let direction = plan[0];
+    let distance = plan[1];
+    let metric = width;
+    if(direction == 'up' || direction == 'down') metric = height;
+    distance *= metric;
+    for(let j = 0; j < distance; j++)
+    {
+        let previousPoint = curve.points[curve.points.length - 1];
+        switch(direction)
+        {
+            case 'up':
+                curve.points.push([previousPoint[0], previousPoint[1]-1]);
+                break;
+            case 'down':
+                curve.points.push([previousPoint[0], previousPoint[1]+1]);
+                break;
+            case 'left':
+                curve.points.push([previousPoint[0]-1, previousPoint[1]]);
+                break;
+            case 'right':
+                curve.points.push([previousPoint[0]+1, previousPoint[1]]);
+                break;
+        }
+    }
+}
+
+
+let mouse = [0, 0];
+let mouseIsDown = false;
+ctx.canvas.onmousemove = function(event)
+{
+    const rect = ctx.canvas.getBoundingClientRect();
+    mouse[0] = event.clientX - rect.left;
+    mouse[1] = event.clientY - rect.top;
+}
+ctx.canvas.onmousedown = function()
+{
+    mouseIsDown = true;
+}
+document.body.onmouseup = function()
+{
+    mouseIsDown = false;
+}
+document.body.onkeyup = function(event)
+{
+    if(event.key === 'z' && event.ctrlKey)
+    {
+        //drawPath.points.pop();
+    }
+}
+ctx.canvas.onclick = function()
+{
+    //drawPath.points.push([mouse[0], mouse[1]]);
+}
+
+let drawPath = new Path('red', 1);
+for(let i = drawPath.points.length - 1; i > 0; i--)
+{
+    if(
+        drawPath.points[i][0] == drawPath.points[i-1][0] ||
+        drawPath.points[i][1] == drawPath.points[i-1][1]
+    ){
+        drawPath.points.splice(i, 1);
+    }
+}
+drawPath.points = [];
+for(let i = 1; i < drawnPathPoints.length; i++)
+{
+    const distanceBetweenPoints = distance(drawnPathPoints[i-1], drawnPathPoints[i]);
+    const numberOfSteps = Math.ceil(distanceBetweenPoints);
+    const step = [
+        (drawnPathPoints[i][0] - drawnPathPoints[i-1][0]) / numberOfSteps,
+        (drawnPathPoints[i][1] - drawnPathPoints[i-1][1]) / numberOfSteps,
+    ];
+    for(let progress = 0; progress < numberOfSteps; progress++)
+    {
+        drawPath.points.push([
+            drawnPathPoints[i-1][0] + step[0] * progress,
+            drawnPathPoints[i-1][1] + step[1] * progress,
+        ]);
+    }
+}
+curve.points = drawPath.points;
+
+curve.rod = [Math.floor(curve.points.length - 1 - height), Math.floor(curve.points.length - 1 - height - width * 7/16)];
+curve.rodLength = width * 0.188;
+
+function draw()
+{
+    ctx.fillStyle = backgroundColour;
+    ctx.fillRect(0, 0, width, height);
+    if(drawReference) ctx.drawImage(document.getElementsByTagName('img')[0], 0, 0, width, height);
+    //curve.draw();
+    curve.drawRod();
+    if(mouseIsDown) curve.moveRodTowardMouse();
+    //drawPath.draw();
+}
+setInterval(draw, 10)
+// Make it so that you can drag either end
+// One end will follow the path closest to the mouse
+// The other will follow the closest to the path
+// There will be a threshold past which it cannot be moved
+    </script>
+</body>
