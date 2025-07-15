@@ -1,0 +1,12 @@
+const white = p => Array.isArray(p) ? p.map(white) : Math.abs(p);
+const black = p => Array.isArray(p) ? p.map(black) : -Math.abs(p);
+const onBoard = (s, v, d) => !((s+v*d)>>6)&&!(((s%8)+d*((v+68)%8-4))>>3);
+const algebreicSquare = s => 'abcdefgh'[s%8]+(8-Math.floor(s/8));
+const algebreicPiece = p => '  RNBQKR K'[p];
+const algebreicMove = m => algebreicPiece(boardState[m[0]])+(boardState[m[1]]?'x':'')+algebreicSquare(m[1]);
+const pawnStartingRank = s => Math.floor(s/8)%5===1;
+const promotionRank = s => Math.floor(s/8)%7===0;
+const kingStartingSquare = s => s%56===4;
+const rookStartingSquare = (s, v) => s-s%8+(v<0?0:7);
+const colouredRect = (colour,a,b,c,d) => {old=ctx.fillStyle;ctx.fillStyle=colour;ctx.fillRect(a,b,c,d);ctx.fillStyle=old;};
+const pieceValue = p => [0, 9, 5, 3, 3, 9, 0, 5, 0, 0][white(p)];
