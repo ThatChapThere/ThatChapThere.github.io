@@ -19,7 +19,7 @@ function isSquareControlledBy(position, square, side) {
         for(let d = 1; onBoard(square, moveVector, d); d++)
         {
             let endPiece = position[square + moveVector * d];
-            if(endPiece) {
+            if(endPiece && endPiece !== -side(Pieces.EN_PASSANTABLE_SQUARE)) {
                 if(
                     endPiece === side(Pieces.BISHOP) ||
                     endPiece === side(Pieces.QUEEN)  ||
@@ -35,7 +35,7 @@ function isSquareControlledBy(position, square, side) {
         for(let d = 1; onBoard(square, moveVector, d); d++)
         {
             let endPiece = position[square + moveVector * d];
-            if(endPiece) {
+            if(endPiece && endPiece !== -side(Pieces.EN_PASSANTABLE_SQUARE)) {
                 if(
                     endPiece === side(Pieces.ROOK) ||
                     endPiece === side(Pieces.CASTLEABLE_ROOK) ||
@@ -124,7 +124,7 @@ function getLegalMoves(position) {
                         for(let d = 2; d <= 5; d++)
                             legalMoves.push(Object.freeze([i, i + moveVector + side(d * 8)]));
                     else legalMoves.push(Object.freeze([i, i + moveVector * d]));
-                    if(endPiece) break;
+                    if(endPiece && endPiece !== -side(Pieces.EN_PASSANTABLE_SQUARE)) break;
                 }
             }
         }
@@ -148,6 +148,11 @@ function executeMove(position, move) {
         position[(move[0] + move[1]) / 2] = side(Pieces.ROOK);
         position[rookStartingSquare(move[0], move[1] - move[0])] = Pieces.EMPTY;
     }
+    // En Passant execution
+    if(position[move[1]] === -side(Pieces.EN_PASSANTABLE_SQUARE))
+    {
+        position[move[1] + side(8)] = Pieces.EMPTY;
+    }
     // En Passant decay
     if(position.includes(-side(Pieces.EN_PASSANTABLE_SQUARE))){
         position[position.indexOf(-side(Pieces.EN_PASSANTABLE_SQUARE))] = Pieces.EMPTY;
@@ -155,9 +160,6 @@ function executeMove(position, move) {
     // En Passant creation
     if(piece === side(Pieces.PAWN) && Math.abs(move[0] - move[1]) === 16)
         position[(move[0] + move[1]) / 2] = side(Pieces.EN_PASSANTABLE_SQUARE);
-    // En Passant execution
-    if(position[move[1]] === -side(Pieces.EN_PASSANTABLE_SQUARE))
-        position[move[1] + side(8)] = Pieces.EMPTY;
     // Promotion
     if(piece === side(Pieces.PAWN) && move[1] - move[0] === side(move[1] - move[0])) {
         piece = side(Pieces.PAWN + Math.abs((move[0]>>3) - (move[1]>>3)));

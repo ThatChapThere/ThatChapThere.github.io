@@ -5,9 +5,9 @@ boardState[63] = white(Pieces.KING_WHOSE_TURN_IT_IS);
 boardState[23] = white(Pieces.ROOK);
 //*/
 
-let whitebot = true;
+let whitebot = false;
 let blackbot = true;
-let removingPieces = false;
+let removingPieces = true;
 let boardStates = [boardState.reduce( (a, c) => a + c, '')];
 let fiftyMoveCounter = 0;
 let gameOver = false;
